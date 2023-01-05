@@ -25,5 +25,8 @@
     "postcss": "^8.4.17",
     "sass": "^1.56.0",
     "sass-loader": "10"
+  },
+  "resolutions": {
+    "@nuxt/kit": "3.0.0-rc.13"
   }
 }
