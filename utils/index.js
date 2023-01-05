@@ -1,9 +1,5 @@
-import crypto from "crypto";
 
-const SALT = "$ome$alt";
-export function getHash(pass) {
-  return crypto.createHmac("sha256", SALT).update(pass).digest("hex");
-}
+
 
 export function kFormatter(num) {
   return Math.abs(num) > 999
