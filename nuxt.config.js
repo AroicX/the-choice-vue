@@ -12,8 +12,19 @@ export default {
     meta: [
       { charset: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { hid: "description", name: "description", content: "" },
+      {
+        hid: "description",
+        name: "description",
+        content:
+          "Choice9ja Goal is to provide a platform for Nigerian citizens, that’s aimed to increase transparency, strengthened participatory  governance and ensuring accountability of our leaders, wherein its online community can raise issues, and rate politicians according to their actions.",
+      },
       { name: "format-detection", content: "telephone=no" },
+      {
+        property: "og:image",
+        hid: "og:image",
+        content:
+          "https://res.cloudinary.com/aroicx/image/upload/v1672934526/icon.png",
+      },
     ],
     link: [{ rel: "icon", type: "image/x-icon", href: "../favicon.ico" }],
   },

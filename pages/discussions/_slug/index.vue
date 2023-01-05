@@ -87,7 +87,7 @@ export default {
       isMember: false,
       discourse: [],
       polls: [],
-      activeTab: "about",
+      activeTab: "discussions",
       tabs: [
         {
           title: "Discussions",
