@@ -1,0 +1,90 @@
+.c_discussion {
+  &-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid #f3f5f5;
+    padding: 0.5rem;
+    .c_post-image {
+      width: 2.5rem;
+      height: 2.5rem;
+      border-radius: 50%;
+    }
+  }
+  &-intro {
+    width: 100%;
+    padding: 1.5rem;
+    background: #ff544a;
+
+    &-top {
+      display: flex;
+      justify-content: space-between;
+      margin: 1rem 0;
+      &--image img {
+        width: 2.5rem;
+        height: 2.5rem;
+        border-radius: 50%;
+      }
+
+      &--btn button {
+        background: $col-white;
+        min-width: 120px;
+        height: 40px;
+        padding: 0.2rem 2rem;
+        font-size: 14px;
+        font-weight: 500;
+        color: $col-black;
+        border-radius: 3rem;
+      }
+    }
+  }
+  &-count {
+    width: 100%;
+    padding: 1rem 1.5rem;
+    background: #ff3e33;
+  }
+
+  &-list {
+    width: 100%;
+
+    &--item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 1rem 0.5rem;
+      border-bottom: 1px solid #f3f5f5;
+      .icon {
+        width: 2rem;
+        height: 2rem;
+        background: $col-green;
+        border-radius: 0.2rem;
+      }
+    }
+  }
+
+  &-content {
+    height: auto;
+    padding-bottom: 2rem;
+    // padding: 0.5rem;
+  }
+
+  &-about {
+    padding: 2rem;
+  }
+
+  &-add {
+    position: fixed;
+    bottom: 5rem;
+    right: 0.5rem;
+    width: 50px;
+    height: 50px;
+    background: $col-green;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    align-self: center;
+    align-content: center;
+    border-radius: 50%;
+    z-index: 10;
+  }
+}

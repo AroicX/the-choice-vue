@@ -1,0 +1,27 @@
+
+@mixin shadow {
+  box-shadow: 0px 5px 15px rgba(106, 127, 130, 0.09);
+}
+
+@mixin noscrollbar {
+  &::-webkit-scrollbar {
+    width: 1px;
+  }
+
+  /* Track */
+  &::-webkit-scrollbar-track {
+    box-shadow: none;
+    border-radius: 1px;
+  }
+
+  /* Handle */
+  &::-webkit-scrollbar-thumb {
+    background: transparent;
+    border-radius: 1px;
+  }
+
+  /* Handle on hover */
+  &::-webkit-scrollbar-thumb:hover {
+    background: transparent;
+  }
+}

@@ -1,0 +1,27 @@
+@import "base/reset";
+
+@import "utils/breakpoints";
+@import "utils/variables";
+@import "utils/helpers";
+@import "utils/width";
+
+@import "base/fonts";
+// @import "base/locomotive";
+
+@import "base/globals";
+
+@import "reusables/button";
+@import "reusables/text";
+@import "reusables/input";
+@import "reusables/tabs";
+@import "reusables/modal";
+
+@import "components/navigation";
+@import "components/post";
+
+//pages
+@import "pages/home";
+@import "pages/discussion";
+@import "pages/elections";
+@import "pages/notification";
+@import "pages/settings";

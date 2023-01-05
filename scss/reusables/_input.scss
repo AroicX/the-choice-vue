@@ -1,0 +1,216 @@
+.c_cusutom {
+  position: relative;
+  top: 0;
+  left: 0;
+
+  label {
+    position: absolute;
+    bottom: 1.2rem;
+    left: 0.5rem;
+    color: $col-white;
+    font-size: 16px;
+    transition: all 0.5s ease-in-out;
+    z-index: -1;
+  }
+
+  & > .c_input:focus + label {
+    position: absolute;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    align-content: center;
+    align-self: center;
+    top: 0;
+    left: 0.5rem;
+    background: $col-white;
+    color: $col-green;
+    height: 10px;
+    padding: 0.5rem;
+    font-size: 12px;
+    transition: all 0.5s ease-in-out;
+    z-index: 100;
+  }
+
+  & > .c_input:not(:placeholder-shown) + label {
+    position: absolute;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    align-content: center;
+    align-self: center;
+    top: 0;
+    left: 0.5rem;
+    background: $col-white;
+    color: $col-green;
+    height: 10px;
+    padding: 0.5rem;
+    font-size: 12px;
+    transition: all 0.5s ease-in-out;
+    z-index: 100;
+  }
+
+  .c_input {
+    position: relative;
+    width: 100%;
+    height: 50px;
+    padding: 0.5rem;
+    margin: 0.5rem 0;
+    border: 1px solid #94abab;
+    border-radius: 0.3rem;
+    outline: none;
+    transition: all 0.5s ease-in-out;
+
+    &:active,
+    &:focus,
+    &:start {
+      border: 1px solid $col-green;
+    }
+
+    &-radio:checked {
+      background-color: $col-green;
+    }
+  }
+}
+.c_cusutom {
+  position: relative;
+  top: 0;
+  left: 0;
+
+  label {
+    position: absolute;
+    bottom: 1.2rem;
+    left: 0.5rem;
+    color: $col-white;
+    font-size: 16px;
+    transition: all 0.5s ease-in-out;
+    z-index: -1;
+  }
+
+  & > .c_textarea:focus + label {
+    position: absolute;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    align-content: center;
+    align-self: center;
+    top: 0;
+    left: 0.5rem;
+    background: $col-white;
+    color: $col-green;
+    height: 50px;
+    padding: 0.5rem;
+    font-size: 12px;
+    transition: all 0.5s ease-in-out;
+    z-index: 100;
+  }
+
+  & > .c_textarea:not(:placeholder-shown) + label {
+    position: absolute;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    align-content: center;
+    align-self: center;
+    top: 0;
+    left: 0.5rem;
+    background: $col-white;
+    color: $col-green;
+    height: 10px;
+    padding: 0.5rem;
+    font-size: 12px;
+    transition: all 0.5s ease-in-out;
+    z-index: 100;
+  }
+
+  .c_textarea {
+    position: relative;
+    width: 100%;
+    // height: 20vh;
+    font-size: 14px;
+    font-weight: 400;
+    padding: 0.5rem;
+    margin: 0.5rem 0;
+    border: 1px solid #94abab;
+    border-radius: 0.3rem;
+    outline: none;
+    transition: all 0.5s ease-in-out;
+
+    &:active,
+    &:focus,
+    &:start {
+      border: 1px solid $col-green;
+    }
+
+    &-radio:checked {
+      background-color: $col-green;
+    }
+  }
+}
+
+input[type="radio"]:checked {
+  border: 1px solid $col-green;
+  // position: absolute;
+  // top: 9px;
+  // left: 10px;
+  content: " ";
+  display: block;
+  background-color: $col-green;
+}
+
+// .c_cusutom {
+//   position: relative;
+//   top: 0;
+//   left: 0;
+
+//   label {
+//     font-size: 12px;
+//     position: relative;
+//     bottom: 2.5rem;
+//     left: 0.5rem;
+//     transition: all 0.5s ease-in-out;
+//     color: $col-white;
+//     z-index: -1;
+//   }
+
+//   & > .c_input:focus + label {
+//     display: flex;
+//     position: absolute;
+//     top: 0;
+//     left: 0.5rem;
+//     padding: 0 0.5rem;
+//     background: $col-white;
+//     color: $col-green;
+//     z-index: 100;
+//     transition: all 0.5s ease-in-out;
+//   }
+
+//   & > .c_input:not(:placeholder-shown) + label {
+//     display: flex;
+//     position: absolute;
+//     top: 0;
+//     left: 0.5rem;
+//     padding: 0 0.5rem;
+//     background: $col-white;
+//     color: $col-green;
+//     z-index: 100;
+//     transition: all 0.5s ease-in-out;
+//   }
+
+//   .c_input {
+//     position: relative;
+//     width: 100%;
+//     height: 50px;
+//     padding: 0.5rem;
+//     border: 1px solid #94abab;
+//     border-radius: 0.3rem;
+//     outline: none;
+//     transition: all 0.5s ease-in-out;
+//     // margin: 0.5rem 0;
+
+//     &:active,
+//     &:focus,
+//     &:start {
+//       border: 2px solid $col-green;
+//     }
+//   }
+// }

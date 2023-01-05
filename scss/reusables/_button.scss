@@ -1,0 +1,31 @@
+.c_button {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-width: 200px;
+  width: auto;
+  padding: 0 1rem;
+  height: 50px;
+  background: $col-green;
+  color: $col-white;
+  border-radius: 0.2rem;
+  margin: 0.5rem 0;
+
+  &--disabled {
+    background: $col-gray !important;
+    color: $col-white;
+    border: 1px solid $col-gray !important;
+    cursor: not-allowed;
+    font-weight: 600;
+  }
+  &--colored {
+    background: $col-green;
+    color: $col-white;
+    border: 1px solid $col-green;
+  }
+  &--transparent {
+    background: $col-white;
+    color: $col-green;
+    border: 1px solid $col-green;
+  }
+}
