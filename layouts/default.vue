@@ -68,6 +68,14 @@ export default {
       ],
     };
   },
+  watch: {
+    $route() {
+      window.scrollTo(0, 0);
+      window.scrollY = 0;
+      // console.log("route change to", to);
+      // console.log("route change from", from);
+    },
+  },
   computed: {
     rooms() {
       return this.$store.state.rooms;
