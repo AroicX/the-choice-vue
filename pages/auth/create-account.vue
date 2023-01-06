@@ -110,13 +110,20 @@ export default {
   data() {
     return {
       form: {
-        firstName: "Sanusi",
-        lastName: "Mubaraq",
-        username: "matrix",
-        phoneNo: "08132554349",
-        email: "mubaraqsanusi908@gmail.com",
-        password: "password",
-        c_password: "password",
+        firstName: "",
+        lastName: "",
+        username: "",
+        phoneNo: "",
+        email: "",
+        password: "",
+        c_password: "",
+        // firstName: "Sanusi",
+        // lastName: "Mubaraq",
+        // username: "matrix",
+        // phoneNo: "08132554349",
+        // email: "mubaraqsanusi908@gmail.com",
+        // password: "password",
+        // c_password: "password",
         isLoading: false,
       },
     };
