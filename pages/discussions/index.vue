@@ -2,7 +2,13 @@
   <main class="c_discussion">
     <div class="c_discussion-header">
       <nuxt-link to="/account/profile">
-        <img class="c_post-image" src="/images/png/user.jpeg" alt="user" />
+        <!-- <img class="c_post-image" src="/images/png/user.jpeg" alt="user" /> -->
+        <div
+          class="c_post-image"
+          :style="{
+            backgroundImage: `url(${user?.profilePic})`,
+          }"
+        />
       </nuxt-link>
       <nuxt-link to="/home">
         <img class="ml-5" src="/svgs/choice-icon.svg" alt="choice-icon" />
@@ -37,7 +43,7 @@
     <poll
       v-for="poll in polls"
       v-bind:key="poll.id"
-      :discussion="[]"
+      :discussion="{}"
       :poll="poll"
     />
   </main>
@@ -54,6 +60,9 @@ export default {
     path() {
       let path = this.$route.path;
       return path;
+    },
+    user() {
+      return this.$store.state.user;
     },
   },
   data() {

@@ -19,55 +19,63 @@
           number on your account.</AppText
         >
       </div>
-      <AppInput
-        label="First Name"
-        placeholder="Enter your FirstName"
-        v-model="email"
-      ></AppInput>
+      <form @submit.prevent="createAccount">
+        <AppInput
+          label="First Name"
+          placeholder="Enter your FirstName"
+          v-model="form.firstName"
+        ></AppInput>
 
-      <AppInput
-        label="Last Name"
-        placeholder="Enter your FirstName"
-        v-model="email"
-      ></AppInput>
+        <AppInput
+          label="Last Name"
+          placeholder="Enter your FirstName"
+          v-model="form.lastName"
+        ></AppInput>
 
-      <AppInput
-        label="Email"
-        type="email"
-        placeholder="Enter your email"
-        v-model="email"
-      ></AppInput>
+        <AppInput
+          label="Email"
+          type="email"
+          placeholder="Enter your email"
+          v-model="form.email"
+        ></AppInput>
 
-      <AppInput
-        label="Phone Number"
-        type="number"
-        placeholder="Enter your Phone Number"
-        v-model="email"
-      ></AppInput>
+        <AppInput
+          label="Phone Number"
+          type="number"
+          placeholder="Enter your Phone Number"
+          v-model="form.phoneNo"
+        ></AppInput>
 
-      <AppInput
-        label="Username"
-        placeholder="Enter your Username"
-        v-model="email"
-      ></AppInput>
+        <AppInput
+          label="Username"
+          placeholder="Enter your Username"
+          v-model="form.username"
+        ></AppInput>
 
-      <AppInput
-        type="password"
-        label="Password"
-        placeholder="Enter your Password"
-        v-model="email"
-      ></AppInput>
+        <AppInput
+          type="password"
+          label="Password"
+          placeholder="Enter your Password"
+          v-model="form.password"
+        ></AppInput>
 
-      <AppInput
-        type="password"
-        label="Confirm Password"
-        placeholder="Enter your Confirm Password"
-        v-model="email"
-      ></AppInput>
+        <AppInput
+          type="password"
+          label="Confirm Password"
+          placeholder="Enter your Confirm Password"
+          v-model="form.c_password"
+        ></AppInput>
 
-      <div class="w-full">
-        <Button width="100%">Create Account</Button>
-      </div>
+        <div class="w-full">
+          <Button
+            type="submit"
+            width="100%"
+            :loading="form.isLoading"
+            :disabled="validate"
+            >Create Account</Button
+          >
+        </div>
+      </form>
       <div class="flex justify-center my-5">
         <AppText variant="14" color="grey"
           >Already have an account?
@@ -86,12 +94,73 @@ import Button from "reusables/Button.vue";
 export default {
   name: "CreateAccount",
   components: { AppText, AppInput, Button },
+  computed: {
+    validate() {
+      return (
+        this.form.firstName === "" ||
+        this.form.lastName === "" ||
+        this.form.username === "" ||
+        this.form.phoneNo === "" ||
+        this.form.email === "" ||
+        this.form.password === "" ||
+        this.form.c_password === ""
+      );
+    },
+  },
+  data() {
+    return {
+      form: {
+        firstName: "Sanusi",
+        lastName: "Mubaraq",
+        username: "matrix",
+        phoneNo: "08132554349",
+        email: "mubaraqsanusi908@gmail.com",
+        password: "password",
+        c_password: "password",
+        isLoading: false,
+      },
+    };
+  },
+  methods: {
+    createAccount() {
+      // compare passwords
+      if (this.form.password !== this.form.c_password) {
+        return this.$toast.error("Passwords do not match");
+      }
+      this.form.isLoading = true;
+      const { firstName, lastName, username, phoneNo, email, password } =
+        this.form;
+      const data = {
+        firstName,
+        lastName,
+        username,
+        phoneNo,
+        email,
+        password,
+      };
+
+      this.$axios
+        .$post("auth/signup", data)
+        .then((response) => {
+          // console.log("response", response);
+          this.form.isLoading = false;
+          this.$toast.success("Account Created Successfully");
+          this.$router.push("/auth/verify");
+        })
+        .catch((error) => {
+          this.form.isLoading = false;
+          return this.$toast.error(error.response.data.message);
+        });
+    },
+  },
 };
 </script>
 
 <style lang="scss">
 .c_auth {
   width: 100%;
+  padding-bottom: 5rem;
+
   &-create {
     width: 90%;
     padding: 2rem;

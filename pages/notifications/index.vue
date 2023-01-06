@@ -2,7 +2,13 @@
   <div class="c_notification">
     <div class="c_discussion-header">
       <nuxt-link to="/account/profile">
-        <img class="c_post-image" src="/images/png/user.jpeg" alt="user" />
+        <!-- <img class="c_post-image" src="/images/png/user.jpeg" alt="user" /> -->
+        <div
+          class="c_post-image"
+          :style="{
+            backgroundImage: `url(${user?.profilePic})`,
+          }"
+        />
       </nuxt-link>
       <nuxt-link to="/home">
         <img class="ml-5" src="/svgs/choice-icon.svg" alt="choice-icon" />
@@ -24,7 +30,12 @@
       >
         <div class="c_notification-list--item-user">
           <img class="icon" :src="resolveIcon(item.data)" alt="like" />
-          <img class="c_post-image" src="/images/png/user.jpeg" alt="user" />
+          <div
+            class="c_post-image"
+            :style="{
+              backgroundImage: `url(${user?.profilePic})`,
+            }"
+          />
         </div>
         <div class="c_notification-list--item-message">
           <AppText class="my-auto mx-2" variant="14" font="400"

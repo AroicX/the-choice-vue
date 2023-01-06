@@ -2,12 +2,11 @@
   <div>
     <div class="c_comment">
       <button></button>
-      <img
+      <div
         class="c_comment-image"
-        src="/images/png/user.jpeg"
-        alt="user"
+      
         @click="gotoProfile(comment.user.id)"
-      />
+      ></div>
       <div>
         <div class="c_comment-header">
           <button @click="gotoProfile(comment.user.id)">

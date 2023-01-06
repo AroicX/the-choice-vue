@@ -68,9 +68,9 @@ export default {
   data() {
     return {
       form: {
-        old_password: "password",
-        password: "password",
-        c_password: "password",
+        old_password: "",
+        password: "",
+        c_password: "",
         isLoading: false,
       },
     };
@@ -113,9 +113,7 @@ export default {
           this.form.isLoading = false;
           this.$toast.error(error.response.data.message);
         });
-   
-   
-      },
+    },
   },
 };
 </script>

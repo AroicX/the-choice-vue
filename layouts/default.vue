@@ -80,21 +80,6 @@ export default {
       return path;
     },
   },
-  created() {
-    this.getRoom();
-  },
-  methods: {
-    async getRoom() {
-      await this.$axios
-        .$get(`rooms/me`)
-        .then((response) => {
-          this.$store.commit("setRooms", response.room);
-        })
-        .catch((error) => {
-          this.$toast.error(error.response.data.message);
-        });
-    },
-  },
 };
 </script>
 

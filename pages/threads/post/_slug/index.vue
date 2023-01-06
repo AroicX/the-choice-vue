@@ -54,11 +54,11 @@ export default {
     },
   },
   created() {
-    // console.log("created", this.storePost);
+    console.log("created", this.storePost);
   },
-  destroyed() {
-    this.$store.commit("setSinglePost", {});
-  },
+  // destroyed() {
+  //   this.$store.commit("setSinglePost", {});
+  // },
   methods: {
     to() {
       this.$router.go(-1);

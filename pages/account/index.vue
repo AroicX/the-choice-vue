@@ -2,7 +2,12 @@
   <main class="c_setting">
     <div class="c_setting-header">
       <nuxt-link to="/account/profile">
-        <img class="c_post-image" src="/images/png/user.jpeg" alt="user" />
+        <div
+          class="c_post-image"
+          :style="{
+            backgroundImage: `url(${user.profilePic})`,
+          }"
+        />
       </nuxt-link>
       <nuxt-link to="/home">
         <img class="ml-5" src="/svgs/choice-icon.svg" alt="choice-icon" />
@@ -11,10 +16,11 @@
       <div></div>
     </div>
     <div class="c_setting-profile">
-      <img
+      <div
         class="c_setting-profile-image"
-        src="/images/png/user.jpeg"
-        alt="user"
+        :style="{
+          backgroundImage: `url(${user.profilePic})`,
+        }"
       />
 
       <div class="my-auto mx-3">

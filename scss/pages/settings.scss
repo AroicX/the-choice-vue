@@ -23,8 +23,10 @@
     &-image {
       width: 5rem;
       height: 5rem;
-      border: 2px dashed $col-green;
       border-radius: 50%;
+      background-size: cover;
+      background-repeat: no-repeat;
+      background-position: center;
     }
     &.no-border {
       border: none;

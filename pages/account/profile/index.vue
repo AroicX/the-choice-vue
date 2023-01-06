@@ -14,11 +14,14 @@
     </div>
 
     <div class="c_setting-profile no-border no-shadow">
-      <img
+      <div
         class="c_setting-profile-image"
-        src="/images/png/user.jpeg"
-        alt="user"
-      />
+        :style="{
+          backgroundImage: `url(${
+            previewImage ? previewImage : user.profilePic
+          })`,
+        }"
+      ></div>
 
       <div class="my-auto mx-3">
         <div class="flex">
@@ -33,15 +36,15 @@
           />
         </div>
 
-        <n-link :to="`${path}/profile`">
+
           <div
-            class="wd-50 flex my-1 bg-gray-200 p-1 justify-center rounded-full"
+            class="w-auto flex my-1 bg-gray-200 p-1 justify-center rounded-full"
           >
             <AppText class="my-1" variant="12" font="300" color="grey"
               >Star Citizen</AppText
             >
           </div>
-        </n-link>
+
       </div>
     </div>
     <div class="p-5 bg-white">

@@ -2,7 +2,13 @@
   <main class="c_election">
     <div class="c_election-header">
       <nuxt-link to="/profile">
-        <img class="c_post-image" src="/images/png/user.jpeg" alt="user" />
+        <!-- <img class="c_post-image" src="/images/png/user.jpeg" alt="user" /> -->
+        <div
+          class="c_post-image"
+          :style="{
+            backgroundImage: `url(${user?.profilePic})`,
+          }"
+        />
       </nuxt-link>
       <nuxt-link to="/home">
         <img class="ml-5" src="/svgs/choice-icon.svg" alt="choice-icon" />
@@ -33,27 +39,25 @@
         SELECT ELECTION
       </AppText>
 
-      <nuxt-link to="/">
-        <div
-          class="c_election-list--item"
-          v-for="election in elections"
-          v-bind:key="election.id"
-        >
-          <div class="flex flex-col">
-            <AppText variant="14" font="500">{{ election.title }}</AppText>
-            <AppText class="my-2" variant="11" font="300" color="grey-2">{{
-              election.description
-            }}</AppText>
-          </div>
-          <div class="icon">
-            <img src="/svgs/chevron-right.svg" alt="choice-icon" />
-          </div>
+      <div v-for="election in elections" v-bind:key="election.id">
+        <nuxt-link :to="`${path}/${election.id}`">
+          <div class="c_election-list--item">
+            <div class="flex flex-col">
+              <AppText variant="14" font="500">{{ election.title }}</AppText>
+              <AppText class="my-2" variant="11" font="300" color="grey-2">{{
+                election.description
+              }}</AppText>
+            </div>
+            <div class="icon">
+              <img src="/svgs/chevron-right.svg" alt="choice-icon" />
+            </div>
 
-          <div class="c_election-list--item-badge">
-            <span>{{ election.status }}</span>
+            <div class="c_election-list--item-badge">
+              <span>{{ election.status }}</span>
+            </div>
           </div>
-        </div>
-      </nuxt-link>
+        </nuxt-link>
+      </div>
     </div>
   </main>
 </template>
@@ -68,6 +72,9 @@ export default {
     path() {
       let path = this.$route.path;
       return path;
+    },
+    user() {
+      return this.$store.state.user;
     },
   },
   data() {

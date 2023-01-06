@@ -21,6 +21,33 @@
         >
       </div>
       <form @submit.prevent="changePassword">
+        <div
+          class="c_setting-profile-image"
+          :style="{
+            backgroundImage: `url(${
+              previewImage ? previewImage : user.profilePic
+            })`,
+          }"
+        ></div>
+
+        <div class="my-2">
+          <input
+            type="file"
+            hidden
+            placeholder="Select New Photo"
+            ref="photo"
+            @change="handleImage"
+          />
+
+          <button
+            type="button"
+            class="inline-flex items-center px-4 py-2 bg-white border border-gray-300 rounded-md font-semibold text-xs text-gray-700 uppercase tracking-widest shadow-sm hover:text-gray-500 focus:outline-none focus:border-blue-400 focus:shadow-outline-blue active:text-gray-800 active:bg-gray-50 transition ease-in-out duration-150 mt-2 outline-none"
+            :disabled="form.isLoading"
+            @click="$refs.photo.click()"
+          >
+            Select New Photo
+          </button>
+        </div>
         <div class="bg-[#F1998E] p-2 rounded-md my-5">
           <AppText
             class="uppercase my-3"
@@ -54,6 +81,7 @@
           placeholder="Enter your first name"
           v-model="form.firstName"
           required
+          :disabled="form.isLoading"
         ></AppInput>
 
         <AppInput
@@ -62,6 +90,7 @@
           placeholder="Enter your last name"
           v-model="form.lastName"
           required
+          :disabled="form.isLoading"
         />
         <AppInput
           label="UserName"
@@ -69,11 +98,13 @@
           placeholder="Enter your username"
           v-model="form.username"
           required
+          :disabled="form.isLoading"
         />
         <app-textarea
           label="About Yourself"
           v-model="form.about"
           height="20vh"
+          :disabled="form.isLoading"
         ></app-textarea>
 
         <Button
@@ -94,16 +125,19 @@ import AppText from "@/reusables/Text.vue";
 import AppInput from "@/reusables/Input.vue";
 import Textarea from "@/reusables/Textarea.vue";
 import Button from "@/reusables/Button.vue";
+import axios from "axios";
 
 export default {
   name: "account-edit-profile",
   components: { AppText, AppInput, Button, "app-textarea": Textarea },
   data() {
     return {
+      file: null,
+      previewImage: null,
       form: {
         firstName: "",
         lastName: "",
-        username: "",
+        // username: "",
         about: "",
         profile_image: "",
         isLoading: false,
@@ -136,18 +170,46 @@ export default {
     to() {
       this.$router.go(-1);
     },
+    async handleImage(event) {
+      const file = event.target.files[0];
+      this.file = file;
+      const link = URL.createObjectURL(file);
+      this.previewImage = link;
+    },
+    async uploadImage() {
+      const formData = new FormData();
+      formData.append("file", this.file, this.file.name);
+      formData.append("upload_preset", "chioce");
+      await axios
+        .post(
+          "https://api.cloudinary.com/v1_1/dxakg8zuk/image/upload",
+          formData
+        )
+        .then((response) => {
+          const { data } = response;
+          // this.form.profile_image = {
+          //   public_id: data.public_id,
+          //   url: data.url,
+          // };
+          this.form.profile_image = data.url;
+        })
+        .catch((error) => {
+          this.$toast.error(error.response.data.message);
+        });
+    },
     async changePassword() {
       this.form.isLoading = true;
-      const { firstName, lastName, username, about, profile_image } = this.form;
+      await this.uploadImage();
+      const { firstName, lastName, about, profile_image } = this.form;
       this.$axios
         .$patch("users/me", {
           firstName,
           lastName,
-          // username,
           about,
           profilePic: profile_image,
         })
         .then((response) => {
+          console.log(response);
           this.form.isLoading = false;
           this.$toast.success(response.message);
           this.$store.commit("setUser", response.data);

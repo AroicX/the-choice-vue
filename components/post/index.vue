@@ -11,12 +11,13 @@
     <div class="c_postcontainer">
       <div class="c_post" :id="`post-${data.id}`">
         <!-- <div class="c_post-image"> -->
-        <img
+        <div
           class="c_post-image"
-          src="/images/png/user.jpeg"
-          alt="user"
-          @click="gotoProfile(data.user.id)"
-        />
+          :style="{
+            backgroundImage: `url(${data.user?.profilePic})`,
+          }"
+          @click="gotoProfile(data.user?.id)"
+        ></div>
         <!-- </div> -->
         <div class="wd-100">
           <button class="c_post-header" @click="gotoProfile(data.user.id)">
@@ -79,7 +80,7 @@
       </div>
       <div v-if="showComments">
         <hr class="divider" />
-        <AppText class="ml-16" variant="10">Comments</AppText>
+        <!-- <AppText class="ml-16" variant="10">Comments</AppText> -->
         <AppComments
           v-for="comment in comments"
           v-bind:key="comment.id"

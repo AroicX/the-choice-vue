@@ -2,7 +2,13 @@
   <main class="c_home">
     <div class="c_home-header">
       <nuxt-link to="/account/profile">
-        <img class="c_post-image" src="/images/png/user.jpeg" alt="user" />
+        <!-- <img class="c_post-image" src="/images/png/user.jpeg" alt="user" /> -->
+        <div
+          class="c_post-image"
+          :style="{
+            backgroundImage: `url(${user?.profilePic})`,
+          }"
+        />
       </nuxt-link>
       <nuxt-link to="/home">
         <img class="ml-5" src="/svgs/choice-icon.svg" alt="choice-icon" />
@@ -45,16 +51,31 @@ import Poll from "@/components/poll/index.vue";
 export default {
   name: "Home",
   components: { AppText, post: Post, poll: Poll },
-  computed: {},
+  computed: {
+    user() {
+      return this.$store.state.user;
+    },
+  },
   data() {
     return {
       posts: [],
     };
   },
   created() {
+    this.getRoom();
     this.getPosts();
   },
   methods: {
+    async getRoom() {
+      await this.$axios
+        .$get(`rooms/me`)
+        .then((response) => {
+          this.$store.commit("setRooms", response.room);
+        })
+        .catch((error) => {
+          this.$toast.error(error.response.data.message);
+        });
+    },
     async getPosts() {
       await this.$axios
         .$get("/posts")
