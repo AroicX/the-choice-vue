@@ -54,7 +54,10 @@
                 <img src="/svgs/thumb_up.svg" alt="thumb_up" />
                 <span>{{ kFormatter(data.likes) }}</span>
               </button>
-              <button :id="`post_dislike-${data.id}`">
+              <button
+                :id="`post_dislike-${data.id}`"
+                @click.prevent="dislike(`post_dislike-${data.id}`)"
+              >
                 <img
                   src="/svgs/thumb_down.svg"
                   width="20px"
@@ -71,7 +74,7 @@
               </button>
               <button :id="`post_share-${data?.id}`">
                 <img src="/svgs/reply.svg" alt="reply" />
-                <span>{{ kFormatter(data?.dislikes) }}</span>
+                <!-- <span>{{ kFormatter(data?.dislikes) }}</span> -->
               </button>
             </div>
           </div>
@@ -79,7 +82,6 @@
         </div>
       </div>
       <div v-if="showComments">
-        <hr class="divider" />
         <!-- <AppText class="ml-16" variant="10">Comments</AppText> -->
         <AppComments
           v-for="comment in comments"
@@ -88,6 +90,7 @@
         />
       </div>
     </div>
+    <hr class="divider" />
   </div>
 </template>
 
@@ -189,6 +192,26 @@ export default {
       }
 
       await this._like();
+    },
+    async dislike(id) {
+      // like a post
+      const children = document.getElementById(id).children;
+      const search = children[0].classList.contains("disliked"); // check if you have liked the post
+      if (search) {
+        // if you have liked the post
+        children[0].classList = ""; // remove the class
+        // subtract 1 from the number of likes
+      } else {
+        // if you have not liked the post
+        children[0].classList = "disliked"; // add class to show you liked the post
+      }
+
+      await this._dislike();
+    },
+    async _dislike() {
+      this.$axios.$patch(`/posts/dislike/${this.data.id}`).catch((error) => {
+        this.$toast.error(error.response.data.message);
+      });
     },
     async _like() {
       this.$axios.$patch(`/posts/like/${this.data.id}`).catch((error) => {

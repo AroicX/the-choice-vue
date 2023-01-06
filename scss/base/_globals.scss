@@ -68,6 +68,12 @@ body {
   filter: invert(56%) sepia(58%) saturate(607%) hue-rotate(83deg) brightness(90%) contrast(81%);
 }
 
+.disliked {
+  fill: $col-green;
+
+  filter: invert(7%) sepia(98%) saturate(7498%) hue-rotate(356deg) brightness(108%) contrast(128%);
+}
+
 .unread {
   background: #fefdf5 !important;
 }

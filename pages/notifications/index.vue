@@ -57,7 +57,7 @@
           </button>
         </div>
 
-        <div>
+        <div class="date">
           <!-- <button>
             <img class="icon" src="/svgs/more.svg" alt="more" />
           </button> -->
@@ -65,9 +65,9 @@
             class="uppercase"
             variant="10"
             color="Ngreen"
-            font="400"
+            font="500"
             textAlign="right"
-            >{{ time_ago(item.createdAt) }}
+            >{{ new Date(item.createdAt).toDateString() }}
           </AppText>
         </div>
       </div>
