@@ -1,7 +1,7 @@
 <template>
   <main class="c_election">
     <div class="c_election-header">
-      <nuxt-link to="/profile">
+      <nuxt-link to="/account/profile">
         <!-- <img class="c_post-image" src="/images/png/user.jpeg" alt="user" /> -->
         <div
           class="c_post-image"

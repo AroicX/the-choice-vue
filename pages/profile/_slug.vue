@@ -6,7 +6,7 @@
       </button>
       <nuxt-link to="/home">
         <AppText variant="16" font="500"
-          >{{ user.username + "'s" }} Profile
+          >{{ user ? user.username + "'s" : "" }} Profile
         </AppText>
       </nuxt-link>
       <div></div>
@@ -24,7 +24,7 @@
       <div class="my-auto mx-3">
         <div class="flex">
           <AppText variant="22" font="600">{{
-            user.firstName + " " + user.lastName
+            user ? user.firstName + " " + user.lastName : ""
           }}</AppText>
           <img
             v-if="user.verifiedPhoneNo"

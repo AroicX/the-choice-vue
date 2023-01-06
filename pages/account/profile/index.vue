@@ -17,9 +17,7 @@
       <div
         class="c_setting-profile-image"
         :style="{
-          backgroundImage: `url(${
-            previewImage ? previewImage : user.profilePic
-          })`,
+          backgroundImage: `url(${user.profilePic})`,
         }"
       ></div>
 
@@ -36,15 +34,13 @@
           />
         </div>
 
-
-          <div
-            class="w-auto flex my-1 bg-gray-200 p-1 justify-center rounded-full"
+        <div
+          class="w-auto flex my-1 bg-gray-200 p-1 justify-center rounded-full"
+        >
+          <AppText class="my-1" variant="12" font="300" color="grey"
+            >Star Citizen</AppText
           >
-            <AppText class="my-1" variant="12" font="300" color="grey"
-              >Star Citizen</AppText
-            >
-          </div>
-
+        </div>
       </div>
     </div>
     <div class="p-5 bg-white">
@@ -135,7 +131,7 @@ export default {
       await this.$axios
         .$get(`/posts/user/${this.user.id}`)
         .then((response) => {
-          console.log(response);
+          // console.log(response);
           this.posts = response.data;
         })
         .catch((error) => {
