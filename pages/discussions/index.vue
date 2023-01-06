@@ -19,7 +19,10 @@
     <div class="p-2 my-5">
       <AppText varaint="16" font="600">Discourse Forums</AppText>
     </div>
-    <div class="c_discussion-list">
+
+    <spinner :loading="!discussions" />
+
+    <div class="c_discussion-list" v-if="discussions">
       <nuxt-link
         :to="`${path}/${discourse.id}`"
         v-for="(discourse, key) in discussions"
@@ -52,10 +55,11 @@
 <script>
 import AppText from "@/reusables/Text.vue";
 import Poll from "@/components/poll/index.vue";
+import Spinner from "reusables/Spinner.vue";
 
 export default {
   name: "Discussions",
-  components: { AppText, poll: Poll },
+  components: { AppText, poll: Poll, spinner: Spinner },
   computed: {
     path() {
       let path = this.$route.path;
@@ -67,7 +71,7 @@ export default {
   },
   data() {
     return {
-      discussions: [],
+      discussions: null,
       polls: [],
     };
   },

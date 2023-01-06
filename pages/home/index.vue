@@ -35,6 +35,8 @@
       <AppText variant="16" font="600"> See What’s happening </AppText>
     </div>
 
+    <spinner :loading="!posts.length" />
+
     <div class="p-3">
       <!-- <poll /> -->
       <post v-for="post in posts" v-bind:key="post.id" :data="post" />
@@ -47,10 +49,11 @@
 import AppText from "@/reusables/Text.vue";
 import Post from "@/components/post/index.vue";
 import Poll from "@/components/poll/index.vue";
+import Spinner from "reusables/Spinner.vue";
 
 export default {
   name: "Home",
-  components: { AppText, post: Post, poll: Poll },
+  components: { AppText, post: Post, poll: Poll, spinner: Spinner },
   computed: {
     user() {
       return this.$store.state.user;

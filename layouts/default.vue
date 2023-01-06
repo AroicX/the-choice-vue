@@ -70,8 +70,10 @@ export default {
   },
   watch: {
     $route() {
-      window.scrollTo(0, 0);
-      window.scrollY = 0;
+      const app = document.getElementById("app");
+      app.scrollTop = 0;
+      // window.scrollTo(0, 0);
+      // window.scrollY = 0;
       // console.log("route change to", to);
       // console.log("route change from", from);
     },

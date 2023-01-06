@@ -21,7 +21,9 @@
       <AppText varaint="16" font="600">Notifications</AppText>
     </div>
 
-    <div class="c_notification-list">
+    <spinner :loading="!notifications" />
+
+    <div class="c_notification-list" v-if="notifications">
       <div
         class="c_notification-list--item"
         v-for="item in notifications"
@@ -78,10 +80,11 @@
 <script>
 import AppText from "@/reusables/Text.vue";
 import { time_ago } from "@/utils/index";
+import Spinner from "reusables/Spinner.vue";
 
 export default {
   name: "Notification",
-  components: { AppText },
+  components: { AppText, spinner: Spinner },
   computed: {
     user() {
       return this.$store.state.user;
@@ -89,7 +92,7 @@ export default {
   },
   data() {
     return {
-      notifications: [],
+      notifications: null,
     };
   },
   created() {
