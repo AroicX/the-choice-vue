@@ -6,6 +6,7 @@
       :comments="data.comments"
       v-on:newComment="handleComment"
       v-on:closeModal="closeModal"
+
     />
 
     <div class="c_postcontainer">

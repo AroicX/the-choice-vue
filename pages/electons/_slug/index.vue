@@ -43,9 +43,9 @@
             </div>
           </div>
           <div class="c_election-content--item-action">
-            <button>
+            <!-- <button>
               <img src="/svgs/chevron-right.svg" alt="choice-icon" />
-            </button>
+            </button> -->
           </div>
         </div>
       </div>
