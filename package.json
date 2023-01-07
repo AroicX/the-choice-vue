@@ -21,6 +21,7 @@
     "vuex-persistedstate": "^4.1.0"
   },
   "devDependencies": {
+    "@nuxtjs/pwa": "^3.3.5",
     "@nuxtjs/tailwindcss": "^5.3.3",
     "postcss": "^8.4.17",
     "sass": "^1.56.0",

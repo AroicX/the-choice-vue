@@ -25,7 +25,10 @@
     <div class="c_discussion-intro">
       <div class="c_discussion-intro-top">
         <div class="c_discussion-intro-top--image">
-          <img src="/images/png/user.jpeg" alt="user" />
+          <img
+            src="https://res.cloudinary.com/dxakg8zuk/image/upload/v1673016977/icon-ga0ea72f0b_1920_j2ksjy.png"
+            alt="user"
+          />
         </div>
         <div class="c_discussion-intro-top--btn">
           <button v-if="isMember" :disabled="true">Joined</button>
@@ -169,9 +172,20 @@ export default {
           userId: this.user.id,
           discussionsId: this.slug,
         })
-        .then((response) => {
+        .then(async (response) => {
           this.isMember = true;
           this.$toast.success(response.message);
+          await this.getRooms();
+        })
+        .catch((error) => {
+          this.$toast.error(error.response.data.message);
+        });
+    },
+    async getRooms() {
+      await this.$axios
+        .$get(`rooms/me`)
+        .then((response) => {
+          this.$store.commit("setRooms", response.room);
         })
         .catch((error) => {
           this.$toast.error(error.response.data.message);

@@ -64,9 +64,9 @@ export default {
       posts: [],
     };
   },
-  created() {
-    this.getRoom();
-    this.getPosts();
+  async created() {
+    await this.getRoom();
+    await this.getPosts();
   },
   methods: {
     async getRoom() {

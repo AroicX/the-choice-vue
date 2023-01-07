@@ -152,7 +152,7 @@ export default {
           // console.log("response", response);
           this.form.isLoading = false;
           this.$toast.success("Account Created Successfully");
-          this.$router.push("/auth/verify");
+          this.$router.push("/auth/login");
         })
         .catch((error) => {
           this.form.isLoading = false;

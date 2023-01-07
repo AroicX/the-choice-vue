@@ -2,6 +2,7 @@ import { resolve } from "path";
 export default {
   // Disable server-side rendering: https://go.nuxtjs.dev/ssr-mode
   ssr: false,
+  target: "static",
 
   // Global page headers: https://go.nuxtjs.dev/config-head
   head: {
@@ -44,6 +45,7 @@ export default {
 
   // Modules for dev and build (recommended): https://go.nuxtjs.dev/config-modules
   buildModules: [
+    "@nuxtjs/pwa",
     // https://go.nuxtjs.dev/tailwindcss
     "@nuxtjs/tailwindcss",
   ],
@@ -84,4 +86,28 @@ export default {
       },
     ],
   },
+
+  // PWA module configuration: https://go.nuxtjs.dev/pwa
+  pwa: {
+    manifest: {
+      lang: "en",
+    },
+  },
+  // pwa: {
+  //   meta: {
+  //     title: "TheChioce9ja",
+  //     author: "AroicX",
+  //   },
+  //   icon: {
+  //     fileName: "icon.png",
+  //   },
+  //   manifest: {
+  //     name: "TheChioce9ja",
+  //     lang: "en",
+  //     useWebmanifestExtension: false,
+  //     display: "standalone",
+  //     short_name: "Chioce9ja",
+  //   },
+  //   // icon: false // disables the icon module
+  // },
 };
