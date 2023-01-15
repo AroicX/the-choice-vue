@@ -1,0 +1,55 @@
+* {
+  box-sizing: border-box;
+}
+
+.c_slider {
+  overflow: hidden;
+  padding: 0.5rem;
+
+  &-slides {
+    display: flex;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    scroll-behavior: smooth;
+    -webkit-overflow-scrolling: touch;
+    cursor: grab;
+    @include noscrollbar();
+  }
+
+  &-item {
+    position: relative;
+    scroll-snap-align: start;
+    flex-shrink: 0;
+    width: 400px;
+    height: 250px;
+    border-radius: 0.4rem;
+    padding: 2rem;
+    margin: 0 0.5rem;
+    box-shadow: 0px 32px 48px -20px rgba(100, 112, 122, 0.15);
+    cursor: pointer;
+
+    &--content {
+      position: relative;
+      .badge {
+        width: auto;
+        position: absolute;
+        top: 0;
+        right: 0;
+        background: #fff;
+        color: #000;
+        font-weight: 400;
+        padding: 0.5rem;
+        border-radius: 0.3rem;
+        font-size: 0.8rem;
+
+        &--on {
+          color: #e85c4a;
+        }
+        &--off {
+          background: #f9ea9b;
+          color: #493e04;
+        }
+      }
+    }
+  }
+}

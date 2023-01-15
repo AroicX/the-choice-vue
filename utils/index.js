@@ -1,6 +1,3 @@
-
-
-
 export function kFormatter(num) {
   return Math.abs(num) > 999
     ? Math.sign(num) * (Math.abs(num) / 1000).toFixed(1) + "k"
@@ -10,9 +7,8 @@ export function kFormatter(num) {
 export function time_ago(date) {
   const formatDate = new Date(date).getTimezoneOffset() + 60 * 60 * 1000;
 
-
-
   var time = new Date(Date.now() - formatDate);
+  //
   switch (typeof time) {
     case "number":
       break;
@@ -25,6 +21,8 @@ export function time_ago(date) {
     default:
       time = +new Date();
   }
+  //
+
   var time_formats = [
     [60, "seconds", 1], // 60
     [120, "1 minute ago", "1 minute from now"], // 60*2
@@ -42,6 +40,7 @@ export function time_ago(date) {
     [5806080000, "Last century", "Next century"], // 60*60*24*7*4*12*100*2
     [58060800000, "centuries", 2903040000], // 60*60*24*7*4*12*100*20, 60*60*24*7*4*12*100
   ];
+
   var seconds = (+new Date() - time) / 1000,
     token = "ago",
     list_choice = 1;
@@ -54,6 +53,7 @@ export function time_ago(date) {
     token = "from now";
     list_choice = 2;
   }
+
   var i = 0,
     format;
   while ((format = time_formats[i++]))

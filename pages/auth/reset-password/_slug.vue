@@ -22,7 +22,7 @@
           account.</AppText
         >
       </div>
-      <form @submit.prevent="handleLogin">
+      <form @submit.prevent="handleRest">
         <AppInput
           label="Password"
           type="password"
@@ -41,7 +41,11 @@
 
         <br />
         <br />
-        <Button width="100%" type="submit" :loading="form.isLoading"
+        <Button
+          width="100%"
+          type="submit"
+          :loading="form.isLoading"
+          :disabled="validate"
           >Contiune</Button
         >
       </form>
@@ -60,31 +64,50 @@ export default {
   data() {
     return {
       form: {
+        slug: "",
+        email: "",
         password: "",
         c_password: "",
         isLoading: false,
       },
     };
   },
+  computed: {
+    validate() {
+      return (
+        this.form.password === "" ||
+        this.form.c_password === "" ||
+        this.form.password !== this.form.c_password
+      );
+    },
+  },
   methods: {
-    async handleLogin() {
+    async handleRest() {
       this.form.isLoading = true;
 
       this.$axios
-        .$post("/auth/login", {
+        .$post("/auth/reset-password", {
           email: this.form.email,
           password: this.form.password,
+          confirm_password: this.form.c_password,
         })
         .then((response) => {
           this.form.isLoading = false;
           this.$toast.success(response.message);
-          this.$router.push("/home");
+          this.$router.push("/auth/login");
         })
         .catch((error) => {
           this.form.isLoading = false;
           this.$toast.error(error.response.data.message);
         });
     },
+  },
+  created() {
+    const { email, phone } = this.$route.query;
+    this.form.email = email;
+    this.form.phoneNo = phone;
+
+    this.slug = this.$route.params.slug;
   },
 };
 </script>

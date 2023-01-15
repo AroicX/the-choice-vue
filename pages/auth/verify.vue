@@ -22,7 +22,7 @@
           number or email on your account.</AppText
         >
       </div>
-      <form @submit.prevent="handleLogin" v-if="step === 'phone'">
+      <form @submit.prevent="checkNumber" v-if="step === 'phone'">
         <AppInput
           label="Phone Number"
           type="number"
@@ -35,8 +35,11 @@
           >Contiune</Button
         >
       </form>
-      <form @submit.prevent="handleLogin" v-if="step === 'otp'">
+      <form @submit.prevent="handleOTP" v-if="step === 'otp'">
         <div class="my-5">
+          <div class="length">
+            OTP expires in <span>{{ timeLeft }}</span>
+          </div>
           <v-otp-input
             ref="otpInput"
             input-classes="otp-input"
@@ -52,6 +55,14 @@
         <Button width="100%" type="submit" :loading="form.isLoading"
           >Confirm</Button
         >
+
+        <!-- <button
+          class="my-5 underline cursor-pointer text-green-600"
+          :disabled="timeLeft !== '00:00'"
+          @click.prevent="resendOtp"
+        >
+          Resend OTP
+        </button> -->
       </form>
     </div>
   </div>
@@ -68,41 +79,95 @@ export default {
   components: { AppText, AppInput, Button, "v-otp-input": OtpInput },
   data() {
     return {
-      step: "otp",
+      time: 600,
+      timer: null,
+      timerCount: 600,
+      duration: "",
+      step: "phone",
       form: {
         phone: "",
-        password: "password",
+        reference_id: "",
         isLoading: false,
       },
     };
   },
+  computed: {
+    timeLeft() {
+      return `${this.minutes}:${this.seconds}`;
+    },
+    minutes() {
+      return String(Math.floor(this.time / 60)).padStart(2, "0");
+    },
+    seconds() {
+      return String(this.time % 60).padStart(2, "0");
+    },
+  },
   methods: {
-    async handleLogin() {
+    async checkNumber() {
       this.form.isLoading = true;
 
+      const phoneNo = this.form.phone.slice(1);
+
       this.$axios
-        .$post("/auth/login", {
-          email: this.form.email,
-          password: this.form.password,
+        .$post("/auth/send-otp", {
+          phoneNo: phoneNo,
         })
         .then((response) => {
+          // console.log(response);
           this.form.isLoading = false;
           this.$toast.success(response.message);
-          this.$router.push("/home");
+          this.form.reference_id = response.data[0].reference_id;
+          this.step = "otp";
+          this.startCounter();
+          // this.$router.push("/home");
         })
         .catch((error) => {
           this.form.isLoading = false;
           this.$toast.error(error.response.data.message);
         });
     },
-    handleOnComplete(value) {
-      console.log("OTP completed: ", value);
+    async handleOTP(value = null) {
+      this.form.isLoading = true;
+
+      this.$axios
+        .$patch("/auth/validate-otp", {
+          phoneNo: this.form.phone,
+          code: this.code || value,
+          reference_id: this.form.reference_id,
+        })
+        .then((response) => {
+          console.log(response);
+          this.form.isLoading = false;
+          this.$toast.success(response.message);
+          this.$router.push("/auth/login");
+        })
+        .catch((error) => {
+          this.form.isLoading = false;
+          this.$toast.error(error.response.data.message);
+        });
+    },
+    async handleOnComplete(value) {
+      this.code = value;
+      await this.handleOTP(value);
     },
     handleOnChange(value) {
       console.log("OTP changed: ", value);
     },
     handleClearInput() {
       this.$refs.otpInput.clearInput();
+    },
+    startCounter() {
+      if (this.timer) {
+        clearInterval(this.timer);
+      }
+      this.time = 600;
+      this.timer = setInterval(this.decrementOrAlert, 1000);
+    },
+    decrementOrAlert() {
+      if (this.time > 0) {
+        this.time--;
+        return;
+      }
     },
   },
 };
@@ -153,5 +218,19 @@ export default {
 .otp-input::-webkit-outer-spin-button {
   -webkit-appearance: none;
   margin: 0;
+}
+
+.length {
+  text-align: left;
+  font-size: 12px;
+  font-weight: 400;
+
+  color: #2eae4e;
+  margin: 0.5rem 0;
+  span {
+    font-size: 14px;
+    font-weight: 600;
+    color: #2eae4e;
+  }
 }
 </style>

@@ -1,7 +1,7 @@
 <template>
   <button
     class="c_button"
-    :class="[isVariant, isDisabled]"
+    :class="[isVariant, isDisabled, isFont]"
     :style="{
       width,
       borderRadius,
@@ -47,6 +47,10 @@ export default {
       type: String,
       default: "",
     },
+    font: {
+      type: String,
+      default: "",
+    },
   },
   name: "Button",
   computed: {
@@ -64,9 +68,12 @@ export default {
     isDisabled() {
       return this.disabled ? "c_button--disabled" : "";
     },
-    mounted() {
-      console.log(this.isVariant);
+    isFont() {
+      return this.font ? `font-${this.font}` : "";
     },
+  },
+  mounted() {
+    // console.log(this.isVariant);
   },
 };
 </script>

@@ -31,6 +31,55 @@
         and vote your choice.</AppText
       >
     </div>
+
+    <div class="h-50 p-5 border-y-4 border-black">
+      <AppText variant="16" font="600"> Choice Mock Election </AppText>
+    </div>
+    <div class="c_slider">
+      <div class="c_slider-slides">
+        <div
+          class="c_slider-item"
+          v-for="slide in slider"
+          v-bind:key="slide.id"
+          :style="{
+            background: slide.bg,
+          }"
+        >
+          <div class="c_slider-item--content">
+            <span
+              class="badge"
+              :class="
+                slide.status.includes('Ongoing') ? 'badge--on' : 'badge--off'
+              "
+              >{{ slide.status }}</span
+            >
+            <img :src="`/svgs/${slide.icon}.svg`" :alt="slide.title" />
+            <div class="mt-10">
+              <AppText
+                class="my-3"
+                variant="16"
+                font="400"
+                :color="slide.color"
+              >
+                {{ slide.title }}</AppText
+              >
+              <AppText
+                class="my-3"
+                variant="16"
+                font="300"
+                :color="slide.color"
+              >
+                {{ slide.description }}</AppText
+              >
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!--  -->
+
+    <!--  -->
+
     <div class="h-50 p-5 border-y-4 border-black">
       <AppText variant="16" font="600"> See What’s happening </AppText>
     </div>
@@ -62,6 +111,35 @@ export default {
   data() {
     return {
       posts: [],
+      slider: [
+        {
+          id: 1,
+          title: "Presidential Election",
+          description: "Join 20,000+ others to vote your desired candidate.",
+          icon: "groupW",
+          status: "Ongoing Election",
+          bg: "#2EAE4E",
+          color: "white",
+        },
+        {
+          id: 2,
+          title: "Senatorial Election ",
+          description: "Join 20,000+ others to vote your desired candidate.",
+          icon: "groupG",
+          status: "Upcoming Election",
+          bg: "#F2FCF5",
+          color: "black",
+        },
+        {
+          id: 3,
+          title: "Senatorial Election ",
+          description: "Join 20,000+ others to vote your desired candidate.",
+          icon: "groupG",
+          status: "Upcoming Election",
+          bg: "#F2FCF5",
+          color: "black",
+        },
+      ],
     };
   },
   async created() {

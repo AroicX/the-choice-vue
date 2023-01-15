@@ -7,7 +7,7 @@
           <AppText variant="34" color="green" font="500">Choice9ja</AppText>
 
           <AppText
-            class="my-2"
+            class="my-2 mt-14"
             variant="18"
             font="300"
             color="grey"
@@ -24,12 +24,12 @@
             >Join Choice9ja today.</AppText
           >
           <nuxt-link to="/auth/create-account">
-            <Button width="100%" borderRadius="3rem"
+            <Button width="100%" borderRadius="3rem" font="400"
               >Sign up with Phone Number</Button
             >
           </nuxt-link>
           <nuxt-link to="/auth/create-account">
-            <Button class="my-5" width="100%" borderRadius="3rem"
+            <Button class="my-5" width="100%" borderRadius="3rem" font="400"
               >Sign up with email</Button
             >
           </nuxt-link>
@@ -52,7 +52,7 @@
             width="100%"
             variant="transparent"
             borderRadius="3rem"
-            font="500"
+            font="400"
             >Log In</Button
           >
         </nuxt-link>
