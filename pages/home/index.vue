@@ -45,34 +45,36 @@
             background: slide.bg,
           }"
         >
-          <div class="c_slider-item--content">
-            <span
-              class="badge"
-              :class="
-                slide.status.includes('Ongoing') ? 'badge--on' : 'badge--off'
-              "
-              >{{ slide.status }}</span
-            >
-            <img :src="`/svgs/${slide.icon}.svg`" :alt="slide.title" />
-            <div class="mt-10">
-              <AppText
-                class="my-3"
-                variant="16"
-                font="400"
-                :color="slide.color"
+          <nuxt-link :to="`/elections/${slide.id}`">
+            <div class="c_slider-item--content">
+              <span
+                class="badge"
+                :class="
+                  slide.status.includes('Ongoing') ? 'badge--on' : 'badge--off'
+                "
+                >{{ slide.status }}</span
               >
-                {{ slide.title }}</AppText
-              >
-              <AppText
-                class="my-3"
-                variant="16"
-                font="300"
-                :color="slide.color"
-              >
-                {{ slide.description }}</AppText
-              >
+              <img :src="`/svgs/${slide.icon}.svg`" :alt="slide.title" />
+              <div class="mt-10">
+                <AppText
+                  class="my-3"
+                  variant="16"
+                  font="400"
+                  :color="slide.color"
+                >
+                  {{ slide.title }}</AppText
+                >
+                <AppText
+                  class="my-3"
+                  variant="16"
+                  font="300"
+                  :color="slide.color"
+                >
+                  {{ slide.description }}</AppText
+                >
+              </div>
             </div>
-          </div>
+          </nuxt-link>
         </div>
       </div>
     </div>

@@ -52,7 +52,7 @@ export default {
         },
         {
           title: "Voting",
-          link: "/electons",
+          link: "/elections",
           icon: "vote",
         },
         {
