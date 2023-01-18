@@ -86,12 +86,19 @@
       <AppText variant="16" font="600"> See What’s happening </AppText>
     </div>
 
-    <spinner :loading="!posts.length" />
+    <spinner :loading="!posts" />
 
-    <div class="p-3">
+    <div class="p-3" v-if="posts">
       <!-- <poll /> -->
       <post v-for="post in posts" v-bind:key="post.id" :data="post" />
       <!-- <post /> -->
+    </div>
+
+    <div
+      class="flex center align-middle p-5 bg-green-500 m-5 rounded-md"
+      v-if="posts?.length <= 0"
+    >
+      <span class="font-bold text-white">No post found</span>
     </div>
   </main>
 </template>
@@ -112,7 +119,8 @@ export default {
   },
   data() {
     return {
-      posts: [],
+      isLoading: false,
+      posts: null,
       slider: [
         {
           id: 1,
@@ -160,9 +168,11 @@ export default {
         });
     },
     async getPosts() {
+      this.isLoading = true;
       await this.$axios
         .$get("/posts")
         .then((response) => {
+          this.isLoading = false;
           this.posts = response.data;
           // console.log(response.data);
         })

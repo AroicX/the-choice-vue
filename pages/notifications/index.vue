@@ -21,7 +21,7 @@
       <AppText varaint="16" font="600">Notifications</AppText>
     </div>
 
-    <spinner :loading="!notifications" />
+    <spinner :loading="isLoading" />
 
     <div class="c_notification-list" v-if="notifications">
       <div
@@ -31,7 +31,7 @@
         :class="item.isRead ? 'read' : 'unread'"
       >
         <div class="c_notification-list--item-user">
-          <img class="icon" :src="resolveIcon(item.data)" alt="like" />
+          <img class="icon" :src="resolveIcon(item?.data)" alt="like" />
           <div
             class="c_post-image"
             :style="{
@@ -45,15 +45,15 @@
           </AppText>
           <button
             class="c_notification-list--item-message-btn"
-            v-if="item.data.discussionsId"
-            @click="$router.push(`/discussions/${item.data.discussionsId}`)"
+            v-if="item?.data?.discussionsId"
+            @click="$router.push(`/discussions/${item?.data?.discussionsId}`)"
           >
             View Room
           </button>
           <button
             class="c_notification-list--item-message-btn"
-            v-if="item.data.commentId"
-            @click="$router.push(`/threads/post/${item.data.postId}`)"
+            v-if="item?.data?.commentId"
+            @click="$router.push(`/threads/post/${item?.data?.postId}`)"
           >
             View Post
           </button>
@@ -74,12 +74,20 @@
         </div>
       </div>
     </div>
+
+    <div
+      class="flex center align-middle p-5 bg-green-500 m-5 rounded-md"
+      v-if="notifications?.length <= 0"
+    >
+      <span class="font-bold text-white">No notifications found</span>
+    </div>
   </div>
 </template>
 
 <script>
 import AppText from "@/reusables/Text.vue";
 import { time_ago } from "@/utils/index";
+import { throws } from "assert";
 import Spinner from "reusables/Spinner.vue";
 
 export default {
@@ -92,6 +100,7 @@ export default {
   },
   data() {
     return {
+      isLoading: false,
       notifications: null,
     };
   },
@@ -108,13 +117,17 @@ export default {
         return "/svgs/noti/comment.svg";
       } else if (data?.discussionsId) {
         return "/svgs/noti/room.svg";
+      } else {
+        return "/svgs/noti/share.svg";
       }
     },
 
     async getNotifications() {
+      this.isLoading = true;
       await this.$axios
         .$get(`/notifications/user/${this.user.id}`)
         .then((response) => {
+          this.isLoading = false;
           this.notifications = response.data;
         })
         .catch((error) => {

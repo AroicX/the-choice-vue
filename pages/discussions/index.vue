@@ -20,7 +20,7 @@
       <AppText varaint="16" font="600">Discourse Forums</AppText>
     </div>
 
-    <spinner :loading="!discussions" />
+    <spinner :loading="isLoading" />
 
     <div class="c_discussion-list" v-if="discussions">
       <nuxt-link
@@ -39,6 +39,12 @@
         </div>
       </nuxt-link>
     </div>
+    <div
+      class="flex center align-middle p-5 bg-green-500 m-5 rounded-md"
+      v-if="discussions?.length <= 0"
+    >
+      <span class="font-bold text-white">No discussions found</span>
+    </div>
 
     <div class="p-2 my-5">
       <AppText varaint="16" font="600">Polls</AppText>
@@ -49,6 +55,12 @@
       :discussion="{}"
       :poll="poll"
     />
+    <div
+      class="flex center align-middle p-5 bg-green-500 m-5 rounded-md"
+      v-if="polls?.length <= 0"
+    >
+      <span class="font-bold text-white">No polls found</span>
+    </div>
   </main>
 </template>
 
@@ -73,6 +85,7 @@ export default {
     return {
       discussions: null,
       polls: [],
+      isLoading: false,
     };
   },
   created() {
@@ -83,15 +96,16 @@ export default {
   methods: {
     async getDiscussions() {
       // this.$store.dispatch("discussions/getDiscussions");
-
+      this.isLoading = true;
       try {
         await this.$axios.$get("/discussions").then((response) => {
+          this.isLoading = false;
           this.discussions = response.data;
+
           // console.log(response);
         });
       } catch (error) {
         (error) => {
-          this.form.isLoading = false;
           this.$toast.error(error.response.data.message);
         };
       }
@@ -106,7 +120,6 @@ export default {
         });
       } catch (error) {
         (error) => {
-          this.form.isLoading = false;
           this.$toast.error(error.response.data.message);
         };
       }
