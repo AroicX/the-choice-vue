@@ -85,8 +85,8 @@ export default {
       duration: "",
       step: "phone",
       form: {
-        phone: "07016762847",
-        reference_id: "a24e5690-9ece-4ef1-a9ec-de33c9149959",
+        phone: "",
+        reference_id: "",
         isLoading: false,
       },
     };
