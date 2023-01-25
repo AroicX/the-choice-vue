@@ -2,7 +2,11 @@
   <div class="c_pollcontainer">
     <div class="c_poll">
       <!-- <div class="c_poll-image"> -->
-      <img class="c_poll-image" src="/images/png/user.jpeg" alt="user" />
+      <img
+        class="c_poll-image"
+        src="https://res.cloudinary.com/dxakg8zuk/image/upload/v1673016977/icon-ga0ea72f0b_1920_j2ksjy.png"
+        alt="user"
+      />
       <!-- </div> -->
       <div>
         <div class="c_poll-header">

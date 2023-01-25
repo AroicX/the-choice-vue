@@ -139,7 +139,7 @@ export default {
         lastName: "",
         // username: "",
         about: "",
-        profile_image: "",
+        profile_image: null,
         isLoading: false,
       },
     };
@@ -199,7 +199,9 @@ export default {
     },
     async changePassword() {
       this.form.isLoading = true;
-      await this.uploadImage();
+      if (this.previewImage) {
+        await this.uploadImage();
+      }
       const { firstName, lastName, about, profile_image } = this.form;
       this.$axios
         .$patch("users/me", {

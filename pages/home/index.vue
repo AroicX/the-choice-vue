@@ -32,45 +32,50 @@
       >
     </div>
 
-    <div class="h-50 p-5 border-y-4 border-black">
+    <div class="h-50 p-5 border-y-4 border-black" v-if="featured_elections">
       <AppText variant="16" font="600"> Choice Mock Election </AppText>
     </div>
-    <div class="c_slider">
+    <div class="c_slider" v-if="featured_elections">
       <div class="c_slider-slides">
         <div
           class="c_slider-item"
-          v-for="slide in slider"
-          v-bind:key="slide.id"
+          v-for="(election, key) in featured_elections"
+          v-bind:key="election.id"
           :style="{
-            background: slide.bg,
+            background: key + 1 === 1 ? '#2EAE4E' : '#F2FCF5',
           }"
         >
-          <nuxt-link :to="`/elections/${slide.id}`">
+          <nuxt-link :to="`/elections/${election.id}`">
             <div class="c_slider-item--content">
               <span
                 class="badge"
                 :class="
-                  slide.status.includes('Ongoing') ? 'badge--on' : 'badge--off'
+                  election.status.includes('Ongoing')
+                    ? 'badge--on'
+                    : 'badge--off'
                 "
-                >{{ slide.status }}</span
+                >{{ election.status }}</span
               >
-              <img :src="`/svgs/${slide.icon}.svg`" :alt="slide.title" />
+              <img
+                :src="`/svgs/${key + 1 === 1 ? 'groupW' : 'groupG'}.svg`"
+                :alt="election.title"
+              />
               <div class="mt-10">
                 <AppText
                   class="my-3"
                   variant="16"
                   font="400"
-                  :color="slide.color"
+                  :color="key + 1 === 1 ? 'white' : 'black'"
                 >
-                  {{ slide.title }}</AppText
+                  {{ election.title }}</AppText
                 >
                 <AppText
                   class="my-3"
                   variant="16"
                   font="300"
-                  :color="slide.color"
+                  :color="key + 1 === 1 ? 'white' : 'black'"
                 >
-                  {{ slide.description }}</AppText
+                  {{ election.description }}</AppText
                 >
               </div>
             </div>
@@ -116,11 +121,15 @@ export default {
     user() {
       return this.$store.state.user;
     },
+    rooms() {
+      return this.$store.state.rooms;
+    },
   },
   data() {
     return {
       isLoading: false,
       posts: null,
+      featured_elections: [],
       slider: [
         {
           id: 1,
@@ -150,10 +159,15 @@ export default {
           color: "black",
         },
       ],
+      pagination: {
+        skip: 0,
+        take: 50,
+      },
     };
   },
   async created() {
-    await this.getRoom();
+    this.rooms.length < 1 ? await this.getRoom() : null;
+    await this.getBanner();
     await this.getPosts();
   },
   methods: {
@@ -162,6 +176,18 @@ export default {
         .$get(`rooms/me`)
         .then((response) => {
           this.$store.commit("setRooms", response.room);
+        })
+        .catch((error) => {
+          this.$toast.error(error.response.data.message);
+        });
+    },
+    async getBanner() {
+      await this.$axios
+        .$get(`elections/banner`)
+        .then((response) => {
+          this.featured_elections = response.election;
+          // console.log(response.election);
+          // this.$store.commit("setRooms", response.room);
         })
         .catch((error) => {
           this.$toast.error(error.response.data.message);

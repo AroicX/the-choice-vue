@@ -48,6 +48,17 @@
           </n-link>
         </div>
       </div>
+      <div class="px-5 py-3">
+        <AppText
+          class="my-1"
+          variant="14"
+          font="300"
+          color="grey"
+          lineHeight="21px"
+        >
+          {{ user?.about }}
+        </AppText>
+      </div>
 
       <div class="c_setting-content">
         <tabs :tabs="tabs" :activeTab="activeTab" v-on:tab-click="changeTab">

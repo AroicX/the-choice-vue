@@ -6,6 +6,7 @@ export const state = () => ({
   posts: [],
   discussions: [],
   rooms: [],
+  elections: [],
 });
 
 export const mutations = {
@@ -29,6 +30,9 @@ export const mutations = {
   },
   setRooms: (state, payload) => {
     state.rooms = payload;
+  },
+  setElections: (state, payload) => {
+    state.elections = payload;
   },
 };
 export const actions = {
