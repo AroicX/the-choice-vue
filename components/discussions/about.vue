@@ -1,5 +1,14 @@
 <template>
   <div class="c_discussion-about">
+    <div class="my-1">
+      <AppText variant="16" font="600">Room Description</AppText>
+
+      <div class="wd-75 my-3">
+        <AppText variant="14" font="300" textAlign="left" lineHeight="21px"
+          >{{ description }}
+        </AppText>
+      </div>
+    </div>
     <AppText variant="16" font="600">Forum Info</AppText>
     <div class="wd-75 my-3">
       <AppText variant="14" font="300" textAlign="left" lineHeight="21px"
@@ -50,9 +59,14 @@
 import AppText from "@/reusables/Text.vue";
 
 export default {
+  props: {
+    description: {
+      type: String,
+      default: "",
+    },
+  },
   name: "about-discussion",
   components: { AppText },
-  
 };
 </script>
 

@@ -53,7 +53,7 @@
           <post v-for="post in posts" v-bind:key="post.id" :data="post" />
         </template>
         <template v-slot:about>
-          <about-discussion />
+          <about-discussion :description="discourse.description"/>
           <poll
             v-for="poll in polls"
             v-bind:key="poll.id"
