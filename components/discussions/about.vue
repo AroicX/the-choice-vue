@@ -3,7 +3,7 @@
     <div class="my-1">
       <AppText variant="16" font="600">Room Description</AppText>
 
-      <div class="wd-75 my-3">
+      <div class="my-3">
         <AppText variant="14" font="300" textAlign="left" lineHeight="21px"
           >{{ description }}
         </AppText>
