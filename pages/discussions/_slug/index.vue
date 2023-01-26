@@ -40,7 +40,7 @@
           {{ discourse.topic }}
         </AppText>
         <AppText class="my-3" variant="12" font="400" color="white">
-          {{ discourse.description }}
+          {{ discourse.question }}
         </AppText>
       </div>
     </div>
