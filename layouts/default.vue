@@ -76,6 +76,9 @@ export default {
   },
   watch: {
     $route() {
+      if (unread === 0) {
+        this.isAuthenticated ? this.notificationCount() : null;
+      }
       // const app = document.getElementById("app");
       // app.scrollTop = 0;
       // window.scrollTo(0, 0);
