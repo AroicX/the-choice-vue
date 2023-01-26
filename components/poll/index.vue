@@ -45,6 +45,7 @@
             />
 
             <img
+              v-if="option.image"
               class="c_poll-options--option-image"
               :src="option.image"
               alt="user"

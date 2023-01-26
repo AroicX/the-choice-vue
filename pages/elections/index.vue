@@ -24,10 +24,10 @@
     <div class="c_election-banner">
       <div class="flex flex-col">
         <AppText variant="16" font="600" color="white">
-          Voting Ends in 6hr 30mins
+          Voting Ends 
         </AppText>
         <AppText class="my-1" variant="14" font="400" color="white">
-          Voting Ends at 23 Aug, 2030 - 12:00am
+          Voting Ends at 11 March, 2023 - 12:00am
         </AppText>
       </div>
       <button>
