@@ -19,6 +19,9 @@
               :src="`/svgs/${item.icon}.svg`"
               alt="home"
             />
+            <div v-if="item.icon === 'notifications'" class="badge">
+              <span>{{ unread }}</span>
+            </div>
             <span
               :class="
                 activeLink === item.link
@@ -66,12 +69,13 @@ export default {
           icon: "profile",
         },
       ],
+      unread: 0,
     };
   },
   watch: {
     $route() {
-      const app = document.getElementById("app");
-      app.scrollTop = 0;
+      // const app = document.getElementById("app");
+      // app.scrollTop = 0;
       // window.scrollTo(0, 0);
       // window.scrollY = 0;
       // console.log("route change to", to);
@@ -88,6 +92,24 @@ export default {
     activeLink() {
       let path = this.$route.path;
       return path;
+    },
+    user() {
+      return this.$store.state.user;
+    },
+  },
+  mounted() {
+    this.isAuthenticated ? this.notificationCount() : null;
+  },
+  methods: {
+    async notificationCount() {
+      await this.$axios
+        .$get(`/notifications/user/count/${this.user.id}`)
+        .then((response) => {
+          this.unread = response.data;
+        })
+        .catch((error) => {
+          this.$toast.error(error.response.data.message);
+        });
     },
   },
 };

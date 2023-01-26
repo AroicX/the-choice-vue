@@ -17,6 +17,7 @@
     z-index: 100;
 
     &__item {
+      position: relative;
       display: flex;
       justify-content: center;
       align-items: center;
@@ -43,6 +44,26 @@
           align-items: center;
           font-weight: 400;
           transition: all 0.5s ease-in-out;
+        }
+      }
+
+      .badge {
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+        background-color: $col-green;
+        position: absolute;
+        top: 0;
+        right: 0;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        align-content: center;
+        align-self: center;
+        span {
+          font-size: 12px;
+          font-weight: 600;
+          color: $col-white;
         }
       }
 

@@ -23,14 +23,14 @@
 
     <spinner :loading="isLoading" />
 
-    <div class="c_notification-list" v-if="notifications">
+    <div class="c_notification-list relative" v-if="notifications">
       <div
-        class="c_notification-list--item"
-        v-for="item in notifications"
+        class="c_notification-list--item relative"
+        v-for="(item, key) in notifications"
         v-bind:key="item.id"
         :class="item.isRead ? 'read' : 'unread'"
       >
-        <div class="c_notification-list--item-user">
+        <div class="c_notification-list--item-user relative">
           <img class="icon" :src="resolveIcon(item?.data)" alt="like" />
           <div
             class="c_post-image"
@@ -60,9 +60,6 @@
         </div>
 
         <div class="date">
-          <!-- <button>
-            <img class="icon" src="/svgs/more.svg" alt="more" />
-          </button> -->
           <AppText
             class="uppercase"
             variant="10"
@@ -72,6 +69,13 @@
             >{{ new Date(item.createdAt).toDateString() }}
           </AppText>
         </div>
+        <button
+          v-if="!item.isRead"
+          class="mark-as-read"
+          @click="read(item.id, key)"
+        >
+          Mark as read
+        </button>
       </div>
     </div>
 
@@ -134,8 +138,36 @@ export default {
           this.$toast.error(error.response.data.message);
         });
     },
+    async read(id, key) {
+      await this.$axios
+        .$patch(`/notifications/${id}`)
+        .then((response) => {
+          console.log(response);
+          this.notifications[key].isRead = true;
+
+          // this.isLoading = false;
+          // this.notifications = response.data;
+        })
+        .catch((error) => {
+          this.$toast.error(error.response.data.message);
+        });
+    },
   },
 };
 </script>
 
-<style lang="scss"></style>
+<style lang="scss">
+.mark-as-read {
+  position: absolute;
+  /* top: -; */
+  /* bottom: rem; */
+  right: 0;
+  background: #2ecc71 !important;
+  color: #fff;
+  min-width: 100px;
+  font-size: 12px;
+  padding: 0.5rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 3rem;
+}
+</style>

@@ -167,16 +167,18 @@ export default {
       this.value = value;
 
       await this.$axios
-        .$patch(`/polls/vote/${this.slug || this.poll.discussionsId}`, {
+        .$patch(`/polls/vote/${this.slug || this.poll.id}`, {
           value,
         })
         .then((response) => {
+          // console.log(response);
           this.$toast.success(response.message);
           this.selectedOption = null;
           this.hasVoted = true;
           // response.data
         })
         .catch((error) => {
+          // console.log(error.response.data.message);
           this.$toast.error(error.response.data.message);
           this.selectedOption = null;
           this.hasVoted = true;
