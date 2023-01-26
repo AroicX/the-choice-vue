@@ -101,6 +101,9 @@ export default {
     user() {
       return this.$store.state.user;
     },
+    notificationsCount() {
+      return this.$store.state.notifications;
+    },
   },
   data() {
     return {
@@ -142,11 +145,12 @@ export default {
       await this.$axios
         .$patch(`/notifications/${id}`)
         .then((response) => {
-          console.log(response);
           this.notifications[key].isRead = true;
 
-          // this.isLoading = false;
-          // this.notifications = response.data;
+          this.$store.commit(
+            "setNotifications",
+            parseInt(this.notificationsCount) - 1
+          );
         })
         .catch((error) => {
           this.$toast.error(error.response.data.message);

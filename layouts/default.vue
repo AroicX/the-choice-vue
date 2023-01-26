@@ -20,8 +20,8 @@
               alt="home"
             />
             <div v-if="item.icon === 'notifications'">
-              <div class="badge" v-if="unread">
-                <span>{{ unread }}</span>
+              <div class="badge" v-if="notifications">
+                <span>{{ notifications }}</span>
               </div>
             </div>
             <span
@@ -71,14 +71,10 @@ export default {
           icon: "profile",
         },
       ],
-      unread: 0,
     };
   },
   watch: {
     $route() {
-      if (unread === 0) {
-        this.isAuthenticated ? this.notificationCount() : null;
-      }
       // const app = document.getElementById("app");
       // app.scrollTop = 0;
       // window.scrollTo(0, 0);
@@ -88,6 +84,9 @@ export default {
     },
   },
   computed: {
+    notifications() {
+      return this.$store.state.notifications;
+    },
     rooms() {
       return this.$store.state.rooms;
     },
@@ -110,7 +109,7 @@ export default {
       await this.$axios
         .$get(`/notifications/user/count/${this.user.id}`)
         .then((response) => {
-          this.unread = response.data;
+          this.$store.commit("setNotifications", response.data);
         })
         .catch((error) => {
           this.$toast.error(error.response.data.message);

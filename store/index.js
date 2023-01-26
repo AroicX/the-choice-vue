@@ -7,6 +7,7 @@ export const state = () => ({
   discussions: [],
   rooms: [],
   elections: [],
+  notifications: 0,
 });
 
 export const mutations = {
@@ -33,6 +34,9 @@ export const mutations = {
   },
   setElections: (state, payload) => {
     state.elections = payload;
+  },
+  setNotifications: (state, payload) => {
+    state.notifications = payload;
   },
 };
 export const actions = {

@@ -112,6 +112,8 @@ export default {
   methods: {
     logout() {
       this.$store.commit("setAuthenticated", false);
+      this.$store.commit("setUser", []);
+      this.$store.commit("setNotifications", 0);
       this.$store.dispatch("logout");
       this.$router.push("/auth/login");
     },
