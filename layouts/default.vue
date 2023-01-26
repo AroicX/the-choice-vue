@@ -19,8 +19,10 @@
               :src="`/svgs/${item.icon}.svg`"
               alt="home"
             />
-            <div v-if="item.icon === 'notifications'" class="badge">
-              <span>{{ unread }}</span>
+            <div v-if="item.icon === 'notifications'">
+              <div class="badge" v-if="unread">
+                <span>{{ unread }}</span>
+              </div>
             </div>
             <span
               :class="
