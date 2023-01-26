@@ -167,29 +167,11 @@ export default {
   },
   async created() {
     this.rooms.length < 1 ? await this.getRoom() : null;
-    // await this.getBanner();
+    await this.getBanner();
     await this.getPosts();
   },
-  mounted() {
-    this.scroll();
-  },
-  methods: {
-    scroll() {
-      window.onscroll = () => {
-        let bottomOfWindow =
-          Math.max(
-            window.pageYOffset,
-            document.documentElement.scrollTop,
-            document.body.scrollTop
-          ) +
-            window.innerHeight ===
-          document.documentElement.offsetHeight;
 
-        if (bottomOfWindow) {
-          console.log("scrolling");
-        }
-      };
-    },
+  methods: {
     async getRoom() {
       await this.$axios
         .$get(`rooms/me`)
@@ -215,13 +197,10 @@ export default {
     async getPosts() {
       this.isLoading = true;
       await this.$axios
-        .$get(`/posts`, {
-          params: this.pagination,
-        })
+        .$get(`/posts`)
         .then((response) => {
           this.isLoading = false;
           this.posts = response.data;
-          // console.log(response.data);
         })
         .catch((error) => {
           this.$toast.error(error.response.data.message);
