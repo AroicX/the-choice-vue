@@ -203,12 +203,19 @@ export default {
         await this.uploadImage();
       }
       const { firstName, lastName, about, profile_image } = this.form;
+      // console.log({
+      //   firstName,
+      //   lastName,
+      //   about,
+      //   profile_image: profile_image || this.user.profilePic,
+      // });
+      // return;
       this.$axios
         .$patch("users/me", {
           firstName,
           lastName,
           about,
-          profilePic: profile_image,
+          profilePic: profile_image || this.user.profilePic,
         })
         .then((response) => {
           console.log(response);
