@@ -3,24 +3,24 @@
     <div class="c_auth">
       <div class="c_auth-onboarding">
         <img src="/svgs/logo.svg" alt="logo" />
-        <div class="my-10">
+        <div class="my-5">
           <AppText variant="34" color="green" font="500">Choice9ja</AppText>
 
           <AppText
-            class="my-2 mt-14"
+            class="my-2 mt-5"
             variant="18"
-            font="300"
-            color="grey"
+            font="500"
+            color="black"
+            textAlign="left"
             lineHeight="21px"
           >
-            A place for nigerians to learn about <br />
-            politicians & parties, <br />
-            raise issues and pseudo-vote candidates.
+            A place for nigerians to learn about politicians & parties, raise
+            issues and pseudo-vote candidates.
           </AppText>
         </div>
 
-        <div class="mb-10">
-          <AppText class="my-5" variant="18" color="black" font="500"
+        <div class="my-5">
+          <AppText class="mb-5" variant="18" color="black" font="500"
             >Join Choice9ja today.</AppText
           >
           <nuxt-link to="/auth/create-account">
@@ -41,7 +41,7 @@
             >
           </AppText>
         </div>
-
+        <br />
         <AppText class="my-2" variant="18" color="black" font="600"
           >Already have an account?</AppText
         >

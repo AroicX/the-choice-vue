@@ -15,12 +15,27 @@
       </div>
       <form @submit.prevent="handleLogin">
         <AppInput
+          v-if="loginType === 'email'"
           label="Email"
           type="email"
           placeholder="Enter your email"
           v-model="form.email"
           required
         ></AppInput>
+        <AppInput
+          v-if="loginType === 'phone'"
+          label="Phone Number"
+          type="number"
+          placeholder="Enter your Phone Number"
+          v-model="form.phoneNo"
+          required
+        ></AppInput>
+
+        <button type="button" @click.prevent="changeLoginType">
+          <AppText class="underline my-2" variant="12" color="green" font="500"
+            >Use {{ loginType === "email" ? "Phone Number" : "Email" }}</AppText
+          >
+        </button>
 
         <AppInput
           type="password"
@@ -66,22 +81,40 @@ export default {
   components: { AppText, AppInput, Button },
   data() {
     return {
+      loginType: "email",
       form: {
         email: "",
+        phoneNo: "",
         password: "",
         isLoading: false,
       },
     };
   },
   methods: {
+    changeLoginType() {
+      if (this.loginType === "email") {
+        return (this.loginType = "phone");
+      }
+
+      if (this.loginType === "phone") {
+        return (this.loginType = "email");
+      }
+    },
+
     async handleLogin() {
       this.form.isLoading = true;
 
+      const data = {
+        password: this.form.password,
+      };
+      if (this.loginType === "email") {
+        data.email = this.form.email;
+      }
+      if (this.loginType === "phone") {
+        data.phoneNo = this.form.phoneNo;
+      }
       this.$axios
-        .$post("/auth/login", {
-          email: this.form.email,
-          password: this.form.password,
-        })
+        .$post("/auth/login", data)
         .then((response) => {
           this.form.isLoading = false;
           window.localStorage.setItem("token", JSON.stringify(response.token));
