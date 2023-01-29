@@ -85,6 +85,14 @@ export default {
       alert("this is a button");
     },
   },
+  computed: {
+    isAuthenticated() {
+      return this.$store.state.isAuthenticated;
+    },
+  },
+  mounted() {
+    this.isAuthenticated ? this.$router.push("/home") : null;
+  },
 };
 </script>
 
