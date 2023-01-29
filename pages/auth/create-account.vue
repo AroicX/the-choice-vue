@@ -106,6 +106,9 @@ export default {
         this.form.c_password === ""
       );
     },
+    isAuthenticated() {
+      return this.$store.state.isAuthenticated;
+    },
   },
   data() {
     return {
@@ -127,6 +130,9 @@ export default {
         isLoading: false,
       },
     };
+  },
+  mounted() {
+    this.isAuthenticated ? this.$router.push("/home") : null;
   },
   methods: {
     createAccount() {

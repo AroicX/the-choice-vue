@@ -90,6 +90,14 @@ export default {
       },
     };
   },
+  computed: {
+    isAuthenticated() {
+      return this.$store.state.isAuthenticated;
+    },
+  },
+  mounted() {
+    this.isAuthenticated ? this.$router.push("/home") : null;
+  },
   methods: {
     changeLoginType() {
       if (this.loginType === "email") {
