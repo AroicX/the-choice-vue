@@ -34,8 +34,28 @@
         <Button width="100%" type="submit" :loading="form.isLoading"
           >Contiune</Button
         >
+
+        <!-- <Button width="100%" type="submit" :loading="form.isLoading"
+          >Send Via SMS</Button
+        >
+        <Button width="100%" type="submit" :loading="form.isLoading"
+          >Send Via WhatsApp</Button
+        > -->
       </form>
       <form @submit.prevent="handleOTP" v-if="step === 'otp'">
+        <div class="bg-yellow-200 p-2 rounded-md">
+          <AppText
+            class="my-2"
+            variant="12"
+            color="black"
+            font="400"
+            lineHeight="14px"
+            >Please Note, if One time password doesn't get delivered to your
+            phone via sms, you can hit the resend via whatsapp link
+            below.</AppText
+          >
+        </div>
+
         <div class="my-5">
           <div class="length">
             OTP expires in <span>{{ timeLeft }}</span>
@@ -52,6 +72,11 @@
           />
         </div>
 
+        <button type="button" @click.prevent="sendViaWhatspp">
+          <AppText class="underline my-2" variant="12" color="green" font="500"
+            >Resend OTP Via WhatsApp</AppText
+          >
+        </button>
         <Button width="100%" type="submit" :loading="form.isLoading"
           >Confirm</Button
         >
@@ -111,6 +136,32 @@ export default {
       this.$axios
         .$post("/auth/send-otp", {
           phoneNo: phoneNo,
+        })
+        .then((response) => {
+          // console.log(response);
+          this.form.isLoading = false;
+          this.$toast.success(response.message);
+          this.form.reference_id = response.data[0].reference_id;
+          this.step = "otp";
+          this.startCounter();
+          // this.$router.push("/home");
+        })
+        .catch((error) => {
+          this.form.isLoading = false;
+          this.$toast.error(error.response.data.message);
+        });
+    },
+    async sendViaWhatspp() {
+      if (!confirm("Are you sure you want to send OTP via WhatsApp?")) return;
+
+      this.form.isLoading = true;
+
+      const phoneNo = this.form.phone.slice(1);
+
+      this.$axios
+        .$post("/auth/send-otp", {
+          phoneNo: phoneNo,
+          channel: "whatsapp",
         })
         .then((response) => {
           // console.log(response);

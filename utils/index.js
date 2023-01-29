@@ -1,9 +1,18 @@
+/**
+ * 
+ * @param {*} num 
+ * @returns 
+ */
 export function kFormatter(num) {
   return Math.abs(num) > 999
     ? Math.sign(num) * (Math.abs(num) / 1000).toFixed(1) + "k"
     : Math.sign(num) * Math.abs(num);
 }
-
+/**
+ * 
+ * @param {*} date 
+ * @returns 
+ */
 export function time_ago(date) {
   const formatDate = new Date(date).getTimezoneOffset() + 60 * 60 * 1000;
 
@@ -62,5 +71,7 @@ export function time_ago(date) {
       else
         return Math.floor(seconds / format[2]) + " " + format[1] + " " + token;
     }
+
+  //
   return time;
 }
