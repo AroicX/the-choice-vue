@@ -4,7 +4,7 @@
       <div class="c_auth-onboarding">
         <img src="/svgs/logo.svg" alt="logo" />
         <div class="my-5">
-          <AppText variant="34" color="green" font="500">Choice9ja</AppText>
+          <AppText variant="34" color="green" font="500"> Choice9ja </AppText>
 
           <AppText
             class="my-2 mt-5"
@@ -77,7 +77,8 @@ export default {
   },
   watch: {
     fullname(value) {
-      console.log("fullname", value);
+      return value
+      // console.log("fullname", value);
     },
   },
   methods: {
