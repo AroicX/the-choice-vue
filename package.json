@@ -28,6 +28,9 @@
     "sass-loader": "10"
   },
   "resolutions": {
-    "@nuxt/kit": "3.0.0-rc.13"
-  }
+    "@nuxt/kit": "3.7.0"
+  },
+   "engines": {
+     "node": "20.8.1"
+ }
 }

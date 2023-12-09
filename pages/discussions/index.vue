@@ -32,8 +32,10 @@
           <div class="flex">
             <div class="icon"></div>
             <AppText class="my-auto mx-2" variant="14" font="500">{{
-              discourse.topic
-            }}</AppText>
+              discourse.topic 
+            }}
+            <span class="active_joined" v-if="isJoined === discourse.id">Joined</span>
+            </AppText>
           </div>
           <img class="ml-5" src="/svgs/chevron-right.svg" alt="choice-icon" />
         </div>
@@ -79,6 +81,25 @@ export default {
     },
     user() {
       return this.$store.state.user;
+    },
+    rooms() {
+      return this.$store.state.rooms;
+    },
+    isJoined() {
+      const rooms = this.$store.state.rooms;
+      const discussions = this.discussions;
+      const user = this.$store.state.user;
+      let isJoined = null;
+      if (rooms && discussions && user) {
+        rooms.forEach((room) => {
+          discussions.forEach((discussion) => {
+            if (room.discussionsId == discussion.id) {
+              isJoined = room.discussionsId;
+            }
+          });
+        });
+      }
+      return isJoined;
     },
   },
   data() {
@@ -128,4 +149,5 @@ export default {
 };
 </script>
 
-<style lang="scss"></style>
+<style lang="scss">
+</style>

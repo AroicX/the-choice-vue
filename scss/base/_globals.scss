@@ -108,6 +108,16 @@ body {
   }
 }
 
+
+.active_joined{
+  font-size: 10px;
+  color: #fff;
+  background: #8c8c8c;
+  border-radius: .5rem;
+  padding: 2px 5px;
+  margin-left: 5px;
+}
+
 input[type="color"],
 input[type="date"],
 input[type="datetime"],
