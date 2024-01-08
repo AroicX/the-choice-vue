@@ -29,8 +29,5 @@
   },
   "resolutions": {
     "@nuxt/kit": "3.7.0"
-  },
-   "engines": {
-     "node": "16.x"
- }
+  }
 }
