@@ -31,7 +31,7 @@
           />
         </div>
         <div class="c_discussion-intro-top--btn">
-          <button v-if="isMember" :disabled="true">Joined</button>
+          <button class="leave" v-if="isMember" :disabled="true">Leave</button>
           <button v-if="!isMember" @click.once="joinRoom">Join+</button>
         </div>
       </div>
@@ -41,6 +41,9 @@
         </AppText>
         <AppText class="my-3" variant="12" font="400" color="white">
           {{ discourse.question }}
+        </AppText>
+        <AppText class="my-3 " variant="14" font="300" color="white" lineHeight="1">
+          This Forum is dedicated to open and informed discussions about the various security challenges and issues affecting Nigeria.
         </AppText>
       </div>
     </div>

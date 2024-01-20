@@ -12,7 +12,7 @@ export default function ({ $axios, redirect }) {
     const code = parseInt(error.response && error.response.status);
     if (code === 401) {
       localStorage.clear();
-      redirect("/auth/login");
+      return redirect("/auth/login");
     }
   });
 }

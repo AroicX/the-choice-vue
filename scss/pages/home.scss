@@ -1,6 +1,46 @@
 .c_home {
   padding-bottom: 5rem;
 
+  &-hottest {
+    background-image: url("./static/images/png/hottest.png");
+    background-position: top center;
+    background-repeat: no-repeat;
+    width: 98%;
+    margin: auto;
+    height: 30vh;
+    padding: 0.1rem;
+    border-radius: 0.5rem;
+    transition: all 0.5s ease;
+
+    @include shadow();
+    cursor: pointer;
+
+    &:hover {
+      transition: all 0.3s ease-in;
+      // border: 1px dashed $col-green;
+    }
+
+    .content {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      padding: 1rem;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+
+      span {
+        position: relative;
+        display: inline-block;
+        max-width: 180px;
+        background: white;
+        padding: 0.5rem;
+        border-radius: 50rem;
+        @include shadow();
+      }
+    }
+  }
+
   &-header {
     display: flex;
     justify-content: space-between;

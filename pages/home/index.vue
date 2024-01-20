@@ -17,8 +17,8 @@
       <div></div>
     </div>
     <div class="p-4 m-auto">
-      <AppText variant="24" font="600"
-        >Know, share & vote your <br />
+      <AppText variant="16" font="600"
+        >Hello, share & vote your <br />
         choice.
       </AppText>
       <AppText
@@ -27,9 +27,23 @@
         font="300"
         color="Ngreen"
         textAlign="left"
-        >Learn about your nigerian politician and discuss politics, raise issues
-        and vote your choice.</AppText
+        >Know, Rate and share your choice.</AppText
       >
+    </div>
+
+    <div class="c_home-hottest">
+      <div class="content">
+          <span>Hottest Discourse 🔥</span>
+          <AppText
+          class="my-3"
+          variant="16"
+          font="300"
+          color="white"
+          textAlign="left"
+          >The “Obidient Movement” will shape Nigerian politics beyond the 2023 presidential election</AppText
+        >
+
+      </div>
     </div>
 
     <div class="h-50 p-5 border-y-4 border-black" v-if="featured_elections">

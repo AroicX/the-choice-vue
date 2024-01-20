@@ -3,12 +3,9 @@
     <div class="c_discussion-header">
       <nuxt-link to="/account/profile">
         <!-- <img class="c_post-image" src="/images/png/user.jpeg" alt="user" /> -->
-        <div
-          class="c_post-image"
-          :style="{
-            backgroundImage: `url(${user?.profilePic})`,
-          }"
-        />
+        <div class="c_post-image" :style="{
+          backgroundImage: `url(${user?.profilePic})`,
+        }" />
       </nuxt-link>
       <nuxt-link to="/home">
         <img class="ml-5" src="/svgs/choice-icon.svg" alt="choice-icon" />
@@ -23,44 +20,39 @@
     <spinner :loading="isLoading" />
 
     <div class="c_discussion-list" v-if="discussions">
-      <nuxt-link
-        :to="`${path}/${discourse.id}`"
-        v-for="(discourse, key) in discussions"
-        v-bind:key="key"
-      >
+      <nuxt-link :to="`${path}/${discourse.id}`" v-for="(discourse, key) in discussions" v-bind:key="key">
         <div class="c_discussion-list--item">
           <div class="flex">
             <div class="icon"></div>
-            <AppText class="my-auto mx-2" variant="14" font="500">{{
-              discourse.topic 
-            }}
-            <span class="active_joined" v-if="isJoined === discourse.id">Joined</span>
-            </AppText>
+            <div class="flex flex-1 flex-col my-auto ">
+              <AppText class="mx-2" variant="11" font="500" color="blue">{{
+                discourse.topic
+              }}
+              </AppText>
+              <AppText class="my-1 mx-2" variant="14" font="500">{{
+                discourse.topic
+              }}
+                <span class="active_joined" v-if="isJoined === discourse.id">Joined</span>
+              </AppText>
+              <AppText class="my-1 mx-2" variant="11" font="400">{{
+                `lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eius ${discourse.description}`
+              }}
+              </AppText>
+            </div>
           </div>
           <img class="ml-5" src="/svgs/chevron-right.svg" alt="choice-icon" />
         </div>
       </nuxt-link>
     </div>
-    <div
-      class="flex center align-middle p-5 bg-green-500 m-5 rounded-md"
-      v-if="discussions?.length <= 0"
-    >
+    <div class="flex center align-middle p-5 bg-green-500 m-5 rounded-md" v-if="discussions?.length <= 0">
       <span class="font-bold text-white">No discussions found</span>
     </div>
 
     <div class="p-2 my-5">
       <AppText varaint="16" font="600">Polls</AppText>
     </div>
-    <poll
-      v-for="poll in polls"
-      v-bind:key="poll.id"
-      :discussion="{}"
-      :poll="poll"
-    />
-    <div
-      class="flex center align-middle p-5 bg-green-500 m-5 rounded-md"
-      v-if="polls?.length <= 0"
-    >
+    <poll v-for="poll in polls" v-bind:key="poll.id" :discussion="{}" :poll="poll" />
+    <div class="flex center align-middle p-5 bg-green-500 m-5 rounded-md" v-if="polls?.length <= 0">
       <span class="font-bold text-white">No polls found</span>
     </div>
   </main>
@@ -149,5 +141,4 @@ export default {
 };
 </script>
 
-<style lang="scss">
-</style>
+<style lang="scss"></style>
