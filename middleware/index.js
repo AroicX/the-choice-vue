@@ -1,4 +1,5 @@
-import { jwtDecode } from 'jwt-decode'
+// import { jwtDecode } from 'jwt-decode'
+const { default: jwt_decode } = require("jwt-decode");
 const isRoutePublic = ['/', '/auth/login', 'auth/signup', 'auth/onboarding']
 
 export default function ({ store, redirect, route, app }) {
@@ -13,7 +14,7 @@ export default function ({ store, redirect, route, app }) {
   const publicRoutes = (route.meta || []).filter((route) => route.public)
 
   if (token) {
-    const { exp } = jwtDecode(token)
+    const { exp } = jwt_decode(token)
     const expiresAt = new Date(exp * 1000)
     const currentTime = new Date()
 
