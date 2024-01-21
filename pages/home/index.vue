@@ -1,7 +1,7 @@
 <template>
   <main class="c_home">
     <div class="c_home-header">
-      <nuxt-link to="/account/profile">
+      <nuxt-link to="/account">
         <!-- <img class="c_post-image" src="/images/png/user.jpeg" alt="user" /> -->
         <div
           class="c_post-image"
@@ -46,7 +46,7 @@
       </div>
     </div>
 
-    <div class="h-50 p-5 border-y-4 border-black" v-if="featured_elections">
+    <div class="h-50 p-5 border-y-4 border-black" v-if="featured_elections.length > 0">
       <AppText variant="16" font="600"> Choice Mock Election </AppText>
     </div>
     <div class="c_slider" v-if="featured_elections">

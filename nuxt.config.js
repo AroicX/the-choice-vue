@@ -44,7 +44,7 @@ export default {
 
   // Modules for dev and build (recommended): https://go.nuxtjs.dev/config-modules
   buildModules: [
-    "@nuxtjs/pwa",
+    // "@nuxtjs/pwa",
     // https://go.nuxtjs.dev/tailwindcss
     "@nuxtjs/tailwindcss",
   ],
@@ -87,11 +87,11 @@ export default {
   },
 
   // PWA module configuration: https://go.nuxtjs.dev/pwa
-  pwa: {
-    manifest: {
-      lang: "en",
-    },
-  },
+  // pwa: {
+  //   manifest: {
+  //     lang: "en",
+  //   },
+  // },
   // pwa: {
   //   meta: {
   //     title: "TheChioce9ja",

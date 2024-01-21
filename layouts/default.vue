@@ -56,9 +56,9 @@ export default {
           icon: "discourse",
         },
         {
-          title: "Voting",
-          link: "/elections",
-          icon: "vote",
+          title: "Explore",
+          link: "/explore",
+          icon: "menu-search",
         },
         {
           title: "Notifications",
@@ -66,9 +66,9 @@ export default {
           icon: "notifications",
         },
         {
-          title: "Account",
-          link: "/account",
-          icon: "profile",
+          title: "Ratings",
+          link: "/ratings",
+          icon: "menu-rating",
         },
       ],
     };
