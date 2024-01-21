@@ -84,9 +84,9 @@ export default {
     return {
       loginType: "email",
       form: {
-        email: "Arowosegbe67@gmail.com",
+        email: "",
         phoneNo: "",
-        password: "password",
+        password: "",
         isLoading: false,
       },
     };
