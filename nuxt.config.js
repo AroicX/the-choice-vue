@@ -88,25 +88,20 @@ export default {
 
   // PWA module configuration: https://go.nuxtjs.dev/pwa
   pwa: {
-    manifest: {
-      lang: "en",
-    },
-  },
-  pwa: {
-    meta: {
-      title: "TheChioce9ja",
-      author: "AroicX",
-    },
-    icon: {
-      fileName: "icon.png",
-    },
-    manifest: {
-      name: "TheChioce9ja",
-      lang: "en",
-      useWebmanifestExtension: false,
-      display: "standalone",
-      short_name: "Chioce9ja",
-    },
+    // meta: {
+    //   title: "TheChioce9ja",
+    //   author: "AroicX",
+    // },
+    // icon: {
+    //   fileName: "icon.png",
+    // },
+    // manifest: {
+    //   name: "TheChioce9ja",
+    //   lang: "en",
+    //   useWebmanifestExtension: false,
+    //   display: "standalone",
+    //   short_name: "Chioce9ja",
+    // },
     // icon: false // disables the icon module
   },
 };
