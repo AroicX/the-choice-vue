@@ -96,6 +96,7 @@ import Spinner from "reusables/Spinner.vue";
 
 export default {
   name: "Notification",
+  middleware: "index",
   components: { AppText, spinner: Spinner },
   computed: {
     user() {

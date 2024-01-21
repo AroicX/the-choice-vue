@@ -44,7 +44,7 @@ export default {
 
   // Modules for dev and build (recommended): https://go.nuxtjs.dev/config-modules
   buildModules: [
-    // "@nuxtjs/pwa",
+    "@nuxtjs/pwa",
     // https://go.nuxtjs.dev/tailwindcss
     "@nuxtjs/tailwindcss",
   ],
@@ -62,7 +62,7 @@ export default {
   },
   server: {
     port: 3008, // default: 3000
-    // host: "0.0.0.0",
+    host: "0.0.0.0",
   },
   axios: {
     baseURL:
@@ -87,26 +87,26 @@ export default {
   },
 
   // PWA module configuration: https://go.nuxtjs.dev/pwa
-  // pwa: {
-  //   manifest: {
-  //     lang: "en",
-  //   },
-  // },
-  // pwa: {
-  //   meta: {
-  //     title: "TheChioce9ja",
-  //     author: "AroicX",
-  //   },
-  //   icon: {
-  //     fileName: "icon.png",
-  //   },
-  //   manifest: {
-  //     name: "TheChioce9ja",
-  //     lang: "en",
-  //     useWebmanifestExtension: false,
-  //     display: "standalone",
-  //     short_name: "Chioce9ja",
-  //   },
-  //   // icon: false // disables the icon module
-  // },
+  pwa: {
+    manifest: {
+      lang: "en",
+    },
+  },
+  pwa: {
+    meta: {
+      title: "TheChioce9ja",
+      author: "AroicX",
+    },
+    icon: {
+      fileName: "icon.png",
+    },
+    manifest: {
+      name: "TheChioce9ja",
+      lang: "en",
+      useWebmanifestExtension: false,
+      display: "standalone",
+      short_name: "Chioce9ja",
+    },
+    // icon: false // disables the icon module
+  },
 };

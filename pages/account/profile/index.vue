@@ -85,6 +85,7 @@ import AboutDiscussion from "@/components/discussions/about.vue";
 
 export default {
   name: "account-profile",
+  middleware: "index",
   components: {
     AppText,
     Tabs,

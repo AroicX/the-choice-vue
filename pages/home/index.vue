@@ -130,6 +130,7 @@ import Spinner from "reusables/Spinner.vue";
 
 export default {
   name: "Home",
+  middleware: "index",
   components: { AppText, post: Post, poll: Poll, spinner: Spinner },
   computed: {
     user() {

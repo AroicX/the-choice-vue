@@ -23,6 +23,7 @@ import Post from "@/components/post/index.vue";
 
 export default {
   name: "Single-Post",
+  middleware: 'index',
   components: {
     AppText,
     Tabs,

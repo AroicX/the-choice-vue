@@ -79,6 +79,7 @@ import AboutDiscussion from "@/components/discussions/about.vue";
 
 export default {
   name: "Discussions-Slug",
+  middleware: "index",
   components: {
     AppText,
     Tabs,

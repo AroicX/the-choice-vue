@@ -79,6 +79,7 @@ import Button from "reusables/Button.vue";
 export default {
   name: "Login",
   components: { AppText, AppInput, Button },
+  middleware: "index",
   data() {
     return {
       loginType: "email",

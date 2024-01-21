@@ -74,6 +74,7 @@ import AppText from "@/reusables/Text.vue";
 
 export default {
   name: "Profile",
+  middleware: "index",
   components: { AppText },
   computed: {
     user() {

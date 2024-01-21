@@ -65,6 +65,7 @@ import Spinner from "reusables/Spinner.vue";
 
 export default {
   name: "Discussions",
+  middleware: "index",
   components: { AppText, poll: Poll, spinner: Spinner },
   computed: {
     path() {

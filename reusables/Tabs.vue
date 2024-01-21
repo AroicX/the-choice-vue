@@ -8,8 +8,8 @@
         :class="activeTab === tab.content ? 'c_tabs--header--tab-active' : ''"
         @click="$emit('tab-click', tab.content)"
       >
-        <AppText variant="14" font="600" color="black" textAlign="center">{{
-          tab.title
+        <AppText variant="14" font="600" color="black">{{
+           tab.title
         }}</AppText>
       </button>
     </div>

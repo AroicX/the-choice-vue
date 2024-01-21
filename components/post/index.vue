@@ -1,24 +1,14 @@
 <template>
   <div>
-    <create-comment
-      :modal="modal"
-      :postId="data.id"
-      :comments="data.comments"
-      v-on:newComment="handleComment"
-      v-on:closeModal="closeModal"
-
-    />
+    <create-comment :modal="modal" :postId="data.id" :comments="data.comments" v-on:newComment="handleComment"
+      v-on:closeModal="closeModal" />
 
     <div class="c_postcontainer">
       <div class="c_post" :id="`post-${data.id}`">
         <!-- <div class="c_post-image"> -->
-        <div
-          class="c_post-image"
-          :style="{
-            backgroundImage: `url(${data.user?.profilePic})`,
-          }"
-          @click="gotoProfile(data.user?.id)"
-        ></div>
+        <div class="c_post-image" :style="{
+          backgroundImage: `url(${data.user?.profilePic})`,
+        }" @click="gotoProfile(data.user?.id)"></div>
         <!-- </div> -->
         <div class="wd-100">
           <button class="c_post-header" @click="gotoProfile(data.user.id)">
@@ -26,50 +16,26 @@
               fullname
             }}</AppText>
             <div class="my-auto mx-2">
-              <AppText variant="11" font="400" color="grey"
-                >@{{ username }}</AppText
-              >
+              <AppText variant="11" font="400" color="grey">@{{ username }}</AppText>
             </div>
           </button>
-          <AppText class="my-2 uppercase" variant="11" font="400" color="black2"
-            >Discussion - {{ data.discussions.topic }}</AppText
-          >
+          <AppText class="my-2 uppercase" variant="11" font="400" color="black2">Discussion - {{ data.discussions.topic }}
+          </AppText>
           <div class="wd-100 my-2">
             <button @click.once="gotoPost">
-              <AppText
-                variant="14"
-                font="400"
-                color="black"
-                textAlign="left"
-                lineHeight="21px"
-              >
-                {{ data.message }}</AppText
-              >
+              <AppText variant="14" font="400" color="black" textAlign="left" lineHeight="21px">
+                {{ data.message }}</AppText>
             </button>
 
             <div class="c_post-bottom" v-if="isMember">
-              <button
-                :id="`post_like-${data.id}`"
-                @click.prevent="like(`post_like-${data.id}`)"
-              >
+              <button :id="`post_like-${data.id}`" @click.prevent="like(`post_like-${data.id}`)">
                 <img src="/svgs/thumb_up.svg" alt="thumb_up" />
                 <span>{{ kFormatter(data.likes) }}</span>
               </button>
-              <button
-                :id="`post_dislike-${data.id}`"
-                @click.prevent="dislike(`post_dislike-${data.id}`)"
-              >
-                <img
-                  src="/svgs/thumb_down.svg"
-                  width="20px"
-                  height="20px"
-                  alt="thumb_down"
-                />
+              <button :id="`post_dislike-${data.id}`" @click.prevent="dislike(`post_dislike-${data.id}`)">
+                <img src="/svgs/thumb_down.svg" width="20px" height="20px" alt="thumb_down" />
               </button>
-              <button
-                :id="`post_comment-${data?.id}`"
-                @click="addComment(`post_comment-${data?.id}`)"
-              >
+              <button :id="`post_comment-${data?.id}`" @click="addComment(`post_comment-${data?.id}`)">
                 <img src="/svgs/comment.svg" alt="comment" />
                 <span>{{ kFormatter(data?._count?.comments) }}</span>
               </button>
@@ -84,11 +50,7 @@
       </div>
       <div v-if="showComments">
         <!-- <AppText class="ml-16" variant="10">Comments</AppText> -->
-        <AppComments
-          v-for="comment in comments"
-          v-bind:key="comment.id"
-          :comment="comment"
-        />
+        <AppComments v-for="comment in comments" v-bind:key="comment.id" :comment="comment" />
       </div>
     </div>
     <hr class="divider" />
@@ -142,6 +104,11 @@ export default {
       return comments;
     },
   },
+  // watch: {
+  //   isMember(value) {
+  //     console.log("isMember", value);
+  //   },
+  // },
 
   created() {
     this.getRoom();

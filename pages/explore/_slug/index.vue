@@ -15,7 +15,7 @@
             </div>
         </div>
 
-        <div class="w-full flex flex-row justify-between p-4 ">
+        <!-- <div class="w-full flex flex-row justify-between p-4 ">
             <button v-for="tab in tabs" v-bind:key="tab" class="p-2 flex flex-1 transition-all duration-300"
                 :class="activeTab === tab ? 'border-b-4 border-green-500' : 'border-faint'"
                 @click.prevent="activeTab = tab"
@@ -26,10 +26,26 @@
                  
                 >{{ tab }}</AppText>
             </button>
-        </div>
+        </div> -->
 
-    
- 
+        <tabs :tabs="tabs" :activeTab="activeTab" v-on:tab-click="changeTab">
+            <template v-slot:popular>
+                <post v-for="post in posts" v-bind:key="post.id" :data="post" />
+            </template>
+            <template v-slot:latest>
+                    <post v-for="post in posts" v-bind:key="post.id" :data="post" />
+
+            </template>
+            <template v-slot:polls>
+      <poll v-for="poll in polls" v-bind:key="poll.id" :discussion="{}" :poll="poll" />
+            </template>
+            <template v-slot:contributors>
+                <h1>Contributors</h1>
+            </template>
+        </tabs>
+
+
+
 
 
 
@@ -41,10 +57,13 @@ import AppText from "@/reusables/Text.vue";
 import Post from "@/components/post/index.vue";
 import Poll from "@/components/poll/index.vue";
 import Spinner from "reusables/Spinner.vue";
+import Tabs from "reusables/Tabs.vue";
+
 
 export default {
     name: "ExploreSlug",
-    components: { AppText, post: Post, poll: Poll, spinner: Spinner },
+    middleware: 'index',
+    components: { AppText, post: Post, poll: Poll, spinner: Spinner, Tabs, },
     computed: {
         user() {
             return this.$store.state.user;
@@ -59,21 +78,37 @@ export default {
             posts: null,
             featured_elections: [],
             tabs: [
-                "Popular",
-                "Latest",
-                "Polls",
-                "Contributors"
+                {
+                    title: "Popular",
+                    content: "popular",
+                },
+                {
+                    title: "Latest",
+                    content: "latest",
+                },
+                {
+                    title: "Polls",
+                    content: "polls",
+                },
+                {
+                    title: "Contributors",
+                    content: "contributors",
+                },
             ],
-            activeTab: "Popular"
+            activeTab: "popular"
 
         };
     },
     async created() {
-
+        await this.getPosts();
+        await this.getPolls();
     },
 
     methods: {
-          to() {
+        changeTab(tab) {
+            this.activeTab = tab;
+        },
+        to() {
             this.$router.go(-1);
         },
         async getRoom() {
@@ -109,6 +144,19 @@ export default {
                 .catch((error) => {
                     this.$toast.error(error.response.data.message);
                 });
+        },
+         async getPolls() {
+
+            try {
+                await this.$axios.$get("/polls").then((response) => {
+                    this.polls = response.poll;
+                    // console.log(response);
+                });
+            } catch (error) {
+                (error) => {
+                    this.$toast.error(error.response.data.message);
+                };
+            }
         },
     },
 };

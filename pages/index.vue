@@ -68,6 +68,7 @@ import AppInput from "@/reusables/Input.vue";
 
 export default {
   name: "Auth_Onboarding",
+  middleware: 'index',
   components: { Button, AppText, AppInput },
   Textame: "Onboarding",
   data() {
