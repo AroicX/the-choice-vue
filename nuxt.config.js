@@ -62,7 +62,7 @@ export default {
   },
   server: {
     port: 3008, // default: 3000
-    host: "0.0.0.0",
+    // host: "0.0.0.0",
   },
   axios: {
     baseURL:
