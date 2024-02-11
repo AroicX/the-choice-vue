@@ -8,6 +8,11 @@ export const state = () => ({
   rooms: [],
   elections: [],
   notifications: 0,
+  search: {
+    keyword: '',
+    posts: [],
+    users: [],
+  }
 });
 
 export const mutations = {
@@ -38,6 +43,11 @@ export const mutations = {
   setNotifications: (state, payload) => {
     state.notifications = payload;
   },
+  setSearch: (state, { keyword, posts, users }) => {
+    state.search.keyword = keyword;
+    state.search.posts = posts;
+    state.search.users = users;
+  }
 };
 export const actions = {
   logout: () => {
