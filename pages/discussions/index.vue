@@ -32,7 +32,7 @@
               <AppText class="my-1 mx-2" variant="14" font="500">{{
                 discourse.topic
               }}
-                <span class="active_joined" v-if="isJoined === discourse.id">Joined</span>
+                <span class="active_joined" v-if="isJoined(discourse.id)">Joined</span>
               </AppText>
               <AppText class="my-1 mx-2" variant="11" font="400">{{
                 `lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eius ${discourse.description}`
@@ -78,22 +78,7 @@ export default {
     rooms() {
       return this.$store.state.rooms;
     },
-    isJoined() {
-      const rooms = this.$store.state.rooms;
-      const discussions = this.discussions;
-      const user = this.$store.state.user;
-      let isJoined = null;
-      if (rooms && discussions && user) {
-        rooms.forEach((room) => {
-          discussions.forEach((discussion) => {
-            if (room.discussionsId == discussion.id) {
-              isJoined = room.discussionsId;
-            }
-          });
-        });
-      }
-      return isJoined;
-    },
+
   },
   data() {
     return {
@@ -137,6 +122,13 @@ export default {
           this.$toast.error(error.response.data.message);
         };
       }
+    },
+    isJoined(id) {
+      return this.rooms.filter((room) => {
+        if (room.discussionsId === id) {
+          return true;
+        } 
+      })[0];
     },
   },
 };

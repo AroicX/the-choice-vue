@@ -33,7 +33,7 @@ export default {
   name: "CreatePost",
   props: {
     discussion: {
-      type: Object,
+      type: Array,
       required: true,
       default: [],
     },

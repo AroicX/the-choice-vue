@@ -11,7 +11,12 @@
 
             </button>
             <div class="w-full flex center flex-1">
-                <input class="w-full px-3 py-2 border broder-b-1 rounded outline-none" type="text" placeholder="search">
+                <input 
+                class="w-full px-3 py-2 border broder-b-1 rounded outline-none" 
+                type="text" 
+                placeholder="search"
+                v-model="keyword"
+                >
             </div>
         </div>
 
@@ -83,21 +88,38 @@ export default {
                     content: "contributors",
                 },
             ],
-            activeTab: "contributors"
+            activeTab: "popular",
+            keyword: ""
 
         };
     },
-    async created() {
-        await this.getPosts();
-        await this.getPolls();
+    watch: {
+        keyword: async function (val) {
+            // console.log(val);
+            await this.getSearch(val);
+        },
     },
-
+    async created() {
+        // await this.getPosts();
+        // await this.getPolls();
+    },
     methods: {
         changeTab(tab) {
             this.activeTab = tab;
         },
         to() {
             this.$router.go(-1);
+        },
+        async getSearch(value) {
+        //   value.replace("#", "")
+            await this.$axios
+                .$get(`/posts/search?keyword=${value.replace("#", "")}`)
+                .then((response) => {
+                    this.posts = response.data;
+                })
+                .catch((error) => {
+                    this.$toast.error(error.response.data.message);
+                });
         },
         async getRoom() {
             await this.$axios
