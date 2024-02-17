@@ -10,29 +10,30 @@
                 </svg>
 
             </button>
-            <nuxt-link to="/home">
-                <img class="ml-5" src="/svgs/choice-icon.svg" alt="choice-icon" />
-            </nuxt-link>
+            <AppText variant="16" font="600">Abia State<br />
+                </AppText>
             <div></div>
             <div></div>
-        </div>
-        <div class="p-4 m-auto">
-            <AppText variant="16" font="600">The House<br />
-            </AppText>
         </div>
 
+
         <div class="p-4">
-            <div class="searchBox">
-                <img class="m-auto" src="/svgs/ratings/search.svg" alt="search" />
-                <input class="" type="text" placeholder="Search by  state or party...">
-            </div>
+           <AppText>
+            The House consist of 360 members in total, representing constituencies for the Federal House of Representatives.
+           </AppText>
 
             <!-- <span class="my-2">36 Governors *</span> -->
 
-            <nuxt-link to="/ratings/house/state" class="w-full flex my-3 py-3 line">
-                <div class="flex-1 flex-col my-1">
-                    <AppText class="my-2" variant="16" font="600">Abia State</AppText>
-                    <AppText class="m-auto" variant="12" font="300" color="blue">8 Federal Constituencies</AppText>
+            <nuxt-link to="/ratings/house/state/1" class="w-full flex my-3 py-3 line">
+                <div class="my-2">
+                    <img width="60px" class="" src="/svgs/ratings/dummy.svg" alt="dummy" />
+                </div>
+                <div class="my-auto px-2">
+                    <AppText class="m-auto" variant="16" font="600">Bola Ahmed Tinubu (GCFR)</AppText>
+                    <div class="flex flex-col my-1">
+                        <AppText class="my-1" variant="14" font="300">All Progressive Party (APC)</AppText>
+                        <AppText class="my-1" variant="12" font="300" color="blue">Abia State</AppText>
+                    </div>
                 </div>
                 <div class="m-auto"><svg width="142" height="24" viewBox="0 0 142 24" fill="none"
                         xmlns="http://www.w3.org/2000/svg">

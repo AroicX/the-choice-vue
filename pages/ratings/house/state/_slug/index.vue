@@ -8,15 +8,13 @@
                             fill="#1C1B1F" />
                     </svg>
                 </button>
-            <nuxt-link to="/home">
-                <img class="ml-5" src="/svgs/choice-icon.svg" alt="choice-icon" />
-            </nuxt-link>
+               <AppText variant="16" font="600">Bola Ahmed Tinubu (GCFR)<br />
+                </AppText>
             <div></div>
             <div></div>
         </div>
         <div class="p-4 m-auto">
-            <AppText variant="16" font="600">The Presidency<br />
-            </AppText>
+        
 
             <div class="w-full flex my-3 py-3">
                 <div class="my-2">
@@ -76,7 +74,7 @@ import Poll from "@/components/poll/index.vue";
 import Spinner from "reusables/Spinner.vue";
 
 export default {
-    name: "PresidencyRating",
+    name: "GovernorSlug",
     middleware: "index",
     components: { AppText, post: Post, Tabs, poll: Poll, spinner: Spinner },
     computed: {

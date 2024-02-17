@@ -3,12 +3,9 @@
     <div class="c_home-header">
       <nuxt-link to="/account">
         <!-- <img class="c_post-image" src="/images/png/user.jpeg" alt="user" /> -->
-        <div
-          class="c_post-image"
-          :style="{
-            backgroundImage: `url(${user?.profilePic})`,
-          }"
-        />
+        <div class="c_post-image" :style="{
+          backgroundImage: `url(${user?.profilePic})`,
+        }" />
       </nuxt-link>
       <nuxt-link to="/home">
         <img class="ml-5" src="/svgs/choice-icon.svg" alt="choice-icon" />
@@ -17,31 +14,19 @@
       <div></div>
     </div>
     <div class="p-4 m-auto">
-      <AppText variant="16" font="600"
-        >Hello, share & vote your <br />
+      <AppText variant="16" font="600">Hello {{ user.firstName }}, share & vote your <br />
         choice.
       </AppText>
-      <AppText
-        class="my-3"
-        variant="16"
-        font="300"
-        color="Ngreen"
-        textAlign="left"
-        >Know, Rate and share your choice.</AppText
-      >
+      <AppText class="my-3" variant="16" font="300" color="Ngreen" textAlign="left">Welcome To The Future Of Democracy In
+        Nigeria.
+        Where Your Voice Count And Opinions Matter!.</AppText>
     </div>
 
     <div class="c_home-hottest">
       <div class="content">
-          <span>Hottest Discourse 🔥</span>
-          <AppText
-          class="my-3"
-          variant="16"
-          font="300"
-          color="white"
-          textAlign="left"
-          >The “Obidient Movement” will shape Nigerian politics beyond the 2023 presidential election</AppText
-        >
+        <span>Hottest Discourse 🔥</span>
+        <AppText class="my-3" variant="16" font="300" color="white" textAlign="left">The “Obidient Movement” will shape
+          Nigerian politics beyond the 2023 presidential election</AppText>
 
       </div>
     </div>
@@ -51,46 +36,21 @@
     </div>
     <div class="c_slider" v-if="featured_elections">
       <div class="c_slider-slides">
-        <div
-          class="c_slider-item"
-          v-for="(election, key) in featured_elections"
-          v-bind:key="election.id"
-          :style="{
-            background: key + 1 === 1 ? '#2EAE4E' : '#F2FCF5',
-          }"
-        >
+        <div class="c_slider-item" v-for="(election, key) in featured_elections" v-bind:key="election.id" :style="{
+          background: key + 1 === 1 ? '#2EAE4E' : '#F2FCF5',
+        }">
           <nuxt-link :to="`/elections/${election.id}`">
             <div class="c_slider-item--content">
-              <span
-                class="badge"
-                :class="
-                  election.status.includes('Ongoing')
-                    ? 'badge--on'
-                    : 'badge--off'
-                "
-                >{{ election.status }}</span
-              >
-              <img
-                :src="`/svgs/${key + 1 === 1 ? 'groupW' : 'groupG'}.svg`"
-                :alt="election.title"
-              />
+              <span class="badge" :class="election.status.includes('Ongoing')
+                  ? 'badge--on'
+                  : 'badge--off'
+                ">{{ election.status }}</span>
+              <img :src="`/svgs/${key + 1 === 1 ? 'groupW' : 'groupG'}.svg`" :alt="election.title" />
               <div class="mt-10">
-                <AppText
-                  class="my-3"
-                  variant="16"
-                  font="400"
-                  :color="key + 1 === 1 ? 'white' : 'black'"
-                >
-                  {{ election.title }}</AppText
-                >
-                <AppText
-                  class="my-3"
-                  variant="16"
-                  font="300"
-                  :color="key + 1 === 1 ? 'white' : 'black'"
-                >
-                  {{ election.description }}</AppText
-                >
+                <AppText class="my-3" variant="16" font="400" :color="key + 1 === 1 ? 'white' : 'black'">
+                  {{ election.title }}</AppText>
+                <AppText class="my-3" variant="16" font="300" :color="key + 1 === 1 ? 'white' : 'black'">
+                  {{ election.description }}</AppText>
               </div>
             </div>
           </nuxt-link>
@@ -113,10 +73,7 @@
       <!-- <post /> -->
     </div>
 
-    <div
-      class="flex center align-middle p-5 bg-green-500 m-5 rounded-md"
-      v-if="posts?.length <= 0"
-    >
+    <div class="flex center align-middle p-5 bg-green-500 m-5 rounded-md" v-if="posts?.length <= 0">
       <span class="font-bold text-white">No post found</span>
     </div>
   </main>
@@ -180,10 +137,16 @@ export default {
       },
     };
   },
+  
   async created() {
-    this.rooms.length < 1 ? await this.getRoom() : null;
+    this.rooms?.length < 1 ? await this.getRoom() : null;
     await this.getBanner();
     await this.getPosts();
+  },
+  computed: {
+    user() {
+      return this.$store.state.user;
+    },
   },
 
   methods: {

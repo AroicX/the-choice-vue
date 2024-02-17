@@ -14,23 +14,18 @@
     <div class="c_setting-security_content">
       <AppText variant="28" font="600" hex="#454F54">About</AppText>
       <div class="my-5">
-        <AppText variant="16" font="300" hex="#282828" lineHeight="21px"
-          >Lorem ipsum dolor sit amet, consectetur adipiscing elit. Leo tellus
-          neque sit metus, amet tristique. Vestibulum facilisis nunc amet
-          sagittis, magna sit dui mi. Quis malesuada a, amet faucibus. Auctor
-          risus, sagittis tellus arcu quam ultrices viverra. Dignissim purus
-          fames lacus fermentum urna eu, id penatibus egestas. Sed bibendum
-          cursus nibh condimentum consectetur lorem nunc tortor. Enim est
-          tincidunt eget ullamcorper tristique. Sit neque porta non purus massa
-          ac. Tellus vitae, tristique imperdiet enim sed tempor. Ullamcorper ut
-          nulla pharetra, amet egestas. Et ultrices diam et dui, viverra
-          vulputate risus. Gravida vitae vulputate luctus curabitur vulputate
-          elementum. Turpis bibendum enim ut adipiscing. Viverra cras adipiscing
-          urna maecenas convallis aenean lectus. Neque egestas quis orci,
-          faucibus etiam id. Ultrices integer vitae non quam sem purus nulla.
-          Nam tortor mus pulvinar feugiat nibh elementum ipsum tincidunt eget.
-          Suspendisse aliquet eget consequat, habitant quisque.</AppText
-        >
+        <AppText variant="16" font="300" hex="#282828" lineHeight="21px">
+          A platform that allows you rate politicians based
+          on credible information and track record, thereby spotlighting the true choice of the people without political
+          bias. Through the use of well verified facts, Choice9ja is a clear indicator of shifts in political preferences
+          and can serve as a check and balancing platform during voting exercises.
+          Users can create opinion polls, anonymously or publicly, for any political representative, economical issues and
+          so on. Other users will then be able to vote such that the leaderboard indicates the feelings of the public. In
+          essence, when a rep is falling short of expectations, the polls will reflect the performance based on user
+          rating.
+          Choice9ja is completely independent of government intervention. The platform requires your phone number to then
+          cross verify your name with telecom operator's data and uses location-based data to detect a user's
+          constituency. Profiles can also be synced with Google to control individual misuse.</AppText>
       </div>
     </div>
   </div>
