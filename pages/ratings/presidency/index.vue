@@ -161,7 +161,7 @@ export default {
                 },
                 {
                     rank: 1,
-                    value: '30%',
+                    value: '20%',
                     color: 'rgba(225, 25, 0, 1)',
                 },
             ]
