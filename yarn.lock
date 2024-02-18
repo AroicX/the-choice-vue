@@ -1573,7 +1573,7 @@
     node-html-parser "^6.1.12"
     ufo "^1.3.2"
 
-"@nuxt/kit@3.7.0", "@nuxt/kit@^3.0.0-rc.9":
+"@nuxt/kit@3.7.0", "@nuxt/kit@^3.0.0-rc.9", "@nuxt/kit@^3.6.1":
   version "3.7.0"
   resolved "https://registry.yarnpkg.com/@nuxt/kit/-/kit-3.7.0.tgz#14046349a7b12412e84782525ef802b65624268f"
   integrity sha512-bsPRb2NTLHRacjyybhhA3pZFIqo2pxB6bcP4FQDuzlGzVTI5PtJzbfNpkmQC7q+LZt8K0pNlxKVGisDvZctk6w==
@@ -6386,6 +6386,14 @@ nth-check@^2.0.1:
   dependencies:
     boolbase "^1.0.0"
 
+nuxt-rating@^0.0.15:
+  version "0.0.15"
+  resolved "https://registry.yarnpkg.com/nuxt-rating/-/nuxt-rating-0.0.15.tgz#bdf82e7d8571b50f3c8e4ccbd8b702c287eb6e00"
+  integrity sha512-K/yehNfcXL/GUgvuCv0GZ4Gk8OWt09xUsMcJYjg0d5xBDxWyxrFUnK4YgvFvxkBLzAMkj+BkW8U4nUF0Ed2rgg==
+  dependencies:
+    "@nuxt/kit" "^3.6.1"
+    sass "^1.63.6"
+
 nuxt@^2.15.8:
   version "2.17.3"
   resolved "https://registry.yarnpkg.com/nuxt/-/nuxt-2.17.3.tgz#68e9bef3287f7f6fa58aed7e753c14167593f631"
@@ -8152,6 +8160,15 @@ sass@^1.56.0:
   version "1.70.0"
   resolved "https://registry.yarnpkg.com/sass/-/sass-1.70.0.tgz#761197419d97b5358cb25f9dd38c176a8a270a75"
   integrity sha512-uUxNQ3zAHeAx5nRFskBnrWzDUJrrvpCPD5FNAoRvTi0WwremlheES3tg+56PaVtCs5QDRX5CBLxxKMDJMEa1WQ==
+  dependencies:
+    chokidar ">=3.0.0 <4.0.0"
+    immutable "^4.0.0"
+    source-map-js ">=0.6.2 <2.0.0"
+
+sass@^1.63.6:
+  version "1.71.0"
+  resolved "https://registry.yarnpkg.com/sass/-/sass-1.71.0.tgz#b3085759b9b2ab503a977aecb7e91153bf941117"
+  integrity sha512-HKKIKf49Vkxlrav3F/w6qRuPcmImGVbIXJ2I3Kg0VMA+3Bav+8yE9G5XmP5lMj6nl4OlqbPftGAscNaNu28b8w==
   dependencies:
     chokidar ">=3.0.0 <4.0.0"
     immutable "^4.0.0"

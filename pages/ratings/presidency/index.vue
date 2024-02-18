@@ -56,7 +56,7 @@
                 </template>
             </tabs>
 
-            <nuxt-link class="submit" to="/">
+            <nuxt-link class="submit" :to="`/ratings/vote?candidate_id=282882`">
                 Submit Feedback
             </nuxt-link>
 
@@ -135,8 +135,6 @@ export default {
                 'Finance',
                 'Infrastructure',
                 'Aviation'
-
-
             ],
             pills: [
                 {
