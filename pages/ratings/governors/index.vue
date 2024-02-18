@@ -29,15 +29,15 @@
 
             <!-- <span class="my-2">36 Governors *</span> -->
 
-            <nuxt-link to="/ratings/governors/1" class="w-full flex my-3 py-3 line">
+            <nuxt-link v-for="candidate in candidates" v-bind:key="candidate.candidateId" :to="`/ratings/governors/${candidate.candidateId}`" class="w-full flex my-3 py-3 line">
                 <div class="my-2">
-                    <img width="60px" class="" src="/svgs/ratings/dummy.svg" alt="dummy" />
+                    <img width="60px"  :src="candidate?.image" alt="dummy" />
                 </div>
-                <div class="my-auto px-2">
-                    <AppText class="m-auto" variant="16" font="600">Bola Ahmed Tinubu (GCFR)</AppText>
-                    <div class="flex flex-col my-1">
-                        <AppText class="my-1" variant="14" font="300">All Progressive Party (APC)</AppText>
-                        <AppText class="my-1" variant="12" font="300" color="blue">Abia State</AppText>
+                <div class="flex-1 my-auto px-2">
+                    <AppText class="m-auto" variant="16" font="600">{{ candidate.name}}</AppText>
+                    <div class="flex fl flex-col my-1">
+                        <AppText class="my-1" variant="14" font="300">{{ candidate.party.name}} ({{ candidate.party.slug }})</AppText>
+                        <AppText class="my-1" variant="12" font="300" color="blue">{{candidate.constituency }} State</AppText>
                     </div>
                 </div>
                 <div class="m-auto"><svg width="142" height="24" viewBox="0 0 142 24" fill="none"
@@ -67,7 +67,7 @@ import Poll from "@/components/poll/index.vue";
 import Spinner from "reusables/Spinner.vue";
 
 export default {
-    name: "PresidencyRating",
+    name: "Governors",
     middleware: "index",
     components: { AppText, post: Post, poll: Poll, spinner: Spinner },
     computed: {
@@ -81,17 +81,32 @@ export default {
     data() {
         return {
             isLoading: false,
+            candidates: [],
+
         };
     },
-    async created() {
-
+    mounted() {
+        this.getCandidates()
     },
 
     methods: {
         to() {
             this.$router.go(-1);
         },
+        async getCandidates() {
+            await this.$axios
+                .$get(`/ratings/bulk?candidate=GOVERNOR`)
+                .then((response) => {
+                    this.candidates = response.data
+                })
+                .catch((error) => {
+                    this.$toast.error(error.response.data.message);
+                });
+        },
     },
+
+
+
 };
 </script>
 

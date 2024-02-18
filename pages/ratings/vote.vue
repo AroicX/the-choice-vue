@@ -16,15 +16,22 @@
             <div></div>
         </div>
         <div class="p-4 m-auto">
-            <AppText variant="16" font="300">Provide feedback to your leaders regarding their performance in various areas
+            <AppText class="py-4" variant="16" font="300">Provide feedback to your leaders regarding their performance in
+                various areas
                 of concern. </AppText>
 
-            <div class="c_ratings" v-for="(performance,index) in performanceItem" v-bind:key="performance.title">
-              <div class="flex justify-between">  <AppText variant="16" font="600">{{ performance.title }} </AppText> <AppText class="my-auto" variant="12" font="600">Rating: {{ performance.rating + 1 }}</AppText></div>
+            <div class="c_ratings" v-for="(performance, index) in performanceItem" v-bind:key="performance.title">
+                <div class="flex justify-between">
+                    <AppText variant="16" font="600">{{ performance.title }} </AppText>
+                    <AppText class="my-auto" variant="12" font="600">Rating: {{ performance.rating + 1 }}</AppText>
+                </div>
                 <div class="flex justify-between" @mousedown="selected = index">
-                    <div class="c_ratings-item" v-for="(rate,star_idx) in ratings" v-bind:key="star_idx" @mouseover="handleRating(performance, index, star_idx)">
-                        <img v-if="star_idx <= performance.rating" class="mx-auto" width="50px" :src="colored" alt="colored">
-                        <img  v-if="star_idx > performance.rating" class="mx-auto" width="50px" :src="uncolored" alt="uncolored">
+                    <div class="c_ratings-item" v-for="(rate, star_idx) in ratings" v-bind:key="star_idx"
+                        @click="handleRating(index, star_idx)">
+                        <img v-if="star_idx <= performance.rating" class="mx-auto" width="50px" :src="colored"
+                            alt="colored">
+                        <img v-if="star_idx > performance.rating" class="mx-auto" width="50px" :src="uncolored"
+                            alt="uncolored">
                         <span>{{ rate.text }}</span>
                     </div>
                 </div>
@@ -35,8 +42,6 @@
             </button>
 
         </div>
-
-
 
 
     </main>
@@ -60,24 +65,27 @@ export default {
         rooms() {
             return this.$store.state.rooms;
         },
+        slug() {
+            let path = this.$route.query?.candidate_id;
+            return path;
+        },
     },
     data() {
         return {
             isLoading: false,
             performanceItem: [
-                {title: 'Education', rating: 0},
+                { title: 'Education', rating: 0 },
                 { title: 'Security', rating: 0 },
-               { title: 'Agriculture', rating: 0},
-                {title:'Foreign Exchange', rating: 0},
-                {title:'Finance', rating: 0},
-                {title: 'Infrastructure', rating: 0},
-               {title: 'Aviation', rating: 0}
+                { title: 'Agriculture', rating: 0 },
+                { title: 'Foreign Exchange', rating: 0 },
+                { title: 'Finance', rating: 0 },
+                { title: 'Infrastructure', rating: 0 },
+                { title: 'Aviation', rating: 0 }
             ],
             colored: '/svgs/ratings/coloredStar.svg',
             uncolored: '/svgs/ratings/uncoloredStar.svg',
             selected: 0,
             ratings: [
-
                 {
                     level: 1,
                     text: 'Very Bad'
@@ -101,22 +109,79 @@ export default {
             ]
         };
     },
-    async created() {
+    async mounted() {
 
+        if (!this.slug) {
+            this.to();
+        } else {
+            this.getCandidate()
+        }
     },
 
     methods: {
+        async getCandidate() {
+            await this.$axios
+                .$get(`/ratings?candidate_id=${this.slug}`)
+                .then((response) => {
+                    const {
+                        educations,
+                        agriculture,
+                        finance,
+                        youth_empowerment,
+                        foreign_exchange,
+                        infrastructure,
+                        aviation,
+                    } = response.data;
+                    this.candidate = response.data
+                    this.rating = {
+                        educations,
+                        agriculture,
+                        finance,
+                        youth_empowerment,
+                        foreign_exchange,
+                        infrastructure,
+                        aviation,
+                    }
+                    // this.$store.commit("setRooms", response.room);
+                })
+                .catch((error) => {
+                    this.$toast.error(error.response.data.message);
+                });
+        },
         changeTab(tab) {
             this.activeTab = tab;
         },
         to() {
             this.$router.go(-1);
         },
-        handleRating(data, index, star_idx) {
-        this.performanceItem[index].rating = star_idx
+        handleRating( index, star_idx) {
+            this.performanceItem[index].rating = star_idx
         },
-        submit() {
-            
+        async submit() {
+            var data = []
+
+            this.performanceItem.map((item) => {
+                data.push(
+                    {
+                        "type": item.title.toLowerCase() === 'education' ? 'educations' : item.title.toLowerCase().replace(' ', '_'),
+                        "level": item.rating + 1,
+                        "vote": 1
+                    }
+                )
+            })
+
+            await this.$axios
+                .$patch(`/ratings/vote/${this.slug}`, data)
+                .then((response) => {
+                    if (response.data) {
+                        this.$toast.success(response.message);
+                        this.$router.go(-2);
+                    }
+                })
+                .catch((error) => {
+                    this.$toast.error(error?.response?.data?.message);
+                    this.$router.go(-2);
+                });
         }
     },
 };
