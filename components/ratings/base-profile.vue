@@ -25,7 +25,7 @@
                 <div class="my-auto px-2">
                     <AppText class="m-auto" variant="24" font="600">{{ candidate?.name}}</AppText>
                     <div class="flex my-2">
-                        <img class="my-auto " src="/svgs/ratings/party.svg" alt="party" />
+                        <img class="my-auto " width="20px" :src="candidate?.party?.image" alt="party-logo" />
                         <AppText class="mx-3 my-auto" variant="14" font="300">{{ candidate?.party?.name}}</AppText>
                     </div>
                 </div>

@@ -17,7 +17,7 @@
             <div></div>
         </div>
         <div class="p-4 m-auto">
-            <AppText variant="16" font="600">The House<br />
+            <AppText variant="16" font="600">The House of Reps<br />
             </AppText>
         </div>
 
@@ -29,10 +29,20 @@
 
             <!-- <span class="my-2">36 Governors *</span> -->
 
-            <nuxt-link to="/ratings/house/state" class="w-full flex my-3 py-3 line">
-                <div class="flex-1 flex-col my-1">
-                    <AppText class="my-2" variant="16" font="600">Abia State</AppText>
-                    <AppText class="m-auto" variant="12" font="300" color="blue">8 Federal Constituencies</AppText>
+            <nuxt-link v-for="candidate in candidates" v-bind:key="candidate.candidateId"
+                :to="`/ratings/house/${candidate.candidateId}`" class="w-full flex my-3 py-3 line">
+                <div class="my-2">
+                    <img width="60px" :src="candidate?.image" alt="dummy" />
+                </div>
+                <div class="flex-1 my-auto px-2">
+                    <AppText class="m-auto" variant="16" font="600">{{ candidate.name }}</AppText>
+                    <div class="flex fl flex-col my-1">
+                        <AppText class="my-1" variant="14" font="300">{{ candidate.party.name }} ({{ candidate.party.slug
+                        }})
+                        </AppText>
+                        <AppText class="my-1" variant="12" font="300" color="blue">{{ candidate.constituency }} State
+                        </AppText>
+                    </div>
                 </div>
                 <div class="m-auto"><svg width="142" height="24" viewBox="0 0 142 24" fill="none"
                         xmlns="http://www.w3.org/2000/svg">
@@ -61,7 +71,7 @@ import Poll from "@/components/poll/index.vue";
 import Spinner from "reusables/Spinner.vue";
 
 export default {
-    name: "PresidencyRating",
+    name: "HousePage",
     middleware: "index",
     components: { AppText, post: Post, poll: Poll, spinner: Spinner },
     computed: {
@@ -75,17 +85,32 @@ export default {
     data() {
         return {
             isLoading: false,
+            candidates: [],
+
         };
     },
-    async created() {
-
+    mounted() {
+        this.getCandidates()
     },
 
     methods: {
         to() {
             this.$router.go(-1);
         },
+        async getCandidates() {
+            await this.$axios
+                .$get(`/ratings/bulk?candidate=HOUSE`)
+                .then((response) => {
+                    this.candidates = response.data
+                })
+                .catch((error) => {
+                    this.$toast.error(error.response.data.message);
+                });
+        },
     },
+
+
+
 };
 </script>
 
