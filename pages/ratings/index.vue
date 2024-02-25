@@ -24,14 +24,13 @@
 
         <div class="c_ratings">
             <div>
-                 <AppText variant="16" font="600">Know your leaders <br />
-                        choice.
-                    </AppText>
-                    <AppText class="my-3" variant="16" font="300" color="Ngreen" textAlign="left">See how your leaders are
-                        performing in various areas of concern.
-                    </AppText>
+                <AppText variant="16" font="600">Know And Review Elected Politicians Approval Ratings!
+                </AppText>
+                <AppText class="my-3" variant="16" font="300" color="Ngreen" textAlign="left">
+                    Based On There Policy Actions And Performance Ratings.
+                </AppText>
             </div>
-            
+
             <nuxt-link class="c_ratings_card" v-for="item in list" v-bind:key="item.title" v-bind:to="item.link">
                 <div class="p-2 flex border-y-4 border-black" v-if="item.images">
                     <img class="img" v-for="image in item.images" v-bind:key="image" :src="image" alt="">
