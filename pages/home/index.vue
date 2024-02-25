@@ -42,8 +42,8 @@
           <nuxt-link :to="`/elections/${election.id}`">
             <div class="c_slider-item--content">
               <span class="badge" :class="election.status.includes('Ongoing')
-                  ? 'badge--on'
-                  : 'badge--off'
+                ? 'badge--on'
+                : 'badge--off'
                 ">{{ election.status }}</span>
               <img :src="`/svgs/${key + 1 === 1 ? 'groupW' : 'groupG'}.svg`" :alt="election.title" />
               <div class="mt-10">
@@ -137,7 +137,7 @@ export default {
       },
     };
   },
-  
+
   async created() {
     this.rooms?.length < 1 ? await this.getRoom() : null;
     await this.getBanner();

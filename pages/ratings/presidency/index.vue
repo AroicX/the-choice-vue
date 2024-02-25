@@ -1,17 +1,19 @@
 <template>
     <main class="c_home">
-        <base-profile pageTitle="The Presidency" :candidate="candidate" :rating="rating"></base-profile>
+         <spinner :loading="!candidate" />
+        <base-profile v-if="candidate" pageTitle="The Presidency" :candidate="candidate" :rating="rating"></base-profile>
     </main>
 </template>
 
 <script>
 
 import BaseProfile from '@/components/ratings/base-profile.vue';
+import Spinner from '@/reusables/Spinner.vue';
 
 export default {
     name: "PresidencyRating",
     middleware: "index",
-    components: { BaseProfile },
+    components: { BaseProfile, spinner: Spinner },
     computed: {
         user() {
             return this.$store.state.user;
@@ -40,28 +42,15 @@ export default {
 
     methods: {
         async getCandidate() {
+
             await this.$axios
                 .$get(`/ratings/bulk?candidate=${this.candidateType}`)
                 .then((response) => {
-                    const {
-                        educations,
-                        agriculture,
-                        finance,
-                        youth_empowerment,
-                        foreign_exchange,
-                        infrastructure,
-                        aviation,
+                       const {
+                        sdg
                     } = response.data[0];
                     this.candidate = response.data[0]
-                    this.rating = {
-                        educations,
-                        agriculture,
-                        finance,
-                        youth_empowerment,
-                        foreign_exchange,
-                        infrastructure,
-                        aviation,
-                    }
+                    this.rating = sdg
                     // this.$store.commit("setRooms", response.room);
                 })
                 .catch((error) => {

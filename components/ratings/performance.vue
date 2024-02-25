@@ -1,7 +1,7 @@
 <template>
    <div>
      <div class="c_performance" v-for="(performance,key) in rating" v-bind:key="key">
-            <AppText variant="16" font="600">{{ key.toLocaleUpperCase().replace('_', ' ') }}</AppText>
+            <AppText variant="16" font="600">{{ key.toLocaleUpperCase().replace(/_/g, ' ') }}</AppText>
             <div class="c_performance-item" v-for="pill in performance" v-bind:key="pill.rank">
                 <img src="/svgs/ratings/mini-star.svg" alt="mini-star">
                 <span>{{ pill.rank }}</span>
@@ -26,20 +26,18 @@ export default {
             default () {
                 return {}
             }
+        },
+        performance: {
+            type: Array,
+            default () {
+                return {}
+            }
         }
     },
     data() {
         return {
             isLoading: false,    
-            performanceItem: [
-                'Education',
-                'Security',
-                'Agriculture',
-                'Foreign Exchange',
-                'Finance',
-                'Infrastructure',
-                'Aviation'
-            ],
+            performanceItem: this.performance,
             pills: [
                 {
                     rank: 5,

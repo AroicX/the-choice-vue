@@ -8,6 +8,30 @@ export function kFormatter(num) {
     ? Math.sign(num) * (Math.abs(num) / 1000).toFixed(1) + "k"
     : Math.sign(num) * Math.abs(num);
 }
+
+export const presidentSDGArr = [
+  'food_security',
+  'poverty_eradication',
+  'growth',
+  'job_creation',
+  'access_to_capital',
+  'inclusion',
+  'rule_of_law',
+  'fighting_corruption',
+];
+
+export const ratingSDGArr = [
+  'peace_justice_and_strong_institutions',
+  'zero_hunger',
+  'good_health_and_well_being',
+  'quality_education_and_gender_equality',
+  'clean_water_and_sanitation',
+  'affordable_and_clean_energy',
+  'decent_work_and_economic_growth',
+  'industry_innovation_and_infrastructure',
+  'responsible_consumption_and_production',
+  'sustainable_cities_and_communities',
+];
 /**
  * 
  * @param {*} date 

@@ -29,15 +29,18 @@
 
             <!-- <span class="my-2">36 Governors *</span> -->
 
-            <nuxt-link v-for="candidate in candidates" v-bind:key="candidate.candidateId" :to="`/ratings/governors/${candidate.candidateId}`" class="w-full flex my-3 py-3 line">
+            <nuxt-link v-for="candidate in candidates" v-bind:key="candidate.candidateId"
+                :to="`/ratings/governors/${candidate.candidateId}`" class="w-full flex my-3 py-3 line">
                 <div class="my-2">
-                    <img width="60px"  :src="candidate?.image" alt="dummy" />
+                    <img width="60px" :src="candidate?.image" alt="dummy" />
                 </div>
                 <div class="flex-1 my-auto px-2">
-                    <AppText class="m-auto" variant="16" font="600">{{ candidate.name}}</AppText>
+                    <AppText class="m-auto" variant="16" font="600">{{ candidate.name }}</AppText>
                     <div class="flex fl flex-col my-1">
-                        <AppText class="my-1" variant="14" font="300">{{ candidate.party.name}} ({{ candidate.party.slug }})</AppText>
-                        <AppText class="my-1" variant="12" font="300" color="blue">{{candidate.constituency }} State</AppText>
+                        <AppText class="my-1" variant="14" font="300">{{ candidate.party.name }} ({{ candidate.party.slug }})
+                        </AppText>
+                        <AppText class="my-1" variant="12" font="300" color="blue">{{ candidate.constituency }} State
+                        </AppText>
                     </div>
                 </div>
                 <div class="m-auto"><svg width="142" height="24" viewBox="0 0 142 24" fill="none"
@@ -134,5 +137,4 @@ export default {
 
 .line {
     border-bottom: 1px solid rgba(190, 190, 190, 0.363);
-}
-</style>
+}</style>

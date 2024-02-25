@@ -33,7 +33,7 @@
 
             <tabs :tabs="tabs" :activeTab="activeTab" v-on:tab-click="changeTab">
                 <template v-slot:performance>
-                    <PerformanceRating :rating="rating" />
+                    <PerformanceRating :rating="rating" :performance="performanceItem" />
                 </template>
                 <template v-slot:profile>
                     <div class="c_political">
@@ -66,6 +66,7 @@ import Post from "@/components/post/index.vue";
 import Poll from "@/components/poll/index.vue";
 import PerformanceRating from "@/components/ratings/performance.vue";
 import Spinner from "reusables/Spinner.vue";
+import { presidentSDGArr, ratingSDGArr } from '@/utils/index';
 
 export default {
     name: "BaseProfile",
@@ -96,6 +97,15 @@ export default {
         rooms() {
             return this.$store.state.rooms;
         },
+    },
+    watch: {
+        candidate: function (value) {
+            if (value.candidate === 'PRESIDENCY') {
+                this.performanceItem = presidentSDGArr
+            } else {
+                this.performanceItem = ratingSDGArr
+            }
+        }
     },
     data() {
         return {
@@ -137,15 +147,7 @@ export default {
                     content: "profile",
                 },
             ],
-            performanceItem: [
-                'Education',
-                'Security',
-                'Agriculture',
-                'Foreign Exchange',
-                'Finance',
-                'Infrastructure',
-                'Aviation'
-            ],
+            performanceItem: null,
             pills: [
                 {
                     rank: 5,
@@ -175,9 +177,9 @@ export default {
             ]
         };
     },
-    async created() {
-
-    },
+    // async mounted() {
+    //     console.log('candidate', this.candidate)
+    // },
 
     methods: {
         changeTab(tab) {

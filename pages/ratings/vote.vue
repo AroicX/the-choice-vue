@@ -22,7 +22,7 @@
 
             <div class="c_ratings" v-for="(performance, index) in performanceItem" v-bind:key="performance.title">
                 <div class="flex justify-between">
-                    <AppText variant="16" font="600">{{ performance.title }} </AppText>
+                    <AppText variant="14" font="600">{{ performance.title.replace(/_/g, " ").toUpperCase() }} </AppText>
                     <AppText class="my-auto" variant="12" font="600">Rating: {{ performance.rating + 1 }}</AppText>
                 </div>
                 <div class="flex justify-between" @mousedown="selected = index">
@@ -54,6 +54,31 @@ import Post from "@/components/post/index.vue";
 import Poll from "@/components/poll/index.vue";
 import Spinner from "reusables/Spinner.vue";
 
+const presidentSDGArr = [
+    { title: 'food_security', rating: 0 },
+    { title: 'poverty_eradication', rating: 0 },
+    { title: 'growth', rating: 0 },
+    { title: 'job_creation', rating: 0 },
+    { title: 'access_to_capital', rating: 0 },
+    { title: 'inclusion', rating: 0 },
+    { title: 'rule_of_law', rating: 0 },
+    { title: 'fighting_corruption', rating: 0 },
+];
+
+const ratingSDGArr = [
+    { title: 'peace_justice_and_strong_institutions', rating: 0 },
+    { title: 'zero_hunger', rating: 0 },
+    { title: 'good_health_and_well_being', rating: 0 },
+    { title: 'quality_education_and_gender_equality', rating: 0 },
+    { title: 'clean_water_and_sanitation', rating: 0 },
+    { title: 'affordable_and_clean_energy', rating: 0 },
+    { title: 'decent_work_and_economic_growth', rating: 0 },
+    { title: 'industry_innovation_and_infrastructure', rating: 0 },
+    { title: 'responsible_consumption_and_production', rating: 0 },
+    { title: 'sustainable_cities_and_communities', rating: 0 },
+
+];
+
 export default {
     name: "RatingVote",
     middleware: "index",
@@ -73,15 +98,7 @@ export default {
     data() {
         return {
             isLoading: false,
-            performanceItem: [
-                { title: 'Education', rating: 0 },
-                { title: 'Security', rating: 0 },
-                { title: 'Agriculture', rating: 0 },
-                { title: 'Foreign Exchange', rating: 0 },
-                { title: 'Finance', rating: 0 },
-                { title: 'Infrastructure', rating: 0 },
-                { title: 'Aviation', rating: 0 }
-            ],
+            performanceItem: [],
             colored: '/svgs/ratings/coloredStar.svg',
             uncolored: '/svgs/ratings/uncoloredStar.svg',
             selected: 0,
@@ -124,24 +141,17 @@ export default {
                 .$get(`/ratings?candidate_id=${this.slug}`)
                 .then((response) => {
                     const {
-                        educations,
-                        agriculture,
-                        finance,
-                        youth_empowerment,
-                        foreign_exchange,
-                        infrastructure,
-                        aviation,
+                            candidate,
+                        sdg
                     } = response.data;
-                    this.candidate = response.data
-                    this.rating = {
-                        educations,
-                        agriculture,
-                        finance,
-                        youth_empowerment,
-                        foreign_exchange,
-                        infrastructure,
-                        aviation,
+                    console.log('candidate', candidate)
+                    if (candidate === 'PRESIDENCY') {
+                        this.performanceItem = presidentSDGArr
+                    } else {
+                        this.performanceItem = ratingSDGArr
                     }
+                    this.candidate = response.data
+                    this.rating = sdg
                     // this.$store.commit("setRooms", response.room);
                 })
                 .catch((error) => {
@@ -169,6 +179,7 @@ export default {
                     }
                 )
             })
+
 
             await this.$axios
                 .$patch(`/ratings/vote/${this.slug}`, data)

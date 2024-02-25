@@ -1,17 +1,18 @@
 <template>
     <main class="c_home">
-        <base-profile pageTitle="The Governors" :candidate="candidate" :rating="rating"></base-profile>
+         <spinner :loading="!candidate" />
+        <base-profile v-if="candidate" pageTitle="The Governors" :candidate="candidate" :rating="rating"></base-profile>
     </main>
 </template>
 
 <script>
-
+import Spinner from '@/reusables/Spinner.vue';
 import BaseProfile from '@/components/ratings/base-profile.vue';
 
 export default {
     name: "SenateSlug",
     middleware: "index",
-    components: { BaseProfile },
+    components: { BaseProfile, spinner: Spinner },
     computed: {
         user() {
             return this.$store.state.user;
@@ -48,25 +49,11 @@ export default {
             await this.$axios
                 .$get(`/ratings?candidate_id=${this.slug}`)
                 .then((response) => {
-                    const {
-                        educations,
-                        agriculture,
-                        finance,
-                        youth_empowerment,
-                        foreign_exchange,
-                        infrastructure,
-                        aviation,
+                       const {
+                        sdg
                     } = response.data;
                     this.candidate = response.data
-                    this.rating = {
-                        educations,
-                        agriculture,
-                        finance,
-                        youth_empowerment,
-                        foreign_exchange,
-                        infrastructure,
-                        aviation,
-                    }
+                    this.rating = sdg
                 })
                 .catch((error) => {
                     this.$toast.error(error.response.data.message);
