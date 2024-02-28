@@ -26,7 +26,7 @@
       <div class="c_discussion-intro-top">
         <div class="c_discussion-intro-top--image">
           <img
-            src="https://res.cloudinary.com/dxakg8zuk/image/upload/v1673016977/icon-ga0ea72f0b_1920_j2ksjy.png"
+            src="https://res.cloudinary.com/aroicx/image/upload/v1709110087/d5odq9kxlzmvfgkr161i.webp"
             alt="user"
           />
         </div>
