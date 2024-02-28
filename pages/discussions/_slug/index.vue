@@ -42,8 +42,9 @@
         <AppText class="my-3" variant="12" font="400" color="white">
           {{ discourse.question }}
         </AppText>
-        <AppText class="my-3 " variant="14" font="300" color="white" lineHeight="1">
-          This Forum is dedicated to open and informed discussions about the various security challenges and issues affecting Nigeria.
+        <AppText class="my-3 line-clamp-1" variant="14" font="300" color="white" lineHeight="1">
+            {{ discourse.description }}
+
         </AppText>
       </div>
     </div>
