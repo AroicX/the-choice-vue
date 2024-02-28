@@ -14,8 +14,7 @@
       <div></div>
     </div>
     <div class="p-4 m-auto">
-      <AppText variant="16" font="600">Hello {{ user.firstName }}, share & vote your <br />
-        choice.
+      <AppText variant="16" font="600">Hello {{ user.firstName }}
       </AppText>
       <AppText class="my-3" variant="16" font="300" color="Ngreen" textAlign="left">Welcome To The Future Of Democracy In
         Nigeria.

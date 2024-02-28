@@ -14,8 +14,7 @@
             textAlign="left"
             lineHeight="21px"
           >
-            A place for nigerians to learn about politicians & parties, raise
-            issues and pseudo-vote candidates.
+            Welcome To The Future Of Democracy in Nigeria. Where Your Voice Counts And Your Opinion Matters.
           </AppText>
         </div>
 

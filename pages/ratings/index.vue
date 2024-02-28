@@ -79,7 +79,7 @@ export default {
             isLoading: false,
             list: [
                 {
-                    title: "The Presidency",
+                    title: "The President",
                     description: "H.E. Bola Ahmed Tinubu GCFR, is the 16th and current President of the Federal Republic of Nigeria.",
                     images: ["/images/png/president.png"],
                     link: "/ratings/presidency"
