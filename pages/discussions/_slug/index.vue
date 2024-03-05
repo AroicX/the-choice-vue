@@ -43,8 +43,7 @@
           <!-- {{ discourse.question }} -->
         </AppText>
         <AppText variant="14" font="300" color="white" textAlign="left" lineHeight="21px"
-        >This forum is used to {{ topic }} in Nigeria, way forward,
-        safety tips and major challenges concerning security in Nigeria.
+        >This forum is used to discourse {{ discourse.topic }} in Nigeria.
       </AppText>
         <!-- <AppText class="my-3 line-clamp-1" variant="14" font="300" color="white" lineHeight="1">
             {{ discourse.description }}
