@@ -40,12 +40,16 @@
           {{ discourse.topic }}
         </AppText>
         <AppText class="my-3" variant="12" font="400" color="white">
-          {{ discourse.question }}
+          <!-- {{ discourse.question }} -->
         </AppText>
-        <AppText class="my-3 line-clamp-1" variant="14" font="300" color="white" lineHeight="1">
+        <AppText variant="14" font="300" color="white" textAlign="left" lineHeight="21px"
+        >This forum is used to {{ topic }} in Nigeria, way forward,
+        safety tips and major challenges concerning security in Nigeria.
+      </AppText>
+        <!-- <AppText class="my-3 line-clamp-1" variant="14" font="300" color="white" lineHeight="1">
             {{ discourse.description }}
 
-        </AppText>
+        </AppText> -->
       </div>
     </div>
     <div class="c_discussion-count">
@@ -57,7 +61,7 @@
           <post v-for="post in posts" v-bind:key="post.id" :data="post" />
         </template>
         <template v-slot:about>
-          <about-discussion :description="discourse.description" />
+          <about-discussion :description="discourse.description" :topic="discourse.topic" />
           <poll
             v-for="poll in polls"
             v-bind:key="poll.id"

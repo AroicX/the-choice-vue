@@ -12,8 +12,8 @@
     <AppText variant="16" font="600">Forum Info</AppText>
     <div class="wd-75 my-3">
       <AppText variant="14" font="300" textAlign="left" lineHeight="21px"
-        >This forum is used to discourse insecurity in nigeria, way forward,
-        safety tips and major challenges concerning security in nigeria.
+        >This forum is used to discourse {{ topic }} in Nigeria, way forward,
+        safety tips and major challenges concerning security in Nigeria.
       </AppText>
     </div>
     <div>
@@ -60,6 +60,10 @@ import AppText from "@/reusables/Text.vue";
 
 export default {
   props: {
+    topic: {
+      type: String,
+      default: "",
+    },
     description: {
       type: String,
       default: "",
