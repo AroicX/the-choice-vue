@@ -27,7 +27,7 @@
                 <AppText variant="16" font="600">Know And Review Elected Politicians Approval Ratings!
                 </AppText>
                 <AppText class="my-3" variant="16" font="300" color="Ngreen" textAlign="left">
-                    Based On There Policy Actions And Performance Ratings.
+                   And See How Your Leaders Are Performing In Various Areas of Concern.
                 </AppText>
             </div>
 

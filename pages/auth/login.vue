@@ -2,12 +2,17 @@
   <div class="c_auth">
     <div class="c_auth-login">
       <div class="my-5">
-        <img src="/svgs/logo.svg" alt="logo" />
-
+        <img
+          class="mx-auto"
+          width="200px"
+          height="200px"
+          src="/svgs/logo.svg"
+          alt="logo"
+        />
         <br />
         <br />
         <br />
-        <AppText variant="24" color="green" font="500">Choice9ja</AppText>
+        <!-- <AppText variant="24" color="green" font="500">Choice9ja</AppText> -->
       </div>
 
       <div class="my-5">
@@ -154,10 +159,6 @@ export default {
     display: flex;
     flex-direction: column;
     height: 100vh;
-    img {
-      width: 50px;
-      height: 50px;
-    }
   }
 }
 </style>

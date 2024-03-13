@@ -2,9 +2,15 @@
   <main>
     <div class="c_auth">
       <div class="c_auth-onboarding">
-        <img src="/svgs/logo.svg" alt="logo" />
+        <img
+          class="mx-auto"
+          width="200px"
+          height="200px"
+          src="/svgs/logo.svg"
+          alt="logo"
+        />
         <div class="my-5">
-          <AppText variant="34" color="green" font="500"> Choice9ja </AppText>
+          <!-- <AppText variant="34" color="green" font="500"> Choice9ja </AppText> -->
 
           <AppText
             class="my-2 mt-5"
@@ -14,7 +20,8 @@
             textAlign="left"
             lineHeight="21px"
           >
-            Welcome To The Future Of Democracy in Nigeria. Where Your Voice Counts And Your Opinion Matters.
+            Welcome To The Future Of Democracy in Nigeria. Where Your Voice
+            Counts And Your Opinion Matters.
           </AppText>
         </div>
 
@@ -67,7 +74,7 @@ import AppInput from "@/reusables/Input.vue";
 
 export default {
   name: "Auth_Onboarding",
-  middleware: 'index',
+  middleware: "index",
   components: { Button, AppText, AppInput },
   Textame: "Onboarding",
   data() {
@@ -77,7 +84,7 @@ export default {
   },
   watch: {
     fullname(value) {
-      return value
+      return value;
       // console.log("fullname", value);
     },
   },
@@ -107,10 +114,10 @@ export default {
     display: flex;
     flex-direction: column;
     height: 100vh;
-    img {
+    /* img {
       width: 50px;
       height: 50px;
-    }
+    } */
   }
 }
 </style>
