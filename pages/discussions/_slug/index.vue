@@ -42,9 +42,14 @@
         <AppText class="my-3" variant="12" font="400" color="white">
           <!-- {{ discourse.question }} -->
         </AppText>
-        <AppText variant="14" font="300" color="white" textAlign="left" lineHeight="21px"
-        >This forum is used to discourse {{ discourse.topic }} in Nigeria.
-      </AppText>
+        <AppText
+          variant="14"
+          font="300"
+          color="white"
+          textAlign="left"
+          lineHeight="21px"
+          >This forum is used to discourse {{ discourse.topic }} in Nigeria.
+        </AppText>
         <!-- <AppText class="my-3 line-clamp-1" variant="14" font="300" color="white" lineHeight="1">
             {{ discourse.description }}
 
@@ -57,10 +62,18 @@
     <div class="c_discussion-content">
       <tabs :tabs="tabs" :activeTab="activeTab" v-on:tab-click="changeTab">
         <template v-slot:discussions>
-          <post v-for="post in posts" v-bind:key="post.id" :data="post" />
+          <post
+            v-for="post in posts"
+            v-bind:key="post.id"
+            :data="post"
+            :truncate="true"
+          />
         </template>
         <template v-slot:about>
-          <about-discussion :description="discourse.description" :topic="discourse.topic" />
+          <about-discussion
+            :description="discourse.description"
+            :topic="discourse.topic"
+          />
           <poll
             v-for="poll in polls"
             v-bind:key="poll.id"
