@@ -1,3 +1,7 @@
+"use client";
+
+import Link from "next/link";
+import { useQuery } from "@tanstack/react-query";
 import { BarChart3, Flame, Newspaper, Vote } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -5,9 +9,30 @@ import { IssueCard } from "@/components/cards/issue-card";
 import { PoliticianCard } from "@/components/cards/politician-card";
 import { PollCard } from "@/components/cards/poll-card";
 import { PostCard } from "@/components/cards/post-card";
-import { issues, politicians, polls, posts } from "@/lib/mock-data";
+import {
+  IssueCardSkeleton,
+  PoliticianCardSkeleton,
+  PollCardSkeleton,
+  PostCardSkeleton,
+  StatCardSkeleton
+} from "@/components/skeletons/card-skeletons";
+import { civicQueries } from "@/services/queries/civic.queries";
+import { asArray, normalizeIssue, normalizePolitician, normalizePoll, normalizePost } from "@/lib/content-utils";
+import type { ApiRecord } from "@/types";
 
 export default function HomePage() {
+  const feedQuery = useQuery({ queryKey: ["home", "feed"], queryFn: () => civicQueries.feed("home") });
+  const issuesQuery = useQuery({ queryKey: ["home", "issues"], queryFn: civicQueries.issues });
+  const politiciansQuery = useQuery({ queryKey: ["home", "politicians"], queryFn: civicQueries.politicians });
+  const pollsQuery = useQuery({ queryKey: ["home", "polls"], queryFn: civicQueries.polls });
+  const newsQuery = useQuery({ queryKey: ["home", "news"], queryFn: civicQueries.news });
+
+  const posts = asArray<ApiRecord>(feedQuery.data).map(normalizePost).slice(0, 3);
+  const issues = asArray<ApiRecord>(issuesQuery.data).map(normalizeIssue);
+  const politicians = asArray<ApiRecord>(politiciansQuery.data).map(normalizePolitician).slice(0, 3);
+  const polls = asArray<ApiRecord>(pollsQuery.data).map(normalizePoll).slice(0, 1);
+  const news = asArray<ApiRecord>(newsQuery.data);
+
   return (
     <div className="space-y-6">
       <section className="rounded-lg border bg-card p-5 shadow-sm sm:p-8">
@@ -16,29 +41,57 @@ export default function HomePage() {
           <h1 className="mt-3 text-3xl font-bold tracking-normal sm:text-5xl">Welcome to the future of democracy in Nigeria.</h1>
           <p className="mt-4 max-w-2xl text-lg text-muted-foreground">Know your leaders. Track performance. Hold power accountable.</p>
           <div className="mt-6 flex flex-wrap gap-3">
-            <Button>Explore civic feed</Button>
-            <Button variant="outline">Report an issue</Button>
+            <Button asChild><Link href="/feed">Explore civic feed</Link></Button>
+            <Button variant="outline" asChild><Link href="/issues/create">Report an issue</Link></Button>
           </div>
         </div>
       </section>
 
       <div className="grid gap-4 md:grid-cols-4">
-        {[
-          ["Active issues", "8,432", Flame],
-          ["Tracked leaders", "1,204", BarChart3],
-          ["Mock votes", "92,810", Vote],
-          ["Civic stories", "316", Newspaper]
-        ].map(([label, value, Icon]) => (
-          <Card key={label as string}>
+        {issuesQuery.isLoading ? <StatCardSkeleton /> : (
+          <Card>
             <CardContent className="flex items-center justify-between p-5">
               <div>
-                <p className="text-sm text-muted-foreground">{label as string}</p>
-                <p className="mt-1 text-2xl font-bold">{value as string}</p>
+                <p className="text-sm text-muted-foreground">Active issues</p>
+                <p className="mt-1 text-2xl font-bold">{issues.length.toLocaleString()}</p>
               </div>
-              <Icon className="h-6 w-6 text-primary" />
+              <Flame className="h-6 w-6 text-primary" />
             </CardContent>
           </Card>
-        ))}
+        )}
+        {politiciansQuery.isLoading ? <StatCardSkeleton /> : (
+          <Card>
+            <CardContent className="flex items-center justify-between p-5">
+              <div>
+                <p className="text-sm text-muted-foreground">Tracked leaders</p>
+                <p className="mt-1 text-2xl font-bold">{asArray<ApiRecord>(politiciansQuery.data).length.toLocaleString()}</p>
+              </div>
+              <BarChart3 className="h-6 w-6 text-primary" />
+            </CardContent>
+          </Card>
+        )}
+        {pollsQuery.isLoading ? <StatCardSkeleton /> : (
+          <Card>
+            <CardContent className="flex items-center justify-between p-5">
+              <div>
+                <p className="text-sm text-muted-foreground">Active polls</p>
+                <p className="mt-1 text-2xl font-bold">{asArray<ApiRecord>(pollsQuery.data).length.toLocaleString()}</p>
+              </div>
+              <Vote className="h-6 w-6 text-primary" />
+            </CardContent>
+          </Card>
+        )}
+        {newsQuery.isLoading ? <StatCardSkeleton /> : (
+          <Card>
+            <CardContent className="flex items-center justify-between p-5">
+              <div>
+                <p className="text-sm text-muted-foreground">Civic stories</p>
+                <p className="mt-1 text-2xl font-bold">{news.length.toLocaleString()}</p>
+              </div>
+              <Newspaper className="h-6 w-6 text-primary" />
+            </CardContent>
+          </Card>
+        )}
       </div>
 
       <Card>
@@ -46,29 +99,55 @@ export default function HomePage() {
           <CardTitle>Daily civic brief</CardTitle>
         </CardHeader>
         <CardContent className="grid gap-4 md:grid-cols-3">
-          <div className="rounded-md bg-accent p-4 text-accent-foreground">Lagos transport petition gained 1,200 new supporters today.</div>
-          <div className="rounded-md bg-secondary p-4">Two active mock elections close this week.</div>
-          <div className="rounded-md bg-secondary p-4">Budget transparency is the top governance topic this morning.</div>
+          <Link href="/issues" className="rounded-md bg-accent p-4 text-accent-foreground">There are {issues.length.toLocaleString()} citizen issues available to track.</Link>
+          <Link href="/polls" className="rounded-md bg-secondary p-4">There are {asArray<ApiRecord>(pollsQuery.data).length.toLocaleString()} polls open or listed.</Link>
+          <Link href="/news" className="rounded-md bg-secondary p-4">There are {news.length.toLocaleString()} civic news stories.</Link>
         </CardContent>
       </Card>
 
       <section className="grid gap-6 xl:grid-cols-[1.2fr_0.8fr]">
         <div className="space-y-4">
           <h2 className="text-xl font-semibold">See what is happening</h2>
-          {posts.map((post) => <PostCard post={post} key={post.id} />)}
+          {feedQuery.isLoading ? (
+            <>
+              <PostCardSkeleton />
+              <PostCardSkeleton />
+            </>
+          ) : (
+            <>
+              {posts.map((post) => <PostCard post={post} key={post.id} />)}
+              {posts.length === 0 ? <p className="text-sm text-muted-foreground">No feed posts yet.</p> : null}
+            </>
+          )}
         </div>
         <div className="space-y-4">
           <h2 className="text-xl font-semibold">Trending issues</h2>
-          {issues.slice(0, 2).map((issue) => <IssueCard issue={issue} key={issue.id} />)}
+          {issuesQuery.isLoading ? (
+            <IssueCardSkeleton />
+          ) : (
+            issues.slice(0, 2).map((issue) => <IssueCard issue={issue} key={issue.id} />)
+          )}
           <h2 className="pt-2 text-xl font-semibold">Active polls</h2>
-          {polls.slice(0, 1).map((poll) => <PollCard poll={poll} key={poll.id} />)}
+          {pollsQuery.isLoading ? (
+            <PollCardSkeleton />
+          ) : (
+            polls.slice(0, 1).map((poll) => <PollCard poll={poll} key={poll.id} />)
+          )}
         </div>
       </section>
 
       <section>
         <h2 className="mb-4 text-xl font-semibold">Politician scorecard highlights</h2>
         <div className="grid gap-4 md:grid-cols-3">
-          {politicians.map((politician) => <PoliticianCard politician={politician} key={politician.id} />)}
+          {politiciansQuery.isLoading ? (
+            <>
+              <PoliticianCardSkeleton />
+              <PoliticianCardSkeleton />
+              <PoliticianCardSkeleton />
+            </>
+          ) : (
+            politicians.map((politician) => <PoliticianCard politician={politician} key={politician.id} />)
+          )}
         </div>
       </section>
     </div>

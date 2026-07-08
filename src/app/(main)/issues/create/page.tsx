@@ -1,12 +1,17 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useMutation } from "@tanstack/react-query";
+import { gooeyToast } from "goey-toast";
+import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { PageHeader } from "@/components/shared/page-header";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { createIssueMutation } from "@/services/mutations/civic.mutations";
+import { useRequireAuth } from "@/hooks/use-require-auth";
 
 const issueSchema = z.object({
   title: z.string().min(5, "Title is required"),
@@ -21,13 +26,26 @@ const issueSchema = z.object({
 type IssueForm = z.infer<typeof issueSchema>;
 
 export default function CreateIssuePage() {
+  const router = useRouter();
+  const { requireAuth } = useRequireAuth();
   const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<IssueForm>({
     resolver: zodResolver(issueSchema),
     defaultValues: { type: "LOCAL" }
   });
+  const createIssue = useMutation({
+    mutationFn: createIssueMutation,
+    onSuccess: () => {
+      gooeyToast.success("Issue submitted", { description: "Your report has been sent for tracking." });
+      router.push("/issues");
+    },
+    onError: (error) => {
+      gooeyToast.error("Issue submission failed", { description: error instanceof Error ? error.message : "Try again." });
+    }
+  });
 
   function onSubmit(data: IssueForm) {
-    console.log("Create issue", data);
+    if (!requireAuth("Sign in to report a civic issue.")) return;
+    createIssue.mutate(data);
   }
 
   return (
@@ -53,7 +71,7 @@ export default function CreateIssuePage() {
                 <textarea className="min-h-32 w-full rounded-md border bg-background px-3 py-2 text-sm" {...register("description")} placeholder="Describe what happened, who is affected, and what response is needed." />
               </Field>
             </div>
-            <Button className="md:col-span-2" disabled={isSubmitting}>{isSubmitting ? "Submitting..." : "Submit issue"}</Button>
+            <Button className="md:col-span-2" disabled={isSubmitting || createIssue.isPending}>{createIssue.isPending ? "Submitting..." : "Submit issue"}</Button>
           </form>
         </CardContent>
       </Card>

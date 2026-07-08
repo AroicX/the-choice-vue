@@ -8,7 +8,7 @@ export function ToastProvider() {
 
   return (
     <GooeyToaster
-      position="bottom-right"
+      position="top-right"
       theme={resolvedTheme === "dark" ? "dark" : "light"}
       preset="smooth"
       closeButton="top-right"

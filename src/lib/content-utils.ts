@@ -1,4 +1,4 @@
-import type { ApiRecord, Issue, Politician, Poll, Post } from "@/types";
+import type { ApiRecord, Issue, Politician, Poll, Post, User } from "@/types";
 
 export function asArray<T = ApiRecord>(value: unknown): T[] {
   if (Array.isArray(value)) return value as T[];
@@ -119,4 +119,43 @@ export function stringifyJson(value: unknown) {
   } catch {
     return "{}";
   }
+}
+
+export function userDisplayName(user: Pick<User, "firstName" | "lastName" | "username" | "email">) {
+  const fullName = [user.firstName, user.lastName].filter(Boolean).join(" ").trim();
+  return fullName || user.username || user.email || "Citizen";
+}
+
+export function userInitials(user: Pick<User, "firstName" | "lastName" | "username" | "email">) {
+  const name = userDisplayName(user);
+  return name
+    .split(" ")
+    .map((part) => part[0])
+    .join("")
+    .slice(0, 2)
+    .toUpperCase();
+}
+
+export function normalizeUserProfile(raw: ApiRecord): User {
+  return {
+    id: recordId(raw),
+    email: raw.email ? String(raw.email) : undefined,
+    firstName: raw.firstName ? String(raw.firstName) : undefined,
+    lastName: raw.lastName ? String(raw.lastName) : undefined,
+    username: String(raw.username ?? "citizen"),
+    role: String(raw.role ?? "USER") as User["role"],
+    state: raw.state ? String(raw.state) : undefined,
+    lga: raw.lga ? String(raw.lga) : undefined,
+    ward: raw.ward ? String(raw.ward) : undefined,
+    constituency: raw.constituency ? String(raw.constituency) : undefined,
+    profilePic: raw.profilePic ? String(raw.profilePic) : undefined,
+    reputationScore: Number(raw.reputationScore ?? 0),
+    about: raw.about ? String(raw.about) : undefined,
+    phone: raw.phone ? String(raw.phone) : undefined,
+    verified: Boolean(raw.verified),
+    verifiedPhone: Boolean(raw.verifiedPhone),
+    interests: Array.isArray(raw.interests) ? raw.interests.map(String) : undefined,
+    createdAt: raw.createdAt ? String(raw.createdAt) : undefined,
+    posts: asArray<ApiRecord>(raw.posts)
+  };
 }

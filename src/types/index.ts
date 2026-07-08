@@ -15,8 +15,36 @@ export type User = {
   username: string;
   role: UserRole;
   state?: string;
+  lga?: string;
+  ward?: string;
+  constituency?: string;
   profilePic?: string;
   reputationScore?: number;
+  about?: string;
+  phone?: string;
+  verified?: boolean;
+  verifiedPhone?: boolean;
+  interests?: string[];
+  createdAt?: string;
+  posts?: ApiRecord[];
+};
+
+export type FollowRecord = {
+  id?: string;
+  targetId: string;
+  targetType: "POLITICIAN" | "USER" | "TOPIC";
+  createdAt?: string;
+};
+
+export type RoomRecord = {
+  id: string;
+  userId?: string;
+  discussionsId?: string;
+  discussions?: {
+    id?: string;
+    topic?: string;
+    polls?: unknown[];
+  };
 };
 
 export type Post = {

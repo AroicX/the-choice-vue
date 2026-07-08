@@ -8,10 +8,10 @@ export const endpoints = {
   },
   users: {
     me: "/users/me",
-    profile: (id: string) => `/users/${id}`,
+    profile: (id: string) => `/users/profile/${id}`,
     search: "/users/search",
-    update: "/users/profile",
-    changePassword: "/users/change-password"
+    update: "/users/me",
+    changePassword: "/users/password-reset"
   },
   feed: {
     home: "/feed/home",

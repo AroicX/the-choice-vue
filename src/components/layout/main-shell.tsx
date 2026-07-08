@@ -1,12 +1,29 @@
+"use client";
+
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useQuery } from "@tanstack/react-query";
 import { mainNav, mobileNav } from "@/lib/constants";
 import { ThemeToggle } from "@/components/layout/theme-toggle";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { issues, politicians, polls } from "@/lib/mock-data";
+import { SidebarWidgetSkeleton } from "@/components/skeletons/card-skeletons";
+import { civicQueries } from "@/services/queries/civic.queries";
+import { asArray, normalizeIssue, normalizePolitician, normalizePoll } from "@/lib/content-utils";
+import { useRequireAuth } from "@/hooks/use-require-auth";
+import type { ApiRecord } from "@/types";
 
 export function MainShell({ children }: { children: React.ReactNode }) {
+  const router = useRouter();
+  const { requireAuth } = useRequireAuth();
+  const issuesQuery = useQuery({ queryKey: ["shell", "issues"], queryFn: civicQueries.issues });
+  const politiciansQuery = useQuery({ queryKey: ["shell", "politicians"], queryFn: civicQueries.politicians });
+  const pollsQuery = useQuery({ queryKey: ["shell", "polls"], queryFn: civicQueries.polls });
+  const issues = asArray<ApiRecord>(issuesQuery.data).map(normalizeIssue).slice(0, 3);
+  const politicians = asArray<ApiRecord>(politiciansQuery.data).map(normalizePolitician).slice(0, 4);
+  const polls = asArray<ApiRecord>(pollsQuery.data).map(normalizePoll);
+
   return (
     <div className="min-h-screen bg-background">
       <header className="sticky top-0 z-30 border-b bg-background/90 backdrop-blur lg:hidden">
@@ -38,7 +55,16 @@ export function MainShell({ children }: { children: React.ReactNode }) {
             ))}
           </nav>
           <div className="absolute bottom-5 left-4 right-4 space-y-3">
-            <Button className="w-full">Create report</Button>
+            <Button
+              className="w-full"
+              onClick={() => {
+                if (requireAuth("Sign in to report a civic issue.")) {
+                  router.push("/issues/create");
+                }
+              }}
+            >
+              Create report
+            </Button>
             <div className="flex items-center justify-between rounded-md border p-2">
               <span className="text-sm font-medium">Theme</span>
               <ThemeToggle />
@@ -50,10 +76,13 @@ export function MainShell({ children }: { children: React.ReactNode }) {
 
         <aside className="sticky top-0 hidden h-screen overflow-y-auto border-l bg-card px-5 py-6 xl:block">
           <div className="space-y-5">
+            {issuesQuery.isLoading ? (
+              <SidebarWidgetSkeleton />
+            ) : (
             <Card className="p-4">
               <h3 className="font-semibold">Trending Issues</h3>
               <div className="mt-3 space-y-3">
-                {issues.slice(0, 3).map((issue) => (
+                {issues.map((issue) => (
                   <Link href={`/issues/${issue.id}`} key={issue.id} className="block rounded-md border p-3 hover:bg-accent">
                     <p className="text-sm font-medium">{issue.title}</p>
                     <p className="mt-1 text-xs text-muted-foreground">{issue.location}</p>
@@ -61,6 +90,10 @@ export function MainShell({ children }: { children: React.ReactNode }) {
                 ))}
               </div>
             </Card>
+            )}
+            {politiciansQuery.isLoading ? (
+              <SidebarWidgetSkeleton />
+            ) : (
             <Card className="p-4">
               <h3 className="font-semibold">Top Scorecards</h3>
               <div className="mt-3 space-y-3">
@@ -75,11 +108,18 @@ export function MainShell({ children }: { children: React.ReactNode }) {
                 ))}
               </div>
             </Card>
+            )}
+            {pollsQuery.isLoading ? (
+              <SidebarWidgetSkeleton />
+            ) : (
             <Card className="p-4">
               <h3 className="font-semibold">Active Poll</h3>
-              <p className="mt-2 text-sm text-muted-foreground">{polls[0].question}</p>
-              <Button className="mt-4 w-full" variant="outline">Vote now</Button>
+              <p className="mt-2 text-sm text-muted-foreground">{polls[0]?.question ?? "No active poll yet."}</p>
+              <Button className="mt-4 w-full" variant="outline" disabled={!polls[0]} asChild={Boolean(polls[0])}>
+                {polls[0] ? <Link href={`/polls/${polls[0].id}`}>Vote now</Link> : <span>Vote now</span>}
+              </Button>
             </Card>
+            )}
           </div>
         </aside>
       </div>
