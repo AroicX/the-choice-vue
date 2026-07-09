@@ -47,6 +47,7 @@ import { civicQueries } from "@/services/queries/civic.queries";
 import { userQueries } from "@/services/queries/user.queries";
 import { useAuthStore } from "@/stores/auth-store";
 import { useCommentModalStore } from "@/stores/comment-modal-store";
+import { useShareModalStore } from "@/stores/share-modal-store";
 import type { ApiRecord, Post, RoomRecord } from "@/types";
 
 type RoomTab = "Posts" | "Polls" | "Issues" | "Top voices";
@@ -105,6 +106,7 @@ function RoomPostCard({
 }) {
   const { requireAuth } = useRequireAuth();
   const openCommentModal = useCommentModalStore((state) => state.open);
+  const openShareModal = useShareModalStore((state) => state.open);
   const { likes, react, isPending, isLiked } = usePostReaction(post);
   const commentCount = post._count?.comments ?? post.comments;
   const summary = aiSummary(raw);
@@ -121,14 +123,15 @@ function RoomPostCard({
     action();
   }
 
-  async function sharePost() {
-    const url = `${window.location.origin}/threads/post/${post.id}`;
-    if (navigator.share) {
-      await navigator.share({ title: post.topic, text: post.message, url });
-      return;
-    }
-    await navigator.clipboard.writeText(url);
-    gooeyToast.success("Post link copied");
+  function sharePost() {
+    openShareModal({
+      type: "post",
+      url: `${window.location.origin}/threads/post/${post.id}`,
+      author: postAuthorName(post),
+      handle: post.handle,
+      message: post.message,
+      topic: post.topic
+    });
   }
 
   return (
@@ -193,7 +196,7 @@ function RoomPostCard({
           <button
             type="button"
             className="inline-flex items-center gap-1 transition-colors hover:text-primary"
-            onClick={() => guardMemberAction("Sign in to share this post.", () => void sharePost())}
+            onClick={() => guardMemberAction("Sign in to share this post.", sharePost)}
           >
             <AppIcon icon={Share08Icon} size={13} />
           </button>

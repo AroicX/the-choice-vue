@@ -9,6 +9,7 @@ import { useRequireAuth } from "@/hooks/use-require-auth";
 import { Bookmark02Icon, Comment01Icon, FavouriteIcon, Share08Icon, ThumbsDownIcon } from "@/lib/icons";
 import { cn } from "@/lib/utils";
 import { useCommentModalStore } from "@/stores/comment-modal-store";
+import { useShareModalStore } from "@/stores/share-modal-store";
 import type { Post } from "@/types";
 import { gooeyToast } from "goey-toast";
 import Image from "next/image";
@@ -25,19 +26,21 @@ export function PostCard({ post, interactive = true, showActions = true }: PostC
   const router = useRouter();
   const { requireAuth } = useRequireAuth();
   const openCommentModal = useCommentModalStore((state) => state.open);
+  const openShareModal = useShareModalStore((state) => state.open);
   const { likes, dislikes, react, isPending, isLiked, isDisliked } = usePostReaction(post);
   const profilePic = post.user?.profilePic;
   const commentCount = post._count?.comments ?? post.comments;
 
-  async function sharePost(event: React.MouseEvent) {
+  function sharePost(event: React.MouseEvent) {
     event.stopPropagation();
-    const url = `${window.location.origin}/threads/post/${post.id}`;
-    if (navigator.share) {
-      await navigator.share({ title: post.topic, text: post.message, url });
-      return;
-    }
-    await navigator.clipboard.writeText(url);
-    gooeyToast.success("Post link copied");
+    openShareModal({
+      type: "post",
+      url: `${window.location.origin}/threads/post/${post.id}`,
+      author: post.author,
+      handle: post.handle,
+      message: post.message,
+      topic: post.topic
+    });
   }
 
   function openPost() {

@@ -2,14 +2,15 @@
 
 import { useCallback, useEffect } from "react";
 import { AppIcon } from "@/components/ui/icon";
+import { Button } from "@/components/ui/button";
 import { PostCommentComposer } from "@/components/comments/post-comment-composer";
-import { PostQuote } from "@/components/comments/post-quote";
 import { CommentSkeleton } from "@/components/skeletons/card-skeletons";
 import { useInfiniteScroll } from "@/hooks/use-infinite-scroll";
 import { flattenComments, usePostComments } from "@/hooks/use-post-comments";
 import { commentAuthor } from "@/lib/content-utils";
-import { Comment01Icon } from "@/lib/icons";
-import type { Post } from "@/types";
+import { Comment01Icon, Share08Icon } from "@/lib/icons";
+import { useShareModalStore } from "@/stores/share-modal-store";
+import type { ApiRecord, Post } from "@/types";
 import { Card, CardContent } from "@/components/ui/card";
 
 type PostCommentSectionProps = {
@@ -17,6 +18,7 @@ type PostCommentSectionProps = {
 };
 
 export function PostCommentSection({ post }: PostCommentSectionProps) {
+  const openShareModal = useShareModalStore((state) => state.open);
   const commentsQuery = usePostComments(post.id);
   const comments = flattenComments(commentsQuery.data?.pages);
 
@@ -39,12 +41,31 @@ export function PostCommentSection({ post }: PostCommentSectionProps) {
   const isInitialLoading = commentsQuery.isLoading;
   const isSyncing = commentsQuery.isFetching && !commentsQuery.isLoading && !commentsQuery.isFetchingNextPage;
 
+  function shareComment(comment: ApiRecord) {
+    const message = String(comment.message ?? comment.content ?? "");
+    const author = commentAuthor(comment);
+    openShareModal({
+      type: "comment",
+      url: `${window.location.origin}/threads/post/${post.id}#comments`,
+      author,
+      handle: `@${author.replace(/\s+/g, "").toLowerCase()}`,
+      message,
+      topic: post.topic,
+      quotedPost: {
+        author: post.author,
+        handle: post.handle,
+        topic: post.topic,
+        message: post.message
+      }
+    });
+  }
+
   return (
     <Card id="comments" className="glass-panel scroll-mt-24">
       <CardContent className="space-y-5 p-4">
         <div className="flex items-center justify-between gap-3">
           <div>
-            <h2 className="font-semibold">Comments</h2> 
+            <h2 className="font-semibold">Comments</h2>
             <p className="mt-1 text-sm text-muted-foreground">
               {comments.length.toLocaleString()} loaded
               {commentsQuery.hasNextPage ? "+" : ""} {comments.length === 1 ? "reply" : "replies"} · updates live
@@ -53,7 +74,6 @@ export function PostCommentSection({ post }: PostCommentSectionProps) {
           {isSyncing ? <span className="text-xs font-medium text-primary">Syncing...</span> : null}
         </div>
 
-        {/* <PostQuote post={post} /> */}
         <PostCommentComposer post={post} showQuote={false} />
 
         <div className="space-y-3 border-t border-primary/10 pt-4">
@@ -70,14 +90,28 @@ export function PostCommentSection({ post }: PostCommentSectionProps) {
                 return (
                   <div
                     key={String(comment.id)}
-                    className={`rounded-xl border bg-background/60 p-3 ${isOptimistic ? "border-primary/30 opacity-80" : "border-primary/10"
-                      }`}
+                    className={`rounded-xl border bg-background/60 p-3 ${
+                      isOptimistic ? "border-primary/30 opacity-80" : "border-primary/10"
+                    }`}
                   >
                     <p className="text-sm leading-6">{String(comment.message ?? comment.content ?? "")}</p>
-                    <p className="mt-2 text-xs text-muted-foreground">
-                      {commentAuthor(comment)}
-                      {isOptimistic ? " · Sending..." : ""}
-                    </p>
+                    <div className="mt-2 flex items-center justify-between gap-3">
+                      <p className="text-xs text-muted-foreground">
+                        {commentAuthor(comment)}
+                        {isOptimistic ? " · Sending..." : ""}
+                      </p>
+                      {!isOptimistic ? (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-7 px-2 text-xs text-muted-foreground"
+                          onClick={() => shareComment(comment)}
+                        >
+                          <AppIcon icon={Share08Icon} size={14} className="mr-1.5" />
+                          Share
+                        </Button>
+                      ) : null}
+                    </div>
                   </div>
                 );
               })}
