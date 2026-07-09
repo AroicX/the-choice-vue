@@ -51,7 +51,7 @@ export type UserReaction = "like" | "dislike";
 
 export type Post = {
   id: string;
-  user: User;
+  user?: User;
   author: string;
   handle: string;
   topic: string;
@@ -64,7 +64,7 @@ export type Post = {
   discussionId?: string;
   createdAt?: string;
   userReaction?: UserReaction | null;
-  _count: {
+  _count?: {
     comments: number;
   };
 };

@@ -4,7 +4,7 @@ export function asArray<T = ApiRecord>(value: unknown): T[] {
   if (Array.isArray(value)) return value as T[];
   if (value && typeof value === "object") {
     const record = value as Record<string, unknown>;
-    for (const key of ["items", "results", "records", "data", "comments"]) {
+    for (const key of ["items", "results", "records", "data", "comments", "room", "rooms"]) {
       if (Array.isArray(record[key])) return record[key] as T[];
     }
   }
@@ -40,10 +40,33 @@ export function recordId(record: ApiRecord) {
   return String(record.id ?? record.slug ?? displayName(record));
 }
 
+export function isRoomMember(rooms: Array<{ discussionsId?: string; discussions?: { id?: string } }>, discussionId: string) {
+  const target = String(discussionId);
+  return rooms.some((room) => String(room.discussionsId ?? room.discussions?.id ?? "") === target);
+}
+
 export function formatDate(value: unknown) {
   if (!value) return "Not set";
   const date = new Date(String(value));
   return Number.isNaN(date.getTime()) ? String(value) : date.toLocaleDateString();
+}
+
+export function formatRelativeTime(value: unknown) {
+  if (!value) return "";
+  const date = new Date(String(value));
+  if (Number.isNaN(date.getTime())) return String(value);
+
+  const seconds = Math.round((Date.now() - date.getTime()) / 1000);
+  if (seconds < 60) return `${Math.max(seconds, 1)}s`;
+  const minutes = Math.round(seconds / 60);
+  if (minutes < 60) return `${minutes}m`;
+  const hours = Math.round(minutes / 60);
+  if (hours < 24) return `${hours}h`;
+  const days = Math.round(hours / 24);
+  if (days < 7) return `${days}d`;
+  const weeks = Math.round(days / 7);
+  if (weeks < 5) return `${weeks}w`;
+  return formatDate(value);
 }
 
 export function resolveUserReaction(raw: ApiRecord, userId?: string): Post["userReaction"] {

@@ -106,14 +106,14 @@ export const endpoints = {
     resolve: (id: string) => `/issues/${id}/resolve`
   },
   ratings: {
-    list: "/ratings",
-    categories: "/ratings/categories",
+    list: "/ratings/all",
+    categories: "/ratings/all",
     bulk: "/ratings/bulk",
     parties: "/ratings/parties",
-    sdgCriteria: "/ratings/sdg-criteria",
-    create: "/ratings/candidates",
-    vote: (id: string) => `/ratings/candidates/${id}/vote`,
-    delete: (id: string) => `/ratings/${id}`,
+    sdgCriteria: "/ratings/sdg",
+    create: "/ratings/create",
+    vote: (id: string) => `/ratings/vote/${id}`,
+    delete: (id: string) => `/ratings/delete/${id}`,
     leaderboard: "/scorecards/leaderboard"
   },
   scorecards: {
@@ -193,7 +193,7 @@ export const endpoints = {
     reports: "/moderation/reports"
   },
   analytics: {
-    overview: "/analytics/overview",
+    overview: "/analytics",
     dashboard: "/analytics/dashboard"
   },
   ai: {

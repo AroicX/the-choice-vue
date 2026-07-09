@@ -1,6 +1,10 @@
 export {
+  Add01Icon,
+  AiMagicIcon,
   Analytics01Icon,
+  ArrowLeft01Icon,
   ArrowUp01Icon,
+  Attachment01Icon,
   Bookmark02Icon,
   Building01Icon,
   Cancel01Icon,
@@ -27,6 +31,7 @@ export {
   PencilEdit01Icon,
   Search01Icon,
   SecurityCheckIcon,
+  SentIcon,
   Settings01Icon,
   Share08Icon,
   Sun03Icon,

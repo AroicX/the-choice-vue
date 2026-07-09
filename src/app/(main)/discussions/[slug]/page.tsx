@@ -1,6 +1,5 @@
-import { DetailView } from "@/components/content/detail-view";
-import { endpoints } from "@/services/client/endpoints";
+import { DiscourseRoomView } from "@/components/discourse/discourse-room-view";
 
 export default function DiscussionDetailPage({ params }: { params: { slug: string } }) {
-  return <DetailView title="Discussion" endpoint={endpoints.discussions.detail(params.slug)} action="discussion" />;
+  return <DiscourseRoomView discussionId={params.slug} />;
 }

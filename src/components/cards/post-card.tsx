@@ -26,6 +26,8 @@ export function PostCard({ post, interactive = true, showActions = true }: PostC
   const { requireAuth } = useRequireAuth();
   const openCommentModal = useCommentModalStore((state) => state.open);
   const { likes, dislikes, react, isPending, isLiked, isDisliked } = usePostReaction(post);
+  const profilePic = post.user?.profilePic;
+  const commentCount = post._count?.comments ?? post.comments;
 
   async function sharePost(event: React.MouseEvent) {
     event.stopPropagation();
@@ -61,8 +63,8 @@ export function PostCard({ post, interactive = true, showActions = true }: PostC
       <CardHeader>
         <div className="flex items-start justify-between gap-3">
           <div className="flex items-start gap-3">
-            {post.user.profilePic ?
-              (<Image src={post.user.profilePic} alt={post.author} width={44} height={44} className="rounded-full" />) :
+            {profilePic ?
+              (<Image src={profilePic} alt={post.author} width={44} height={44} className="rounded-full" />) :
               (<div className="grid h-11 w-11 place-items-center rounded-xl bg-gradient-to-br from-primary/20 to-emerald-500/10 text-sm font-bold text-primary">
                 {post.author.slice(0, 2).toUpperCase()}
               </div>)}
@@ -108,12 +110,12 @@ export function PostCard({ post, interactive = true, showActions = true }: PostC
             {interactive ? (
               <Button variant="ghost" size="sm" onClick={openComments}>
                 <AppIcon icon={Comment01Icon} size={18} className="mr-2" />
-                {post._count.comments}
+                {commentCount}
               </Button>
             ) : (
               <Button variant="ghost" size="sm" disabled>
                 <AppIcon icon={Comment01Icon} size={18} className="mr-2" />
-                {post._count.comments}
+                {commentCount}
               </Button>
             )}
             <Button variant="ghost" size="sm" onClick={sharePost}>

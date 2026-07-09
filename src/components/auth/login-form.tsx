@@ -30,7 +30,6 @@ export function LoginForm({ onSuccess, showLinks = true }: LoginFormProps) {
     mutationFn: loginMutation,
     onSuccess: ({ token, user }) => {
       setSession({ token, user });
-      document.cookie = `choice9ja-role=${user.role}; path=/; max-age=604800; SameSite=Lax`;
       gooeyToast.success("Welcome back", { description: "You are signed in to Choice9ja." });
       onSuccess?.();
     },

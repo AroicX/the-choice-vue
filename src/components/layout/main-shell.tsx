@@ -1,6 +1,8 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
+import { FormEvent, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import { mainNav, mobileNav } from "@/lib/constants";
@@ -9,53 +11,115 @@ import { AppIcon } from "@/components/ui/icon";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
 import { SidebarWidgetSkeleton } from "@/components/skeletons/card-skeletons";
 import { civicQueries } from "@/services/queries/civic.queries";
-import { asArray, normalizeIssue, normalizePolitician, normalizePoll } from "@/lib/content-utils";
+import { notificationsService } from "@/services/notifications.service";
+import {
+  asArray,
+  normalizeIssue,
+  normalizePolitician,
+  normalizePoll,
+  userDisplayName,
+  userInitials
+} from "@/lib/content-utils";
 import { useRequireAuth } from "@/hooks/use-require-auth";
+import { useAuthStore } from "@/stores/auth-store";
+import { useLoginModalStore } from "@/stores/login-modal-store";
+import { Logout01Icon, Search01Icon } from "@/lib/icons";
 import { cn } from "@/lib/utils";
 import type { ApiRecord } from "@/types";
+
+function unreadCountFromPayload(payload: unknown): number {
+  if (typeof payload === "number") return Math.max(0, payload);
+  if (typeof payload === "string") {
+    const parsed = Number(payload);
+    return Number.isFinite(parsed) ? Math.max(0, parsed) : 0;
+  }
+  if (!payload || typeof payload !== "object") return 0;
+  const record = payload as Record<string, unknown>;
+  const candidates = [record.count, record.unreadCount, record.unread, record.total];
+  for (const value of candidates) {
+    const parsed = Number(value);
+    if (Number.isFinite(parsed)) return Math.max(0, parsed);
+  }
+  return 0;
+}
+
+function NotificationBadge({ count, className }: { count: number; className?: string }) {
+  if (count <= 0) return null;
+  return (
+    <span
+      className={cn(
+        "inline-flex min-w-5 items-center justify-center rounded-full bg-primary px-1.5 py-0.5 text-[10px] font-bold leading-none text-primary-foreground",
+        className
+      )}
+    >
+      {count > 99 ? "99+" : count}
+    </span>
+  );
+}
 
 export function MainShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
-  const { requireAuth } = useRequireAuth();
+  const { requireAuth, isAuthenticated } = useRequireAuth();
+  const user = useAuthStore((state) => state.user);
+  const clearSession = useAuthStore((state) => state.clearSession);
+  const openLoginModal = useLoginModalStore((state) => state.open);
+  const [search, setSearch] = useState("");
+
   const issuesQuery = useQuery({ queryKey: ["shell", "issues"], queryFn: civicQueries.issues });
   const politiciansQuery = useQuery({ queryKey: ["shell", "politicians"], queryFn: civicQueries.politicians });
   const pollsQuery = useQuery({ queryKey: ["shell", "polls"], queryFn: civicQueries.polls });
+  const notificationCountQuery = useQuery({
+    queryKey: ["notifications", "count", user?.id],
+    queryFn: () => notificationsService.count(user!.id),
+    enabled: Boolean(user?.id),
+    refetchInterval: 60_000
+  });
+
   const issues = asArray<ApiRecord>(issuesQuery.data).map(normalizeIssue).slice(0, 3);
   const politicians = asArray<ApiRecord>(politiciansQuery.data).map(normalizePolitician).slice(0, 4);
   const polls = asArray<ApiRecord>(pollsQuery.data).map(normalizePoll);
+  const unreadCount = unreadCountFromPayload(notificationCountQuery.data);
+
+  function handleLogout() {
+    clearSession();
+    document.cookie = "choice9ja-role=; path=/; max-age=0; SameSite=Lax";
+    router.push("/login");
+  }
+
+  function handleSearch(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const query = search.trim();
+    if (!query) return;
+    router.push(`/politicians?q=${encodeURIComponent(query)}`);
+  }
 
   return (
     <div className="min-h-screen bg-background">
-      <header className="sticky top-0 z-30 border-b border-white/10 bg-background/75 backdrop-blur-xl lg:hidden">
-        <div className="flex h-16 items-center justify-between px-4">
-          <Link href="/home" className="flex items-center gap-2 font-bold">
-            <img src="/legacy/logo.png" alt="Choice9ja" className="h-9 w-9 rounded-xl object-contain shadow-glow" />
-            <span className="civic-gradient-text">TheChoice9ja</span>
-          </Link>
-          <ThemeToggle />
-        </div>
-      </header>
-
       <div className="mx-auto grid max-w-[1440px] grid-cols-1 lg:grid-cols-[270px_minmax(0,1fr)_340px]">
         <aside className="sticky top-0 hidden h-screen border-r border-white/10 bg-card/70 px-4 py-5 backdrop-blur-xl lg:block">
           <Link href="/home" className="mb-8 flex items-center gap-3 font-bold">
             <img src="/legacy/logo.png" alt="Choice9ja" className="h-10 w-10 rounded-xl object-contain shadow-glow" />
             <span className="civic-gradient-text">TheChoice9ja</span>
           </Link>
-          <nav className="space-y-1.5">
+          <nav className="space-y-1.5 overflow-y-auto pb-36">
             {mainNav.map((item) => {
               const active = pathname === item.href || pathname.startsWith(`${item.href}/`);
+              const showBadge = item.href === "/notifications" && unreadCount > 0;
               return (
                 <Link
                   key={item.href}
                   href={item.href}
-                  className={cn("nav-pill", active && "nav-pill-active")}
+                  className={cn("nav-pill", active && "nav-pill-active", showBadge && "justify-between")}
                 >
-                  <AppIcon icon={item.icon} size={18} />
-                  {item.label}
+                  <span className="flex items-center gap-3">
+                    <AppIcon icon={item.icon} size={18} />
+                    {item.label}
+                  </span>
+                  {showBadge ? <NotificationBadge count={unreadCount} /> : null}
                 </Link>
               );
             })}
@@ -71,14 +135,70 @@ export function MainShell({ children }: { children: React.ReactNode }) {
             >
               Create report
             </Button>
-            <div className="glass-panel flex items-center justify-between rounded-xl p-2.5">
-              <span className="text-sm font-medium">Theme</span>
-              <ThemeToggle />
-            </div>
+            {isAuthenticated ? (
+              <Button variant="outline" className="w-full gap-2 text-destructive hover:bg-destructive/10 hover:text-destructive" onClick={handleLogout}>
+                <AppIcon icon={Logout01Icon} size={16} />
+                Log out
+              </Button>
+            ) : null}
           </div>
         </aside>
 
-        <main className="min-h-screen px-4 pb-24 pt-5 sm:px-6 lg:px-8 lg:pb-10">{children}</main>
+        <div className="min-w-0">
+          <header className="sticky top-0 z-30 border-b border-white/10 bg-background/80 backdrop-blur-xl">
+            <div className="flex h-16 items-center gap-3 px-4 sm:px-6 lg:px-8">
+              <Link href="/home" className="flex shrink-0 items-center gap-2 font-bold lg:hidden">
+                <img src="/legacy/logo.png" alt="Choice9ja" className="h-9 w-9 rounded-xl object-contain shadow-glow" />
+                <span className="civic-gradient-text hidden sm:inline">TheChoice9ja</span>
+              </Link>
+
+              <form onSubmit={handleSearch} className="relative min-w-0 flex-1">
+                <AppIcon icon={Search01Icon} size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                <Input
+                  value={search}
+                  onChange={(event) => setSearch(event.target.value)}
+                  className="h-10 pl-10"
+                  placeholder="Search politicians, issues, communities..."
+                  aria-label="Search"
+                />
+              </form>
+
+              <div className="flex shrink-0 items-center gap-2">
+                <ThemeToggle />
+                {isAuthenticated && user ? (
+                  <Link
+                    href="/profile"
+                    className="flex items-center gap-2 rounded-xl border border-white/10 bg-card/70 px-2 py-1.5 transition-colors hover:bg-accent/60"
+                  >
+                    {user.profilePic ? (
+                      <Image
+                        src={user.profilePic}
+                        alt={userDisplayName(user)}
+                        width={32}
+                        height={32}
+                        className="h-8 w-8 rounded-full object-cover"
+                      />
+                    ) : (
+                      <span className="grid h-8 w-8 place-items-center rounded-full bg-primary/15 text-xs font-semibold text-primary">
+                        {userInitials(user)}
+                      </span>
+                    )}
+                    <span className="hidden min-w-0 sm:block">
+                      <span className="block truncate text-sm font-semibold leading-tight">{userDisplayName(user)}</span>
+                      <span className="block truncate text-xs text-muted-foreground">@{user.username}</span>
+                    </span>
+                  </Link>
+                ) : (
+                  <Button size="sm" onClick={() => openLoginModal("Sign in to continue.")}>
+                    Sign in
+                  </Button>
+                )}
+              </div>
+            </div>
+          </header>
+
+          <main className="min-h-[calc(100vh-4rem)] px-4 pb-24 pt-5 sm:px-6 lg:px-8 lg:pb-10">{children}</main>
+        </div>
 
         <aside className="sticky top-0 hidden h-screen overflow-y-auto border-l border-white/10 bg-card/50 px-5 py-6 backdrop-blur-xl xl:block">
           <div className="space-y-5">
@@ -134,16 +254,20 @@ export function MainShell({ children }: { children: React.ReactNode }) {
         <div className="grid grid-cols-5">
           {mobileNav.map((item) => {
             const active = pathname === item.href || pathname.startsWith(`${item.href}/`);
+            const showBadge = item.href === "/notifications" && unreadCount > 0;
             return (
               <Link
                 key={item.href}
                 href={item.href}
                 className={cn(
-                  "flex flex-col items-center gap-1 px-1 py-3 text-xs font-medium transition-colors",
+                  "relative flex flex-col items-center gap-1 px-1 py-3 text-xs font-medium transition-colors",
                   active ? "text-primary" : "text-muted-foreground"
                 )}
               >
-                <AppIcon icon={item.icon} size={20} />
+                <span className="relative">
+                  <AppIcon icon={item.icon} size={20} />
+                  {showBadge ? <NotificationBadge count={unreadCount} className="absolute -right-3 -top-2 min-w-4 px-1" /> : null}
+                </span>
                 {item.label}
               </Link>
             );

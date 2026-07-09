@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Search01Icon } from "@/lib/icons";
 import { cn } from "@/lib/utils";
-import type { AdminField, AdminRecord, AdminResourceConfig, AdminStatus } from "@/lib/admin-control-data";
+import type { AdminField, AdminPageMeta, AdminRecord, AdminStatus } from "@/lib/admin-control-data";
 
 export function SearchInput({ value, onChange, placeholder = "Search..." }: { value: string; onChange: (value: string) => void; placeholder?: string }) {
   return (
@@ -124,11 +124,11 @@ export function ActionMenu({ actions, onAction }: { actions: string[]; onAction:
   );
 }
 
-export function DataTable({ config, records, onAction }: { config: AdminResourceConfig; records: AdminRecord[]; onAction: (action: string, record: AdminRecord) => void }) {
+export function DataTable({ config, records, onAction, onCreate }: { config: AdminPageMeta; records: AdminRecord[]; onAction: (action: string, record: AdminRecord) => void; onCreate?: () => void }) {
   const [selected, setSelected] = useState<string[]>([]);
 
   if (!records.length) {
-    return <EmptyState title={config.emptyTitle} description={config.emptyDescription} actionLabel={config.primaryAction} onAction={() => gooeyToast.info(`${config.primaryAction} opened`)} />;
+    return <EmptyState title={config.emptyTitle} description={config.emptyDescription} actionLabel={config.primaryAction} onAction={onCreate} />;
   }
 
   return (
@@ -241,22 +241,23 @@ export function ConfirmModal({ open, title, message, destructive, requireReason,
   );
 }
 
-function FieldControl({ field }: { field: AdminField }) {
-  if (field.type === "textarea") return <textarea className="min-h-24 w-full rounded-lg border border-slate-200 p-3 text-sm" placeholder={field.placeholder} />;
+function FieldControl({ field, value }: { field: AdminField; value?: string | number | boolean | null }) {
+  const stringValue = value === undefined || value === null ? "" : String(value);
+  if (field.type === "textarea") return <textarea name={field.name} defaultValue={stringValue} className="min-h-24 w-full rounded-lg border border-slate-200 p-3 text-sm" placeholder={field.placeholder} />;
   if (field.type === "select") {
     return (
-      <select className="h-10 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm">
+      <select name={field.name} defaultValue={stringValue} className="h-10 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm">
         <option value="">Select {field.label.toLowerCase()}</option>
         {field.options?.map((option) => <option key={option}>{option}</option>)}
       </select>
     );
   }
-  if (field.type === "checkbox") return <input type="checkbox" className="h-4 w-4 rounded border-slate-300" />;
+  if (field.type === "checkbox") return <input name={field.name} type="checkbox" defaultChecked={value === true || stringValue.toLowerCase() === "true" || stringValue.toLowerCase() === "verified"} className="h-4 w-4 rounded border-slate-300" />;
   if (field.type === "file") return <FileUpload />;
-  return <Input type={field.type ?? "text"} className="rounded-lg" placeholder={field.placeholder} />;
+  return <Input name={field.name} type={field.type ?? "text"} defaultValue={stringValue} className="rounded-lg" placeholder={field.placeholder} />;
 }
 
-export function ResourceModal({ open, title, fields, submitLabel, onClose, onSubmit }: { open: boolean; title: string; fields: AdminField[]; submitLabel: string; onClose: () => void; onSubmit: () => void }) {
+export function ResourceModal({ open, title, fields, submitLabel, initialValues, onClose, onSubmit }: { open: boolean; title: string; fields: AdminField[]; submitLabel: string; initialValues?: Record<string, string | number | boolean | null | undefined>; onClose: () => void; onSubmit: (payload: Record<string, string | boolean>) => void }) {
   const [saving, setSaving] = useState(false);
   if (!open) return null;
 
@@ -267,26 +268,37 @@ export function ResourceModal({ open, title, fields, submitLabel, onClose, onSub
           <h2 className="text-lg font-semibold text-slate-950">{title}</h2>
           <Button variant="ghost" className="rounded-lg" onClick={onClose}>Close</Button>
         </div>
-        <div className="mt-5 grid gap-4 sm:grid-cols-2">
+        <form
+          className="mt-5 grid gap-4 sm:grid-cols-2"
+          id={`admin-form-${title.replace(/\s+/g, "-").toLowerCase()}`}
+          onSubmit={(event) => {
+            event.preventDefault();
+            const form = new FormData(event.currentTarget);
+            const payload = fields.reduce<Record<string, string | boolean>>((acc, field) => {
+              acc[field.name] = field.type === "checkbox" ? form.get(field.name) === "on" : String(form.get(field.name) ?? "");
+              return acc;
+            }, {});
+            setSaving(true);
+            window.setTimeout(() => {
+              setSaving(false);
+              onSubmit(payload);
+            }, 250);
+          }}
+        >
           {fields.map((field) => (
             <label key={field.name} className={cn("block space-y-2 text-sm font-medium text-slate-700", field.type === "textarea" && "sm:col-span-2")}>
               <span>{field.label}</span>
-              <FieldControl field={field} />
+              <FieldControl field={field} value={initialValues?.[field.name]} />
             </label>
           ))}
-        </div>
+        </form>
         <div className="mt-6 flex justify-end gap-2">
           <Button variant="outline" className="rounded-lg" onClick={onClose}>Cancel</Button>
           <Button
+            type="submit"
+            form={`admin-form-${title.replace(/\s+/g, "-").toLowerCase()}`}
             className="rounded-lg"
             disabled={saving}
-            onClick={() => {
-              setSaving(true);
-              window.setTimeout(() => {
-                setSaving(false);
-                onSubmit();
-              }, 500);
-            }}
           >
             {saving ? "Saving..." : submitLabel}
           </Button>

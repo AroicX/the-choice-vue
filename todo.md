@@ -1,19 +1,37 @@
 # TheChoice9ja Control/Admin Frontend Todo
 
+## Correction Pass
+
+- [x] Remove the dynamic `/control/[resource]` page and any mock-record driven admin UI.
+- [x] Create explicit route folders/pages for every control module.
+- [x] Replace mock dashboard/resource data with real API-backed React Query calls.
+- [x] Make each route call its own module component/service, using reusable components only for shared UI.
+- [x] Wire all available admin/control endpoints from the API codebase and show honest empty/unavailable states for missing backend endpoints.
+- [x] Run build and update this checklist.
+
+## Follow-up Fixes
+
+- [x] Remove visible `/api` and backend implementation copy from the control UI.
+- [x] Fix control-page reload logout by waiting for persisted auth hydration before redirecting.
+- [x] Centralize role cookie handling in the auth store and restore it after hydration.
+- [x] Prefill edit forms from the selected record and submit real payload values.
+- [x] Make custom actions invalidate data and surface request errors.
+- [x] Re-run build after follow-up fixes.
+
 - [x] Read the full admin/control prompt and extract the required routes, components, behaviours, and security rules.
 - [x] Study the existing frontend architecture, routing groups, UI primitives, auth store, middleware, services, and data-fetching patterns.
 - [x] Study the API reference at `/Users/Gabriel/Desktop/Dev/theChoice9ja/thechoice9ja-api/docs/API_REFERENCE.md`.
 - [x] Inspect the API codebase at `/Users/Gabriel/Desktop/Dev/theChoice9ja/thechoice9ja-api` to confirm real endpoints, request/response shapes, auth, roles, and moderation flows.
 - [x] Compare the requested admin features against available API capabilities and note gaps or mock-only areas.
 - [x] Design the admin frontend structure: layouts, shared components, route modules, API services, state flows, loading/error/empty states, and role-aware redirects.
-- [ ] Implement shared admin UI components and the full-screen control layout.
-- [ ] Implement shared API client and admin service files aligned with the backend.
-- [ ] Implement role-aware middleware/login redirect behaviour for users, admins, super admins, and moderators.
-- [ ] Implement the dashboard and all control resource pages.
-- [ ] Add CRUD modals, detail drawers, confirmation flows, table filters/search/pagination, toasts, and bulk action affordances.
-- [ ] Run typecheck/build and fix issues.
-- [ ] Review the UI for desktop-first admin usability and mobile fallback.
-- [ ] Update this checklist with completed work and summarize final changes.
+- [x] Implement shared admin UI components and the full-screen control layout.
+- [x] Implement shared API client and admin service files aligned with the backend.
+- [x] Implement role-aware middleware/login redirect behaviour for users, admins, super admins, and moderators.
+- [x] Implement the dashboard and all control resource pages.
+- [x] Add CRUD modals, detail drawers, confirmation flows, table filters/search/pagination, toasts, and bulk action affordances.
+- [x] Run typecheck/build and fix issues.
+- [x] Review the UI for desktop-first admin usability and mobile fallback.
+- [x] Update this checklist with completed work and summarize final changes.
 
 ## Study Notes
 
@@ -28,14 +46,14 @@
 - Real moderation endpoints: `/api/moderation/reports` and `/api/moderation/actions`, admin-only.
 - Real reports endpoint: `/api/reports` creates a user report; report listing is via moderation.
 - Real CRUD-style resources: discussions, posts, comments, polls, elections, parties, politicians, ratings/candidates, notifications, promises, news, fact-checks, topics, communities.
-- API gaps vs requested UI: feature/unfeature posts, hide/restore content, notification audience broadcast, full admin settings, direct user create/edit/delete/change-role/verify endpoints, and some status transitions are not first-class backend endpoints yet.
+- API gaps vs requested UI: feature/unfeature posts, hide/restore content, notification audience broadcast, full admin settings, direct user edit/delete/change-role/verify endpoints, and some status transitions are not first-class backend endpoints yet.
 
 ## Implementation Design
 
-- Route group: add `src/app/(control)/control/layout.tsx`, `src/app/(control)/control/page.tsx`, and one page for each requested admin module.
+- Route group: add `src/app/(control)/control/layout.tsx`, `src/app/(control)/control/page.tsx`, and explicit route folders/pages for each requested admin module.
 - Layout: replace the existing lightweight `ControlShell` with fixed dark sidebar, sticky header, breadcrumbs, profile dropdown, notification button, and independently scrolling main content.
 - Shared admin UI: place reusable primitives under `src/components/admin` and keep them client-compatible where they manage table/drawer/modal state.
-- Data pages: use one reusable `AdminResourcePage` client component fed by per-module config and mock fallback records; wire real service functions where backend endpoints exist.
+- Data pages: use explicit module pages that call their own service functions; share only UI/table/form primitives.
 - Service layer: add `src/lib/api-client.ts` as a normalized wrapper around the existing Axios client, plus `src/services/*.service.ts` files matching the requested API pattern.
 - Auth/routing: update middleware and login success routing to recognize `ADMIN`, `SUPER_ADMIN`, and `MODERATOR` for frontend `/control` access, while noting backend write endpoints may still reject moderators.
-- Dashboard: combine `/analytics` data shape with mock activity/moderation queues so the page is useful even before backend returns detailed time-series data.
+- Dashboard: load live analytics from `/api/analytics` and moderation reports from `/api/moderation/reports`; show empty/error states when the API returns no data.

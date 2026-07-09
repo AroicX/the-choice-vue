@@ -27,7 +27,7 @@ export const mainNav = [
   { href: "/fact-checks", label: "Fact Checks", icon: SecurityCheckIcon },
   { href: "/communities", label: "Communities", icon: Building01Icon },
   { href: "/notifications", label: "Notifications", icon: Notification03Icon },
-  { href: "/profile", label: "Profile", icon: UserCircleIcon }
+  { href: "/profile", label: "Account", icon: UserCircleIcon }
 ];
 
 export const mobileNav = [

@@ -9,8 +9,8 @@ import { AppIcon } from "@/components/ui/icon";
 import { CheckListIcon, Door01Icon, FavouriteIcon } from "@/lib/icons";
 import { api, getData } from "@/services/client/api";
 import { endpoints } from "@/services/client/endpoints";
-import { asArray, displayName, normalizePoll, normalizePost, recordId, stringifyJson } from "@/lib/content-utils";
-import type { ApiRecord } from "@/types";
+import { asArray, displayName, isRoomMember, normalizePoll, normalizePost, recordId } from "@/lib/content-utils";
+import type { ApiRecord, RoomRecord } from "@/types";
 import { useRequireAuth } from "@/hooks/use-require-auth";
 import { useAuthStore } from "@/stores/auth-store";
 import { PostActions } from "@/components/actions/post-actions";
@@ -18,6 +18,7 @@ import { PostCard } from "@/components/cards/post-card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { userQueries } from "@/services/queries/user.queries";
 
 type DetailAction = "post" | "discussion" | "poll" | "election" | "issue" | "community" | "politician" | "none";
 
@@ -25,8 +26,8 @@ export function DetailView({ title, endpoint, action = "none" }: { title: string
   const queryClient = useQueryClient();
   const user = useAuthStore((state) => state.user);
   const userId = user?.id;
-  const { requireAuth } = useRequireAuth();
-  const [joinedRoom, setJoinedRoom] = useState(false);
+  const { requireAuth, isAuthenticated } = useRequireAuth();
+  const [optimisticJoined, setOptimisticJoined] = useState(false);
   const query = useQuery({
     queryKey: ["detail", endpoint],
     queryFn: () => getData<ApiRecord>(endpoint),
@@ -36,6 +37,15 @@ export function DetailView({ title, endpoint, action = "none" }: { title: string
   const record = query.data;
   const id = record ? recordId(record) : "";
   const post = record && action === "post" ? normalizePost(record, userId) : null;
+
+  const roomsQuery = useQuery({
+    queryKey: ["rooms", "me"],
+    queryFn: userQueries.rooms,
+    enabled: action === "discussion" && isAuthenticated,
+    retry: false
+  });
+  const isMember = optimisticJoined || isRoomMember(asArray<RoomRecord>(roomsQuery.data), id);
+
   const relatedPostsQuery = useQuery({
     queryKey: ["discussion-posts", id],
     queryFn: () => getData<unknown>(endpoints.posts.byDiscussion(id)),
@@ -61,28 +71,27 @@ export function DetailView({ title, endpoint, action = "none" }: { title: string
     },
     onMutate: async () => {
       if (action !== "discussion") return;
-      const previousJoined = joinedRoom;
-      setJoinedRoom(true);
+      const previousJoined = optimisticJoined;
+      setOptimisticJoined(true);
       return { joinedRoom: previousJoined };
     },
     onSuccess: () => {
       if (action !== "discussion") {
         gooeyToast.success("Action completed");
+      } else {
+        gooeyToast.success("Joined discussion");
       }
       queryClient.invalidateQueries({ queryKey: ["detail", endpoint] });
-      queryClient.invalidateQueries({ queryKey: ["profile"] });
+      queryClient.invalidateQueries({ queryKey: ["rooms", "me"] });
+      queryClient.invalidateQueries({ queryKey: ["profile-rooms"] });
     },
     onError: (error, _value, context) => {
       if (action === "discussion") {
-        setJoinedRoom(context?.joinedRoom ?? false);
+        setOptimisticJoined(context?.joinedRoom ?? false);
+        gooeyToast.error("Could not join room");
         return;
       }
       gooeyToast.error("Action failed", { description: error instanceof Error ? error.message : "Try again." });
-    },
-    onSettled: () => {
-      if (action === "discussion") {
-        queryClient.invalidateQueries({ queryKey: ["profile"] });
-      }
     }
   });
 
@@ -132,14 +141,15 @@ export function DetailView({ title, endpoint, action = "none" }: { title: string
 
           {action === "discussion" ? (
             <div className="space-y-5">
-              <Button
-                onClick={() => runQuickAction("Sign in to join this discussion room.")}
-                disabled={quickAction.isPending || joinedRoom}
-                variant={joinedRoom ? "secondary" : "default"}
-              >
-                <AppIcon icon={Door01Icon} size={18} className="mr-2" />
-                {joinedRoom ? "Joined" : quickAction.isPending ? "Joining..." : "Join room"}
-              </Button>
+              {!isMember ? (
+                <Button
+                  onClick={() => runQuickAction("Sign in to join this discussion room.")}
+                  disabled={quickAction.isPending}
+                >
+                  <AppIcon icon={Door01Icon} size={18} className="mr-2" />
+                  {quickAction.isPending ? "Joining..." : "Join room"}
+                </Button>
+              ) : null}
               <Card>
                 <CardContent className="space-y-4 p-5">
                   <h2 className="font-semibold">Room posts</h2>
@@ -152,7 +162,7 @@ export function DetailView({ title, endpoint, action = "none" }: { title: string
                     <>
                       {asArray<ApiRecord>(relatedPostsQuery.data).map((rawPost) => {
                         const relatedPost = normalizePost(rawPost, userId);
-                        return <PostCard key={relatedPost.id} post={relatedPost} />;
+                        return <PostCard key={relatedPost.id} post={relatedPost} showActions={isMember} />;
                       })}
                       {asArray<ApiRecord>(relatedPostsQuery.data).length === 0 ? (
                         <p className="text-sm text-muted-foreground">No posts in this discussion yet.</p>
@@ -224,11 +234,6 @@ export function DetailView({ title, endpoint, action = "none" }: { title: string
               </CardContent>
             </Card>
           ) : null}
-
-          <details className="rounded-md border bg-card p-4">
-            <summary className="cursor-pointer text-sm font-medium">Raw API data</summary>
-            <pre className="mt-3 max-h-[420px] overflow-auto rounded-md bg-muted p-4 text-xs text-muted-foreground">{stringifyJson(record)}</pre>
-          </details>
         </>
       ) : null}
     </div>

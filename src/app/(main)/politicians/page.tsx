@@ -1,6 +1,7 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { Suspense, useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import { PoliticianCard } from "@/components/cards/politician-card";
 import { PageHeader } from "@/components/shared/page-header";
@@ -11,11 +12,17 @@ import { civicQueries } from "@/services/queries/civic.queries";
 import { asArray, normalizePolitician, stringifyJson } from "@/lib/content-utils";
 import type { ApiRecord } from "@/types";
 
-export default function PoliticiansPage() {
-  const [search, setSearch] = useState("");
+function PoliticiansContent() {
+  const searchParams = useSearchParams();
+  const queryParam = searchParams.get("q") ?? "";
+  const [search, setSearch] = useState(queryParam);
   const [party, setParty] = useState("");
   const [state, setState] = useState("");
   const [office, setOffice] = useState("");
+
+  useEffect(() => {
+    setSearch(queryParam);
+  }, [queryParam]);
   const query = useQuery({
     queryKey: ["politicians"],
     queryFn: civicQueries.politicians
@@ -50,5 +57,13 @@ export default function PoliticiansPage() {
         </QueryListState>
       </div>
     </div>
+  );
+}
+
+export default function PoliticiansPage() {
+  return (
+    <Suspense fallback={<PoliticianCardSkeleton />}>
+      <PoliticiansContent />
+    </Suspense>
   );
 }
