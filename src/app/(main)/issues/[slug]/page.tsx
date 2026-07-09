@@ -1,6 +1,5 @@
-import { DetailView } from "@/components/content/detail-view";
-import { endpoints } from "@/services/client/endpoints";
+import { IssueDetailView } from "@/components/issues/issue-detail-view";
 
 export default function IssueDetailPage({ params }: { params: { slug: string } }) {
-  return <DetailView title="Issue" endpoint={endpoints.issues.detail(params.slug)} action="issue" />;
+  return <IssueDetailView issueId={params.slug} />;
 }

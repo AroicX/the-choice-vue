@@ -2,15 +2,13 @@
 
 import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
-import { SecurityCheckIcon } from "@/lib/icons";
-import { AppIcon } from "@/components/ui/icon";
 import { PageHeader } from "@/components/shared/page-header";
 import { QueryListState } from "@/components/shared/query-states";
 import { GenericCardSkeleton } from "@/components/skeletons/card-skeletons";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { civicQueries } from "@/services/queries/civic.queries";
-import { asArray, displayName, recordId } from "@/lib/content-utils";
+import { asArray, normalizeFactCheck } from "@/lib/content-utils";
 import type { ApiRecord } from "@/types";
 
 export default function FactChecksPage() {
@@ -18,7 +16,7 @@ export default function FactChecksPage() {
     queryKey: ["fact-checks"],
     queryFn: civicQueries.factChecks
   });
-  const factChecks = asArray<ApiRecord>(query.data);
+  const factChecks = asArray<ApiRecord>(query.data).map(normalizeFactCheck);
 
   return (
     <div>
@@ -32,17 +30,19 @@ export default function FactChecksPage() {
           emptyMessage="No fact checks available yet."
         >
           {factChecks.map((factCheck) => (
-          <Link key={recordId(factCheck)} href={`/fact-checks/${recordId(factCheck)}`}>
-          <Card className="transition-colors hover:bg-accent">
-            <CardContent className="p-5">
-              <AppIcon icon={SecurityCheckIcon} size={24} className="text-primary" />
-              <h2 className="mt-4 font-semibold">{displayName(factCheck)}</h2>
-              <p className="mt-2 line-clamp-2 text-sm text-muted-foreground">{String(factCheck.explanation ?? factCheck.description ?? "")}</p>
-              <Badge className="mt-4" variant="info">{String(factCheck.verdict ?? "UNVERIFIED")}</Badge>
-            </CardContent>
-          </Card>
-          </Link>
-        ))}
+            <Link key={factCheck.id} href={`/fact-checks/${factCheck.id}`}>
+              <Card className="transition-colors hover:bg-accent">
+                <CardContent className="p-5">
+                  <Badge variant="info">{factCheck.verdict.replaceAll("_", " ")}</Badge>
+                  <h2 className="mt-4 font-semibold leading-6">{factCheck.claim}</h2>
+                  <p className="mt-2 line-clamp-2 text-sm text-muted-foreground">{factCheck.explanation}</p>
+                  <p className="mt-4 text-xs text-muted-foreground">
+                    {factCheck.sources.length} source{factCheck.sources.length === 1 ? "" : "s"}
+                  </p>
+                </CardContent>
+              </Card>
+            </Link>
+          ))}
         </QueryListState>
       </div>
     </div>

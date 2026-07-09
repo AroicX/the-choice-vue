@@ -49,6 +49,20 @@ export type RoomRecord = {
 
 export type UserReaction = "like" | "dislike";
 
+export type MediaKind = "image" | "video";
+
+export type MediaAttachment = {
+  id?: string;
+  url: string;
+  type: MediaKind;
+  mimeType?: string;
+  size?: number;
+};
+
+export type MediaAttachments = {
+  items: MediaAttachment[];
+};
+
 export type Post = {
   id: string;
   user?: User;
@@ -64,9 +78,65 @@ export type Post = {
   discussionId?: string;
   createdAt?: string;
   userReaction?: UserReaction | null;
+  attachments?: MediaAttachment[];
   _count?: {
     comments: number;
   };
+};
+
+export type Politician = {
+  id: string;
+  name: string;
+  party: string;
+  partyImage?: string;
+  position: string;
+  state: string;
+  lga?: string;
+  constituency?: string;
+  biography?: string;
+  manifesto?: string;
+  imageUrl?: string;
+  slug?: string;
+  approvalScore: number;
+  performanceScore: number;
+  verified: boolean;
+  termStart?: string;
+  termEnd?: string;
+  promiseCount?: number;
+  issueCount?: number;
+  ratingCount?: number;
+};
+
+export type Scorecard = {
+  approvalRating: number;
+  performanceScore: number;
+  promiseDeliveryRate: number;
+  publicSentiment: number;
+  issueResponseRate: number;
+  factCheckScore: number;
+  transparencyScore: number;
+};
+
+export type FactCheck = {
+  id: string;
+  claim: string;
+  verdict: string;
+  explanation: string;
+  sources: string[];
+  relatedPoliticianIds: string[];
+  createdAt?: string;
+  updatedAt?: string;
+};
+
+export type Community = {
+  id: string;
+  name: string;
+  slug?: string;
+  type: string;
+  description: string;
+  state?: string;
+  lga?: string;
+  createdAt?: string;
 };
 
 export type Issue = {
@@ -79,17 +149,23 @@ export type Issue = {
   upvotes: number;
   comments: number;
   priority: "Low" | "Medium" | "High";
+  type?: string;
+  evidencePhotos?: string[];
+  evidenceDocuments?: string[];
+  aiSummary?: string;
+  politicianId?: string;
+  politicianName?: string;
+  politicianImage?: string;
+  createdByName?: string;
+  createdAt?: string;
 };
 
-export type Politician = {
-  id: string;
-  name: string;
-  party: string;
-  position: string;
-  state: string;
-  approvalScore: number;
-  performanceScore: number;
-  verified: boolean;
+export type VoteOption = {
+  label: string;
+  key: string;
+  value: number;
+  rawValue?: number;
+  image?: string;
 };
 
 export type Poll = {
@@ -97,7 +173,40 @@ export type Poll = {
   question: string;
   votes: number;
   expiresIn: string;
-  options: { label: string; key?: string; value: number; rawValue?: number }[];
+  options: VoteOption[];
+  hasVoted?: boolean;
+  userOption?: string | null;
+};
+
+export type Election = {
+  id: string;
+  title: string;
+  description?: string;
+  status: string;
+  type?: string;
+  votes: number;
+  options: VoteOption[];
+  image?: string;
+  createdAt?: string;
+  updatedAt?: string;
+  hasVoted?: boolean;
+  userOption?: string | null;
+};
+
+export type RatingCandidate = {
+  id: string;
+  name: string;
+  image?: string;
+  position: string;
+  party?: string;
+  partyImage?: string;
+  state?: string;
+  score: number;
+  politicianId?: string;
+  education?: string;
+  profession?: string;
+  constituency?: string;
+  hasRated?: boolean;
 };
 
 export type ApiRecord = Record<string, unknown> & {

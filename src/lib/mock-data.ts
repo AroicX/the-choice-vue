@@ -112,9 +112,9 @@ export const polls: Poll[] = [
     votes: 12840,
     expiresIn: "2 days",
     options: [
-      { label: "Healthcare access", value: 34 },
-      { label: "Road maintenance", value: 42 },
-      { label: "School funding", value: 24 }
+      { key: "option1", label: "Healthcare access", value: 34 },
+      { key: "option2", label: "Road maintenance", value: 42 },
+      { key: "option3", label: "School funding", value: 24 }
     ]
   },
   {
@@ -123,9 +123,9 @@ export const polls: Poll[] = [
     votes: 9241,
     expiresIn: "6 hours",
     options: [
-      { label: "Yes", value: 81 },
-      { label: "No", value: 9 },
-      { label: "Not sure", value: 10 }
+      { key: "option1", label: "Yes", value: 81 },
+      { key: "option2", label: "No", value: 9 },
+      { key: "option3", label: "Not sure", value: 10 }
     ]
   }
 ];

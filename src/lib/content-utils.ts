@@ -1,12 +1,39 @@
-import type { ApiRecord, Issue, Politician, Poll, Post, User } from "@/types";
+import type { ApiRecord, Community, Election, FactCheck, Issue, Politician, Poll, Post, RatingCandidate, Scorecard, User } from "@/types";
+import { normalizeMediaAttachments } from "@/lib/media-utils";
 
 export function asArray<T = ApiRecord>(value: unknown): T[] {
   if (Array.isArray(value)) return value as T[];
   if (value && typeof value === "object") {
     const record = value as Record<string, unknown>;
-    for (const key of ["items", "results", "records", "data", "comments", "room", "rooms"]) {
-      if (Array.isArray(record[key])) return record[key] as T[];
+    for (const key of [
+      "items",
+      "results",
+      "records",
+      "data",
+      "comments",
+      "posts",
+      "polls",
+      "poll",
+      "elections",
+      "election",
+      "room",
+      "rooms",
+      "discussions"
+    ]) {
+      const nested = record[key];
+      if (Array.isArray(nested)) return nested as T[];
     }
+
+    // Some endpoints return a single resource under a singular key (e.g. `{ poll: {...} }`).
+    for (const key of ["poll", "election", "post", "comment", "discussion"]) {
+      const nested = record[key];
+      if (nested && typeof nested === "object" && !Array.isArray(nested)) {
+        return [nested as T];
+      }
+    }
+
+    // getData may already unwrap to a single resource object.
+    if (record.id != null) return [value as T];
   }
   return [];
 }
@@ -23,10 +50,17 @@ export function commentAuthor(comment: ApiRecord) {
   return "Citizen";
 }
 
+export function commentAuthorProfilePic(comment: ApiRecord) {
+  const user = (comment.user ?? comment.createdBy) as ApiRecord | undefined;
+  if (!user || typeof user !== "object") return undefined;
+  return user.profilePic ? String(user.profilePic) : undefined;
+}
+
 export function displayName(record: ApiRecord) {
   return String(
     record.title ??
       record.name ??
+      record.claim ??
       record.topic ??
       record.question ??
       record.username ??
@@ -110,6 +144,7 @@ export function normalizePost(raw: ApiRecord, userId?: string): Post {
     discussionId: raw.discussionsId ? String(raw.discussionsId) : undefined,
     createdAt: raw.createdAt ? String(raw.createdAt) : undefined,
     userReaction: resolveUserReaction(raw, userId),
+    attachments: normalizeMediaAttachments(raw.attachments),
     _count: {
       comments: Number(count.comments ?? raw.comments ?? raw.commentCount ?? 0),
     },
@@ -117,6 +152,12 @@ export function normalizePost(raw: ApiRecord, userId?: string): Post {
 }
 
 export function normalizeIssue(raw: ApiRecord): Issue {
+  const politician = raw.politician as ApiRecord | undefined;
+  const createdBy = raw.createdBy as ApiRecord | undefined;
+  const evidence = raw.evidence && typeof raw.evidence === "object" ? raw.evidence as ApiRecord : {};
+  const photos = Array.isArray(evidence.photos) ? evidence.photos.map(String).filter(Boolean) : [];
+  const documents = Array.isArray(evidence.documents) ? evidence.documents.map(String).filter(Boolean) : [];
+
   return {
     id: recordId(raw),
     title: String(raw.title ?? "Untitled issue"),
@@ -126,45 +167,176 @@ export function normalizeIssue(raw: ApiRecord): Issue {
     status: (String(raw.status ?? "OPEN") as Issue["status"]),
     upvotes: Number(raw.upvoteCount ?? raw.upvotes ?? raw.votes ?? 0),
     comments: Number(raw.commentCount ?? raw.comments ?? 0),
-    priority: Number(raw.priority ?? 1) >= 3 ? "High" : Number(raw.priority ?? 1) === 2 ? "Medium" : "Low"
+    priority: Number(raw.priority ?? 1) >= 3 ? "High" : Number(raw.priority ?? 1) === 2 ? "Medium" : "Low",
+    type: raw.type ? String(raw.type) : undefined,
+    evidencePhotos: photos,
+    evidenceDocuments: documents,
+    aiSummary: raw.aiSummary ? String(raw.aiSummary) : undefined,
+    politicianId: politician?.id ? String(politician.id) : raw.politicianId ? String(raw.politicianId) : undefined,
+    politicianName: politician?.name ? String(politician.name) : undefined,
+    politicianImage: politician?.imageUrl ? String(politician.imageUrl) : undefined,
+    createdByName: createdBy
+      ? [createdBy.firstName, createdBy.lastName].filter(Boolean).join(" ") || String(createdBy.username ?? "Citizen")
+      : undefined,
+    createdAt: raw.createdAt ? String(raw.createdAt) : undefined
   };
 }
 
 export function normalizePolitician(raw: ApiRecord): Politician {
   const party = raw.party as ApiRecord | string | undefined;
+  const count = raw._count && typeof raw._count === "object" ? raw._count as ApiRecord : {};
+  const partyImage = typeof party === "object" && party ? String(party.image ?? "").trim() : "";
+  const image = String(raw.imageUrl ?? raw.image ?? "").trim();
+
   return {
     id: recordId(raw),
     name: String(raw.name ?? "Unnamed politician"),
     party: typeof party === "object" && party ? String(party.acronym ?? party.name ?? "Party") : String(party ?? raw.partyName ?? "Party"),
+    partyImage: partyImage || undefined,
     position: String(raw.position ?? raw.office ?? "Public office"),
-    state: String(raw.state ?? raw.constituency ?? "Nigeria"),
+    state: String(raw.state ?? "Nigeria"),
+    lga: raw.lga ? String(raw.lga) : undefined,
+    constituency: raw.constituency ? String(raw.constituency) : undefined,
+    biography: raw.biography ? String(raw.biography) : undefined,
+    manifesto: raw.manifesto ? String(raw.manifesto) : undefined,
+    imageUrl: image || undefined,
+    slug: raw.slug ? String(raw.slug) : undefined,
     approvalScore: Number(raw.approvalScore ?? raw.approval ?? 0),
     performanceScore: Number(raw.performanceScore ?? raw.score ?? 0),
-    verified: Boolean(raw.verified)
+    verified: Boolean(raw.verified),
+    termStart: raw.termStart ? String(raw.termStart) : undefined,
+    termEnd: raw.termEnd ? String(raw.termEnd) : undefined,
+    promiseCount: Number(count.promises ?? raw.promiseCount ?? 0),
+    issueCount: Number(count.issues ?? raw.issueCount ?? 0),
+    ratingCount: Number(count.ratings ?? raw.ratingCount ?? 0)
   };
 }
 
-export function normalizePoll(raw: ApiRecord): Poll {
-  const optionsRecord = raw.options && typeof raw.options === "object" ? raw.options as Record<string, ApiRecord> : {};
-  const options = Object.entries(optionsRecord).map(([key, option]) => ({
-    label: String(option.text ?? option.label ?? key),
-    key,
-    value: Number(option.value ?? 0)
-  }));
-  const votes = Number(raw.pollCount ?? raw.voteCount ?? options.reduce((total, option) => total + option.value, 0));
-  const percentageOptions = options.map((option) => ({
-    label: option.label,
-    key: option.key,
-    value: votes > 0 ? Math.round((option.value / votes) * 100) : 0,
-    rawValue: option.value
-  }));
+export function normalizeScorecard(raw: ApiRecord): Scorecard {
+  return {
+    approvalRating: Number(raw.approvalRating ?? raw.approvalScore ?? 0),
+    performanceScore: Number(raw.performanceScore ?? 0),
+    promiseDeliveryRate: Number(raw.promiseDeliveryRate ?? 0),
+    publicSentiment: Number(raw.publicSentiment ?? 0),
+    issueResponseRate: Number(raw.issueResponseRate ?? 0),
+    factCheckScore: Number(raw.factCheckScore ?? 0),
+    transparencyScore: Number(raw.transparencyScore ?? 0)
+  };
+}
+
+export function normalizeFactCheck(raw: ApiRecord): FactCheck {
+  const sourcesRaw = raw.sources;
+  let sources: string[] = [];
+  if (Array.isArray(sourcesRaw)) sources = sourcesRaw.map(String);
+  else if (sourcesRaw && typeof sourcesRaw === "object") {
+    const record = sourcesRaw as ApiRecord;
+    if (Array.isArray(record.urls)) sources = record.urls.map(String);
+  }
+
+  const related = raw.relatedIds && typeof raw.relatedIds === "object" ? raw.relatedIds as ApiRecord : {};
+  const relatedPoliticianIds = Array.isArray(related.politicians) ? related.politicians.map(String) : [];
 
   return {
     id: recordId(raw),
+    claim: String(raw.claim ?? raw.title ?? "Untitled claim"),
+    verdict: String(raw.verdict ?? "UNVERIFIED"),
+    explanation: String(raw.explanation ?? raw.description ?? ""),
+    sources,
+    relatedPoliticianIds,
+    createdAt: raw.createdAt ? String(raw.createdAt) : undefined,
+    updatedAt: raw.updatedAt ? String(raw.updatedAt) : undefined
+  };
+}
+
+export function normalizeCommunity(raw: ApiRecord): Community {
+  return {
+    id: recordId(raw),
+    name: String(raw.name ?? "Untitled community"),
+    slug: raw.slug ? String(raw.slug) : undefined,
+    type: String(raw.type ?? "TOPIC"),
+    description: String(raw.description ?? ""),
+    state: raw.state ? String(raw.state) : undefined,
+    lga: raw.lga ? String(raw.lga) : undefined,
+    createdAt: raw.createdAt ? String(raw.createdAt) : undefined
+  };
+}
+
+export function normalizeVoteOptions(raw: ApiRecord, totalVotes?: number) {
+  const optionsRecord = raw.options && typeof raw.options === "object" && !Array.isArray(raw.options)
+    ? raw.options as Record<string, ApiRecord>
+    : {};
+  const options = Object.entries(optionsRecord).map(([key, option]) => {
+    const image = String(option.image ?? option.imageUrl ?? option.photo ?? option.avatar ?? "").trim();
+    return {
+      label: String(option.text ?? option.label ?? key),
+      key,
+      value: Number(option.value ?? 0),
+      image: image || undefined
+    };
+  });
+  const votes = totalVotes ?? options.reduce((total, option) => total + option.value, 0);
+  return options.map((option) => ({
+    ...option,
+    value: votes > 0 ? Math.round((option.value / votes) * 100) : 0,
+    rawValue: option.value
+  }));
+}
+
+export function normalizePoll(raw: ApiRecord): Poll {
+  const votes = Number(raw.pollCount ?? raw.voteCount ?? 0);
+  return {
+    id: recordId(raw),
     question: String(raw.question ?? raw.title ?? "Untitled poll"),
-    votes,
+    votes: votes || normalizeVoteOptions(raw).reduce((total, option) => total + (option.rawValue ?? 0), 0),
     expiresIn: String(raw.status ?? raw.expiresIn ?? "Active"),
-    options: percentageOptions
+    options: normalizeVoteOptions(raw, votes || undefined),
+    hasVoted: Boolean(raw.hasVoted),
+    userOption: raw.userOption ? String(raw.userOption) : null
+  };
+}
+
+export function normalizeElection(raw: ApiRecord): Election {
+  const votes = Number(raw.electionCount ?? raw.voteCount ?? 0);
+  const options = normalizeVoteOptions(raw, votes || undefined);
+  const cover = String(raw.image ?? raw.imageUrl ?? raw.banner ?? raw.coverImage ?? "").trim();
+  const firstOptionImage = options.find((option) => option.image)?.image;
+  return {
+    id: recordId(raw),
+    title: String(raw.title ?? raw.question ?? "Untitled election"),
+    description: raw.description ? String(raw.description) : undefined,
+    status: String(raw.status ?? "Live"),
+    type: raw.type ? String(raw.type) : undefined,
+    votes: votes || options.reduce((total, option) => total + (option.rawValue ?? 0), 0),
+    options,
+    image: cover || firstOptionImage || undefined,
+    createdAt: raw.createdAt ? String(raw.createdAt) : undefined,
+    updatedAt: raw.updatedAt ? String(raw.updatedAt) : undefined,
+    hasVoted: Boolean(raw.hasVoted),
+    userOption: raw.userOption ? String(raw.userOption) : null
+  };
+}
+
+export function normalizeRatingCandidate(raw: ApiRecord): RatingCandidate {
+  const party = raw.party as ApiRecord | string | undefined;
+  const partyName = typeof party === "object" && party
+    ? String(party.acronym ?? party.name ?? "")
+    : String(party ?? raw.partyName ?? "");
+  const partyImage = typeof party === "object" && party ? String(party.image ?? "").trim() : "";
+  const image = String(raw.image ?? raw.imageUrl ?? raw.avatar ?? "").trim();
+  return {
+    id: recordId(raw),
+    name: String(raw.name ?? "Unnamed candidate"),
+    image: image || undefined,
+    position: String(raw.position ?? raw.candidate ?? "Public office"),
+    party: partyName || undefined,
+    partyImage: partyImage || undefined,
+    state: raw.state ? String(raw.state) : undefined,
+    score: Number(raw.score ?? raw.performanceScore ?? raw.approvalScore ?? 0),
+    politicianId: raw.politicianId ? String(raw.politicianId) : undefined,
+    education: raw.education ? String(raw.education) : undefined,
+    profession: raw.profession ? String(raw.profession) : undefined,
+    constituency: raw.constituency ? String(raw.constituency) : undefined,
+    hasRated: Boolean(raw.hasRated)
   };
 }
 

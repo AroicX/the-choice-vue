@@ -1,6 +1,5 @@
-import { DetailView } from "@/components/content/detail-view";
-import { endpoints } from "@/services/client/endpoints";
+import { CommunityDetailView } from "@/components/communities/community-detail-view";
 
 export default function CommunityDetailPage({ params }: { params: { slug: string } }) {
-  return <DetailView title="Community" endpoint={endpoints.communities.detail(params.slug)} action="community" />;
+  return <CommunityDetailView communityId={params.slug} />;
 }

@@ -1,6 +1,7 @@
 "use client";
 
 import { ReactionButton } from "@/components/animations/reaction-button";
+import { MediaAttachmentGrid } from "@/components/media/media-attachment-grid";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { AppIcon } from "@/components/ui/icon";
@@ -38,8 +39,10 @@ export function PostCard({ post, interactive = true, showActions = true }: PostC
       url: `${window.location.origin}/threads/post/${post.id}`,
       author: post.author,
       handle: post.handle,
+      authorAvatar: post.user?.profilePic,
       message: post.message,
-      topic: post.topic
+      topic: post.topic,
+      attachments: post.attachments
     });
   }
 
@@ -80,6 +83,7 @@ export function PostCard({ post, interactive = true, showActions = true }: PostC
         </div>
       </CardHeader>
       <CardContent>
+        {post.attachments?.length ? <MediaAttachmentGrid items={post.attachments} /> : null}
         <p className="leading-7 text-foreground">{post.message}</p>
         {showActions ? (
           <div

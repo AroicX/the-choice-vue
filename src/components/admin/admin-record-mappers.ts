@@ -2,6 +2,10 @@ import { detailsFrom, nestedValue, roles, states, statusField, valueFrom, type A
 
 type Raw = Record<string, unknown>;
 
+export type OptionPayload = Record<string, unknown> & {
+  options: Record<string, { text: string; image: string | null; value: number }>;
+};
+
 function idOf(raw: Raw) {
   return String(raw.id ?? raw._id ?? raw.slug ?? crypto.randomUUID());
 }
@@ -199,11 +203,13 @@ export const pollsMeta: AdminPageMeta = {
   createFields: [
     { name: "discussionId", label: "Discussion ID" },
     { name: "question", label: "Question", type: "textarea" },
-    { name: "options", label: "Options JSON", type: "textarea", placeholder: "{\"a\":{\"text\":\"Yes\"},\"b\":{\"text\":\"No\"}}" }
+    { name: "optionText", label: "Option text" },
+    { name: "optionImage", label: "Option image URL" }
   ],
   editFields: [
     { name: "question", label: "Question", type: "textarea" },
-    { name: "options", label: "Options JSON", type: "textarea" }
+    { name: "optionText", label: "Option text" },
+    { name: "optionImage", label: "Option image URL" }
   ],
   emptyTitle: "No polls returned",
   emptyDescription: "No polls are available right now."
@@ -215,7 +221,8 @@ export function mapPoll(raw: Raw): AdminRecord {
     discussion: nestedValue(raw, "discussions", ["topic", "question"], String(raw.discussionsId ?? "-")),
     votes: Number(raw.pollCount ?? raw.voteCount ?? 0),
     status: String(raw.status ?? "Created"),
-    endDate: raw.expiresAt ? new Date(String(raw.expiresAt)).toLocaleDateString() : "-"
+    endDate: raw.expiresAt ? new Date(String(raw.expiresAt)).toLocaleDateString() : "-",
+    options: raw.options && typeof raw.options === "object" ? Object.keys(raw.options as Raw).length : 0
   };
   return recordFrom(raw, String(values.question), values, String(values.status).toLowerCase());
 }
@@ -237,12 +244,14 @@ export const electionsMeta: AdminPageMeta = {
   createFields: [
     { name: "title", label: "Title" },
     { name: "description", label: "Description", type: "textarea" },
-    { name: "options", label: "Options JSON", type: "textarea" }
+    { name: "optionText", label: "Candidate/option name" },
+    { name: "optionImage", label: "Candidate/option image URL" }
   ],
   editFields: [
     { name: "title", label: "Title" },
     { name: "description", label: "Description", type: "textarea" },
-    { name: "options", label: "Options JSON", type: "textarea" }
+    { name: "optionText", label: "Candidate/option name" },
+    { name: "optionImage", label: "Candidate/option image URL" }
   ],
   emptyTitle: "No elections returned",
   emptyDescription: "No elections are available right now."
@@ -254,6 +263,7 @@ export function mapElection(raw: Raw): AdminRecord {
     type: String(raw.type ?? "-"),
     status: String(raw.status ?? "Upcoming"),
     votes: Number(raw.electionCount ?? raw.voteCount ?? 0),
+    options: raw.options && typeof raw.options === "object" ? Object.keys(raw.options as Raw).length : 0,
     createdAt: dateOf(raw)
   };
   return recordFrom(raw, String(values.title), values, String(values.status).toLowerCase());
@@ -276,10 +286,13 @@ export const ratingsMeta: AdminPageMeta = {
   createFields: [
     { name: "name", label: "Name" },
     { name: "candidate", label: "Candidate type", type: "select", options: ["PRESIDENCY", "GOVERNOR", "SENATOR", "HOUSE"] },
+    { name: "partyId", label: "Party ID", type: "number" },
     { name: "position", label: "Position" },
     { name: "constituency", label: "Constituency" },
+    { name: "age", label: "Age" },
     { name: "education", label: "Education" },
     { name: "profession", label: "Profession" },
+    { name: "image", label: "Candidate image URL" },
     { name: "state", label: "State", type: "select", options: states }
   ],
   editFields: [
@@ -287,8 +300,10 @@ export const ratingsMeta: AdminPageMeta = {
     { name: "name", label: "Name" },
     { name: "position", label: "Position" },
     { name: "constituency", label: "Constituency" },
+    { name: "age", label: "Age" },
     { name: "education", label: "Education" },
-    { name: "profession", label: "Profession" }
+    { name: "profession", label: "Profession" },
+    { name: "image", label: "Candidate image URL" }
   ],
   emptyTitle: "No ratings returned",
   emptyDescription: "No ratings are available right now."
@@ -300,7 +315,9 @@ export function mapRating(raw: Raw): AdminRecord {
     position: String(raw.position ?? raw.candidate ?? "-"),
     constituency: String(raw.constituency ?? "-"),
     state: String(raw.state ?? "-"),
-    education: String(raw.education ?? "-")
+    education: String(raw.education ?? "-"),
+    profession: String(raw.profession ?? "-"),
+    image: String(raw.image ?? "")
   };
   return recordFrom(raw, String(values.name), values, "active", String(values.position));
 }
@@ -323,6 +340,18 @@ export const partiesMeta: AdminPageMeta = {
     { name: "name", label: "Party name" },
     { name: "slug", label: "Slug" },
     { name: "acronym", label: "Acronym" },
+    { name: "founded", label: "Founded" },
+    { name: "image", label: "Logo image URL" },
+    { name: "description", label: "Description", type: "textarea" },
+    { name: "website", label: "Website" },
+    { name: "chairman", label: "Chairman" }
+  ],
+  editFields: [
+    { name: "name", label: "Party name" },
+    { name: "slug", label: "Slug" },
+    { name: "acronym", label: "Acronym" },
+    { name: "founded", label: "Founded" },
+    { name: "image", label: "Logo image URL" },
     { name: "description", label: "Description", type: "textarea" },
     { name: "website", label: "Website" },
     { name: "chairman", label: "Chairman" }
@@ -336,7 +365,10 @@ export function mapParty(raw: Raw): AdminRecord {
     name: String(raw.name ?? "-"),
     acronym: String(raw.acronym ?? "-"),
     chairman: String(raw.chairman ?? "-"),
+    founded: String(raw.founded ?? "-"),
+    image: String(raw.image ?? ""),
     website: String(raw.website ?? "-"),
+    description: String(raw.description ?? "-"),
     createdAt: dateOf(raw)
   };
   return recordFrom(raw, String(values.name), values, "active", String(values.acronym));
@@ -369,6 +401,27 @@ export const politiciansMeta: AdminPageMeta = {
     { name: "biography", label: "Biography", type: "textarea" },
     { name: "imageUrl", label: "Profile image URL" },
     { name: "manifesto", label: "Manifesto", type: "textarea" },
+    { name: "approvalScore", label: "Approval score", type: "number" },
+    { name: "performanceScore", label: "Performance score", type: "number" },
+    { name: "termStart", label: "Term start", type: "date" },
+    { name: "termEnd", label: "Term end", type: "date" },
+    { name: "verified", label: "Verified", type: "checkbox" }
+  ],
+  editFields: [
+    { name: "name", label: "Full name" },
+    { name: "slug", label: "Slug" },
+    { name: "partyId", label: "Party ID" },
+    { name: "position", label: "Position", type: "select", options: ["PRESIDENCY", "GOVERNOR", "SENATOR", "HOUSE"] },
+    { name: "state", label: "State", type: "select", options: states },
+    { name: "lga", label: "LGA" },
+    { name: "constituency", label: "Constituency" },
+    { name: "biography", label: "Biography", type: "textarea" },
+    { name: "imageUrl", label: "Profile image URL" },
+    { name: "manifesto", label: "Manifesto", type: "textarea" },
+    { name: "approvalScore", label: "Approval score", type: "number" },
+    { name: "performanceScore", label: "Performance score", type: "number" },
+    { name: "termStart", label: "Term start", type: "date" },
+    { name: "termEnd", label: "Term end", type: "date" },
     { name: "verified", label: "Verified", type: "checkbox" }
   ],
   emptyTitle: "No politicians returned",
@@ -383,9 +436,163 @@ export function mapPolitician(raw: Raw): AdminRecord {
     state: String(raw.state ?? "-"),
     constituency: String(raw.constituency ?? "-"),
     verified: raw.verified ? "Verified" : "Unverified",
-    approval: `${Number(raw.approvalScore ?? 0)}%`
+    approval: `${Number(raw.approvalScore ?? 0)}%`,
+    performance: `${Number(raw.performanceScore ?? 0)}%`,
+    imageUrl: String(raw.imageUrl ?? ""),
+    biography: String(raw.biography ?? "-"),
+    manifesto: String(raw.manifesto ?? "-"),
+    termStart: raw.termStart ? new Date(String(raw.termStart)).toLocaleDateString() : "-",
+    termEnd: raw.termEnd ? new Date(String(raw.termEnd)).toLocaleDateString() : "-"
   };
   return recordFrom(raw, String(values.name), values, raw.verified ? "verified" : "active", String(values.position));
+}
+
+export const issuesMeta: AdminPageMeta = {
+  title: "Issues",
+  description: "Review civic issues, assignments, and resolution status.",
+  primaryAction: "Create Issue",
+  filters: ["Status", "Category", "State"],
+  columns: [
+    { key: "title", label: "Title" },
+    { key: "category", label: "Category" },
+    { key: "status", label: "Status" },
+    { key: "priority", label: "Priority" },
+    { key: "upvotes", label: "Upvotes" },
+    { key: "location", label: "Location" }
+  ],
+  rowActions: ["View", "Edit", "Delete"],
+  createFields: [
+    { name: "title", label: "Title" },
+    { name: "description", label: "Description", type: "textarea" },
+    { name: "type", label: "Type", type: "select", options: ["NATIONAL", "STATE", "LGA", "WARD"] },
+    { name: "category", label: "Category" },
+    { name: "state", label: "State", type: "select", options: states },
+    { name: "lga", label: "LGA" },
+    { name: "priority", label: "Priority", type: "number" },
+    { name: "politicianId", label: "Politician ID" }
+  ],
+  editFields: [
+    { name: "title", label: "Title" },
+    { name: "description", label: "Description", type: "textarea" },
+    { name: "category", label: "Category" },
+    { name: "status", label: "Status", type: "select", options: ["OPEN", "UNDER_REVIEW", "IN_PROGRESS", "RESOLVED", "REJECTED", "ARCHIVED"] },
+    { name: "priority", label: "Priority", type: "number" },
+    { name: "politicianId", label: "Politician ID" }
+  ],
+  emptyTitle: "No issues returned",
+  emptyDescription: "No civic issues are available right now."
+};
+
+export function mapIssue(raw: Raw): AdminRecord {
+  const values = {
+    title: String(raw.title ?? "-"),
+    category: String(raw.category ?? "-"),
+    status: String(raw.status ?? "OPEN"),
+    priority: String(raw.priority ?? 0),
+    upvotes: Number(raw.upvoteCount ?? 0),
+    location: [raw.ward, raw.lga, raw.state].filter(Boolean).join(", ") || "-",
+    politician: nestedValue(raw, "politician", ["name"], String(raw.politicianId ?? "-"))
+  };
+  return recordFrom(raw, String(values.title), values, String(values.status).toLowerCase(), String(values.category));
+}
+
+export const factChecksMeta: AdminPageMeta = {
+  title: "Fact Checks",
+  description: "Manage claims, verdicts, explanations, and source links.",
+  primaryAction: "Create Fact Check",
+  filters: ["Verdict"],
+  columns: [
+    { key: "claim", label: "Claim" },
+    { key: "verdict", label: "Verdict" },
+    { key: "sources", label: "Sources" },
+    { key: "updatedAt", label: "Updated" }
+  ],
+  rowActions: ["View", "Edit", "Delete"],
+  createFields: [
+    { name: "claim", label: "Claim", type: "textarea" },
+    { name: "verdict", label: "Verdict", type: "select", options: ["TRUE", "MOSTLY_TRUE", "MIXED", "MOSTLY_FALSE", "FALSE", "UNVERIFIED", "MISLEADING"] },
+    { name: "explanation", label: "Explanation", type: "textarea" },
+    { name: "sources", label: "Sources JSON", type: "textarea", placeholder: '{"urls":["https://example.com"]}' },
+    { name: "relatedIds", label: "Related IDs JSON", type: "textarea", placeholder: '{"politicians":["uuid"]}' }
+  ],
+  editFields: [
+    { name: "claim", label: "Claim", type: "textarea" },
+    { name: "verdict", label: "Verdict", type: "select", options: ["TRUE", "MOSTLY_TRUE", "MIXED", "MOSTLY_FALSE", "FALSE", "UNVERIFIED", "MISLEADING"] },
+    { name: "explanation", label: "Explanation", type: "textarea" },
+    { name: "sources", label: "Sources JSON", type: "textarea" },
+    { name: "relatedIds", label: "Related IDs JSON", type: "textarea" }
+  ],
+  emptyTitle: "No fact checks returned",
+  emptyDescription: "No fact checks are available right now."
+};
+
+export function mapFactCheck(raw: Raw): AdminRecord {
+  const sources = raw.sources && typeof raw.sources === "object" ? raw.sources as Raw : {};
+  const urls = Array.isArray(sources.urls) ? sources.urls.length : 0;
+  const values = {
+    claim: String(raw.claim ?? "-").slice(0, 100),
+    verdict: String(raw.verdict ?? "UNVERIFIED"),
+    sources: `${urls} source${urls === 1 ? "" : "s"}`,
+    updatedAt: dateOf(raw),
+    explanation: String(raw.explanation ?? "-")
+  };
+  return recordFrom(raw, String(values.claim), values, String(values.verdict).toLowerCase());
+}
+
+export const communitiesMeta: AdminPageMeta = {
+  title: "Communities",
+  description: "Manage civic communities by state, LGA, and topic.",
+  primaryAction: "Create Community",
+  filters: ["Type", "State"],
+  columns: [
+    { key: "name", label: "Name" },
+    { key: "type", label: "Type" },
+    { key: "state", label: "State" },
+    { key: "slug", label: "Slug" },
+    { key: "createdAt", label: "Created" }
+  ],
+  rowActions: ["View", "Edit", "Delete"],
+  createFields: [
+    { name: "name", label: "Name" },
+    { name: "slug", label: "Slug" },
+    { name: "type", label: "Type", type: "select", options: ["STATE", "LGA", "WARD", "CONSTITUENCY", "TOPIC", "POLITICAL_PARTY", "CIVIL_SOCIETY"] },
+    { name: "description", label: "Description", type: "textarea" },
+    { name: "state", label: "State", type: "select", options: states },
+    { name: "lga", label: "LGA" }
+  ],
+  editFields: [
+    { name: "name", label: "Name" },
+    { name: "slug", label: "Slug" },
+    { name: "type", label: "Type", type: "select", options: ["STATE", "LGA", "WARD", "CONSTITUENCY", "TOPIC", "POLITICAL_PARTY", "CIVIL_SOCIETY"] },
+    { name: "description", label: "Description", type: "textarea" },
+    { name: "state", label: "State", type: "select", options: states },
+    { name: "lga", label: "LGA" }
+  ],
+  emptyTitle: "No communities returned",
+  emptyDescription: "No communities are available right now."
+};
+
+export function mapCommunity(raw: Raw): AdminRecord {
+  const values = {
+    name: String(raw.name ?? "-"),
+    type: String(raw.type ?? "-"),
+    state: String(raw.state ?? "-"),
+    slug: String(raw.slug ?? "-"),
+    createdAt: dateOf(raw),
+    description: String(raw.description ?? "-")
+  };
+  return recordFrom(raw, String(values.name), values, "active", String(values.type));
+}
+
+export function factCheckPayload(payload: Record<string, string | boolean>) {
+  const clean = omitEmpty(payload);
+  return {
+    claim: clean.claim,
+    verdict: clean.verdict,
+    explanation: clean.explanation,
+    sources: parseJsonField(clean.sources ?? ""),
+    relatedIds: parseJsonField(clean.relatedIds ?? "")
+  };
 }
 
 export const notificationsMeta: AdminPageMeta = {
@@ -505,6 +712,14 @@ export function parseJsonField(value: string | boolean) {
 
 export function omitEmpty(payload: Record<string, string | boolean>) {
   return Object.fromEntries(Object.entries(payload).filter(([, value]) => value !== ""));
+}
+
+export function ratingPayload(payload: Record<string, string | boolean>) {
+  const clean: Record<string, unknown> = omitEmpty(payload);
+  if (clean.partyId !== undefined) {
+    clean.partyId = Number(clean.partyId);
+  }
+  return clean;
 }
 
 export function userPayload(payload: Record<string, string | boolean>) {

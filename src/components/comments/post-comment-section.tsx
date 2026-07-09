@@ -1,17 +1,21 @@
 "use client";
 
-import { useCallback, useEffect } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { AppIcon } from "@/components/ui/icon";
 import { Button } from "@/components/ui/button";
+import { MediaAttachmentGrid } from "@/components/media/media-attachment-grid";
 import { PostCommentComposer } from "@/components/comments/post-comment-composer";
 import { CommentSkeleton } from "@/components/skeletons/card-skeletons";
 import { useInfiniteScroll } from "@/hooks/use-infinite-scroll";
 import { flattenComments, usePostComments } from "@/hooks/use-post-comments";
-import { commentAuthor } from "@/lib/content-utils";
+import { commentAuthor, commentAuthorProfilePic } from "@/lib/content-utils";
+import { normalizeMediaAttachments } from "@/lib/media-utils";
 import { Comment01Icon, Share08Icon } from "@/lib/icons";
 import { useShareModalStore } from "@/stores/share-modal-store";
 import type { ApiRecord, Post } from "@/types";
 import { Card, CardContent } from "@/components/ui/card";
+import { cn } from "@/lib/utils";
+import Image from "next/image";
 
 type PostCommentSectionProps = {
   post: Post;
@@ -21,6 +25,7 @@ export function PostCommentSection({ post }: PostCommentSectionProps) {
   const openShareModal = useShareModalStore((state) => state.open);
   const commentsQuery = usePostComments(post.id);
   const comments = flattenComments(commentsQuery.data?.pages);
+  const [activeCommentId, setActiveCommentId] = useState<string | null>(null);
 
   const loadMore = useCallback(() => {
     if (commentsQuery.hasNextPage && !commentsQuery.isFetchingNextPage) {
@@ -40,6 +45,7 @@ export function PostCommentSection({ post }: PostCommentSectionProps) {
 
   const isInitialLoading = commentsQuery.isLoading;
   const isSyncing = commentsQuery.isFetching && !commentsQuery.isLoading && !commentsQuery.isFetchingNextPage;
+  const activeComment = comments.find((comment) => String(comment.id) === activeCommentId) ?? null;
 
   function shareComment(comment: ApiRecord) {
     const message = String(comment.message ?? comment.content ?? "");
@@ -49,13 +55,16 @@ export function PostCommentSection({ post }: PostCommentSectionProps) {
       url: `${window.location.origin}/threads/post/${post.id}#comments`,
       author,
       handle: `@${author.replace(/\s+/g, "").toLowerCase()}`,
+      authorAvatar: commentAuthorProfilePic(comment),
       message,
       topic: post.topic,
+      attachments: normalizeMediaAttachments(comment.attachments),
       quotedPost: {
         author: post.author,
         handle: post.handle,
         topic: post.topic,
-        message: post.message
+        message: post.message,
+        attachments: post.attachments
       }
     });
   }
@@ -76,6 +85,28 @@ export function PostCommentSection({ post }: PostCommentSectionProps) {
 
         <PostCommentComposer post={post} showQuote={false} />
 
+        {activeComment ? (
+          <div className="space-y-3 rounded-2xl border border-primary/20 bg-primary/5 p-4">
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <p className="text-sm font-semibold">Comment thread</p>
+                <p className="text-xs text-muted-foreground">{commentAuthor(activeComment)}</p>
+              </div>
+              <Button variant="ghost" size="sm" onClick={() => setActiveCommentId(null)}>
+                Close
+              </Button>
+            </div>
+            <p className="text-sm leading-6">{String(activeComment.message ?? activeComment.content ?? "")}</p>
+            <MediaAttachmentGrid items={normalizeMediaAttachments(activeComment.attachments)} />
+            <div className="rounded-xl border border-border/70 bg-background/70 p-3">
+              <p className="mb-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">Original post</p>
+              <p className="text-sm font-semibold">{post.author}</p>
+              <p className="mt-1 text-sm text-muted-foreground line-clamp-3">{post.message}</p>
+              {post.attachments?.length ? <MediaAttachmentGrid items={post.attachments} className="mt-3" /> : null}
+            </div>
+          </div>
+        ) : null}
+
         <div className="space-y-3 border-t border-primary/10 pt-4">
           {isInitialLoading ? (
             <>
@@ -87,25 +118,63 @@ export function PostCommentSection({ post }: PostCommentSectionProps) {
             <>
               {comments.map((comment) => {
                 const isOptimistic = String(comment.id ?? "").startsWith("optimistic-");
+                const attachments = normalizeMediaAttachments(comment.attachments);
+                const isActive = String(comment.id) === activeCommentId;
+                const author = commentAuthor(comment);
+                const profilePic = commentAuthorProfilePic(comment);
+
                 return (
                   <div
                     key={String(comment.id)}
-                    className={`rounded-xl border bg-background/60 p-3 ${
-                      isOptimistic ? "border-primary/30 opacity-80" : "border-primary/10"
-                    }`}
+                    role="button"
+                    tabIndex={0}
+                    onClick={() => {
+                      if (isOptimistic) return;
+                      setActiveCommentId(String(comment.id));
+                    }}
+                    onKeyDown={(event) => {
+                      if (event.key === "Enter" || event.key === " ") {
+                        event.preventDefault();
+                        if (!isOptimistic) setActiveCommentId(String(comment.id));
+                      }
+                    }}
+                    className={cn(
+                      "rounded-xl border bg-background/60 p-3 text-left transition-colors",
+                      isOptimistic ? "border-primary/30 opacity-80" : "border-primary/10 hover:border-primary/25 hover:bg-accent/30",
+                      isActive && "border-primary/40 bg-primary/5"
+                    )}
                   >
+                    <div className="mb-2 flex items-center gap-2">
+                      {profilePic ? (
+                        <Image src={profilePic} alt={author} width={24} height={24} className="rounded-full object-cover" />
+                      ) : (
+                        <span className="grid h-6 w-6 place-items-center rounded-full bg-primary/15 text-[10px] font-semibold text-primary">
+                          {author.slice(0, 2).toUpperCase()}
+                        </span>
+                      )}
+                      <p className="text-sm font-semibold">{author}</p>
+                    </div>
+                    {attachments.length ? (
+                      <div onClick={(event) => event.stopPropagation()}>
+                        <MediaAttachmentGrid items={attachments} />
+                      </div>
+                    ) : null}
                     <p className="text-sm leading-6">{String(comment.message ?? comment.content ?? "")}</p>
+
                     <div className="mt-2 flex items-center justify-between gap-3">
-                      <p className="text-xs text-muted-foreground">
+                      {/* <p className="text-xs text-muted-foreground">
                         {commentAuthor(comment)}
                         {isOptimistic ? " · Sending..." : ""}
-                      </p>
+                      </p> */}
                       {!isOptimistic ? (
                         <Button
                           variant="ghost"
                           size="sm"
                           className="h-7 px-2 text-xs text-muted-foreground"
-                          onClick={() => shareComment(comment)}
+                          onClick={(event) => {
+                            event.stopPropagation();
+                            shareComment(comment);
+                          }}
                         >
                           <AppIcon icon={Share08Icon} size={14} className="mr-1.5" />
                           Share

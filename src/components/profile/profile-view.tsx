@@ -261,7 +261,7 @@ export function ProfileView({ userId }: ProfileViewProps) {
                 Rooms joined
               </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-3">
+            <CardContent className="space-y-3 max-h-[300px] overflow-y-auto">
               {roomsQuery.isLoading ? (
                 <div className="space-y-3">
                   {Array.from({ length: 2 }).map((_, index) => (

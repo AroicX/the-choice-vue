@@ -37,7 +37,7 @@ function PoliticiansContent() {
   return (
     <div>
       <PageHeader title="Politicians" description="Search leader profiles, scorecards, promises, ratings, and related public issues." />
-      <div className="mb-5 grid gap-3 md:grid-cols-4">
+      <div className="mb-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         <Input placeholder="Search by name" value={search} onChange={(event) => setSearch(event.target.value)} />
         <Input placeholder="Party" value={party} onChange={(event) => setParty(event.target.value)} />
         <Input placeholder="State" value={state} onChange={(event) => setState(event.target.value)} />

@@ -15,6 +15,7 @@ import { Input } from "@/components/ui/input";
 import { SidebarWidgetSkeleton } from "@/components/skeletons/card-skeletons";
 import { civicQueries } from "@/services/queries/civic.queries";
 import { notificationsService } from "@/services/notifications.service";
+import { userQueries } from "@/services/queries/user.queries";
 import {
   asArray,
   normalizeIssue,
@@ -26,9 +27,9 @@ import {
 import { useRequireAuth } from "@/hooks/use-require-auth";
 import { useAuthStore } from "@/stores/auth-store";
 import { useLoginModalStore } from "@/stores/login-modal-store";
-import { Logout01Icon, Search01Icon } from "@/lib/icons";
+import { Logout01Icon, Message01Icon, Search01Icon } from "@/lib/icons";
 import { cn } from "@/lib/utils";
-import type { ApiRecord } from "@/types";
+import type { ApiRecord, RoomRecord } from "@/types";
 
 function unreadCountFromPayload(payload: unknown): number {
   if (typeof payload === "number") return Math.max(0, payload);
@@ -69,7 +70,17 @@ export function MainShell({ children }: { children: React.ReactNode }) {
   const openLoginModal = useLoginModalStore((state) => state.open);
   const [search, setSearch] = useState("");
 
-  const issuesQuery = useQuery({ queryKey: ["shell", "issues"], queryFn: civicQueries.issues });
+  const roomsQuery = useQuery({
+    queryKey: ["rooms", "me"],
+    queryFn: userQueries.rooms,
+    enabled: isAuthenticated,
+    retry: false
+  });
+  const issuesQuery = useQuery({
+    queryKey: ["shell", "issues"],
+    queryFn: civicQueries.issues,
+    enabled: !isAuthenticated
+  });
   const politiciansQuery = useQuery({ queryKey: ["shell", "politicians"], queryFn: civicQueries.politicians });
   const pollsQuery = useQuery({ queryKey: ["shell", "polls"], queryFn: civicQueries.polls });
   const notificationCountQuery = useQuery({
@@ -79,9 +90,10 @@ export function MainShell({ children }: { children: React.ReactNode }) {
     refetchInterval: 60_000
   });
 
+  const joinedRooms = asArray<RoomRecord>(roomsQuery.data).slice(0, 6);
   const issues = asArray<ApiRecord>(issuesQuery.data).map(normalizeIssue).slice(0, 3);
-  const politicians = asArray<ApiRecord>(politiciansQuery.data).map(normalizePolitician).slice(0, 4);
-  const polls = asArray<ApiRecord>(pollsQuery.data).map(normalizePoll);
+  const politicians = asArray(politiciansQuery.data).map(normalizePolitician).slice(0, 4);
+  const polls = asArray(pollsQuery.data).map(normalizePoll);
   const unreadCount = unreadCountFromPayload(notificationCountQuery.data);
 
   function handleLogout() {
@@ -158,7 +170,7 @@ export function MainShell({ children }: { children: React.ReactNode }) {
                   value={search}
                   onChange={(event) => setSearch(event.target.value)}
                   className="h-10 pl-10"
-                  placeholder="Search politicians, issues, communities..."
+                  placeholder="Search civic topics..."
                   aria-label="Search"
                 />
               </form>
@@ -197,23 +209,76 @@ export function MainShell({ children }: { children: React.ReactNode }) {
             </div>
           </header>
 
-          <main className="min-h-[calc(100vh-4rem)] px-4 pb-24 pt-5 sm:px-6 lg:px-8 lg:pb-10">{children}</main>
+          <main className="min-h-[calc(100vh-4rem)] min-w-0 overflow-x-hidden px-4 pb-24 pt-5 sm:px-6 lg:px-8 lg:pb-10">{children}</main>
         </div>
 
         <aside className="sticky top-0 hidden h-screen overflow-y-auto border-l border-white/10 bg-card/50 px-5 py-6 backdrop-blur-xl xl:block">
           <div className="space-y-5">
-            {issuesQuery.isLoading ? (
+            {isAuthenticated ? (
+              roomsQuery.isLoading ? (
+                <SidebarWidgetSkeleton />
+              ) : (
+                <Card className="glass-panel p-4">
+                  <div className="flex items-center justify-between gap-2">
+                    <h3 className="font-semibold">Your discussions</h3>
+                    <Link href="/discourse" className="text-xs font-medium text-primary hover:underline">
+                      View all
+                    </Link>
+                  </div>
+                  <div className="mt-3 space-y-3">
+                    {joinedRooms.length ? (
+                      joinedRooms.map((room) => {
+                        const discussionId = room.discussionsId ?? room.discussions?.id ?? room.id;
+                        const topic = room.discussions?.topic ?? "Discussion room";
+                        const pollCount = asArray(room.discussions?.polls).length;
+                        return (
+                          <Link
+                            href={`/discussions/${discussionId}`}
+                            key={room.id}
+                            className="flex items-start gap-3 rounded-xl border border-primary/10 bg-background/60 p-3 transition-colors hover:border-primary/25 hover:bg-accent/50"
+                          >
+                            <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-primary/10 text-primary">
+                              <AppIcon icon={Message01Icon} size={16} />
+                            </span>
+                            <span className="min-w-0">
+                              <p className="truncate text-sm font-medium">{topic}</p>
+                              <p className="mt-1 text-xs text-muted-foreground">
+                                {pollCount.toLocaleString()} poll{pollCount === 1 ? "" : "s"}
+                              </p>
+                            </span>
+                          </Link>
+                        );
+                      })
+                    ) : (
+                      <div className="rounded-xl border border-dashed border-primary/20 bg-background/60 p-3">
+                        <p className="text-sm text-muted-foreground">You haven’t joined any discussions yet.</p>
+                        <Button className="mt-3 w-full" size="sm" variant="outline" asChild>
+                          <Link href="/discourse">Browse discourse</Link>
+                        </Button>
+                      </div>
+                    )}
+                  </div>
+                </Card>
+              )
+            ) : issuesQuery.isLoading ? (
               <SidebarWidgetSkeleton />
             ) : (
               <Card className="glass-panel p-4">
                 <h3 className="font-semibold">Trending Issues</h3>
                 <div className="mt-3 space-y-3">
                   {issues.map((issue) => (
-                    <Link href={`/issues/${issue.id}`} key={issue.id} className="block rounded-xl border border-primary/10 bg-background/60 p-3 transition-colors hover:border-primary/25 hover:bg-accent/50">
+                    <Link
+                      href={`/issues/${issue.id}`}
+                      key={issue.id}
+                      className="block rounded-xl border border-primary/10 bg-background/60 p-3 transition-colors hover:border-primary/25 hover:bg-accent/50"
+                    >
                       <p className="text-sm font-medium">{issue.title}</p>
                       <p className="mt-1 text-xs text-muted-foreground">{issue.location}</p>
                     </Link>
                   ))}
+                  {!issues.length ? (
+                    <p className="text-sm text-muted-foreground">No trending issues yet.</p>
+                  ) : null}
                 </div>
               </Card>
             )}

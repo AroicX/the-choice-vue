@@ -7,8 +7,9 @@ import { api } from "@/services/client/api";
 import { endpoints } from "@/services/client/endpoints";
 import { useRequireAuth } from "@/hooks/use-require-auth";
 import type { CommentsPage } from "@/hooks/use-post-comments";
+import { toAttachmentsPayload } from "@/lib/media-utils";
 import { useAuthStore } from "@/stores/auth-store";
-import type { ApiRecord } from "@/types";
+import type { ApiRecord, MediaAttachment } from "@/types";
 
 export function usePostComment(postId: string, options?: { onSuccess?: () => void }) {
   const queryClient = useQueryClient();
@@ -17,13 +18,18 @@ export function usePostComment(postId: string, options?: { onSuccess?: () => voi
   const [message, setMessage] = useState("");
 
   const commentMutation = useMutation({
-    mutationFn: (body: string) => api.post(endpoints.comments.create(postId), { message: body }),
-    onMutate: async (body) => {
+    mutationFn: ({ body, attachments }: { body: string; attachments: MediaAttachment[] }) =>
+      api.post(endpoints.comments.create(postId), {
+        message: body || " ",
+        attachments: toAttachmentsPayload(attachments)
+      }),
+    onMutate: async ({ body, attachments }) => {
       await queryClient.cancelQueries({ queryKey: ["comments", postId] });
       const previous = queryClient.getQueryData<InfiniteData<CommentsPage>>(["comments", postId]);
       const optimistic: ApiRecord = {
         id: `optimistic-${Date.now()}`,
         message: body,
+        attachments: toAttachmentsPayload(attachments),
         postsId: postId,
         postId,
         user: user
@@ -61,7 +67,7 @@ export function usePostComment(postId: string, options?: { onSuccess?: () => voi
       const previousPost = queryClient.getQueryData<ApiRecord>(["post", postId]);
       return { previous, previousPost };
     },
-    onError: (error, _body, context) => {
+    onError: (error, _vars, context) => {
       if (context?.previous) {
         queryClient.setQueryData(["comments", postId], context.previous);
       }
@@ -82,11 +88,11 @@ export function usePostComment(postId: string, options?: { onSuccess?: () => voi
     }
   });
 
-  function submitComment() {
+  function submitComment(attachments: MediaAttachment[] = []) {
     const trimmed = message.trim();
-    if (!trimmed) return;
+    if (!trimmed && !attachments.length) return;
     if (!requireAuth("Sign in to comment on this post.")) return;
-    commentMutation.mutate(trimmed);
+    commentMutation.mutate({ body: trimmed || " ", attachments });
   }
 
   return {

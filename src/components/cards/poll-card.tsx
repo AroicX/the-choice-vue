@@ -1,10 +1,39 @@
-import Link from "next/link";
+"use client";
+
+import { useState } from "react";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { gooeyToast } from "goey-toast";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { OptionVotePanel } from "@/components/voting/option-vote-panel";
+import { useRequireAuth } from "@/hooks/use-require-auth";
+import { votePollMutation } from "@/services/mutations/civic.mutations";
 import type { Poll } from "@/types";
 
 export function PollCard({ poll }: { poll: Poll }) {
+  const queryClient = useQueryClient();
+  const { requireAuth } = useRequireAuth();
+  const [votedLocally, setVotedLocally] = useState(false);
+  const hasVoted = Boolean(poll.hasVoted || votedLocally);
+
+  const voteMutation = useMutation({
+    mutationFn: (value: string) => votePollMutation({ pollId: poll.id, value }),
+    onSuccess: () => {
+      setVotedLocally(true);
+      gooeyToast.success("Vote cast");
+      queryClient.invalidateQueries({ queryKey: ["polls"] });
+      queryClient.invalidateQueries({ queryKey: ["discussion-polls"] });
+      queryClient.invalidateQueries({ queryKey: ["detail"] });
+      queryClient.invalidateQueries({ queryKey: ["discourse", "polls"] });
+      queryClient.invalidateQueries({ queryKey: ["shell", "polls"] });
+    },
+    onError: (error) => {
+      const message = error instanceof Error ? error.message : "Try again.";
+      if (/already/i.test(message)) setVotedLocally(true);
+      gooeyToast.error("Could not cast vote", { description: message });
+    }
+  });
+
   return (
     <Card className="animate-fade-up">
       <CardHeader>
@@ -14,25 +43,17 @@ export function PollCard({ poll }: { poll: Poll }) {
         </div>
       </CardHeader>
       <CardContent>
-        <div className="space-y-3">
-          {poll.options.map((option) => (
-            <div key={option.label}>
-              <div className="mb-1 flex justify-between text-sm">
-                <span>{option.label}</span>
-                <span className="font-medium">{option.value}%</span>
-              </div>
-              <div className="h-2.5 overflow-hidden rounded-full bg-muted">
-                <div className="h-2.5 rounded-full bg-gradient-to-r from-primary to-emerald-400 transition-all" style={{ width: `${option.value}%` }} />
-              </div>
-            </div>
-          ))}
-        </div>
-        <div className="mt-5 flex items-center justify-between">
-          <span className="text-sm text-muted-foreground">{poll.votes.toLocaleString()} votes</span>
-          <Button size="sm" asChild>
-            <Link href={`/polls/${poll.id}`}>Vote</Link>
-          </Button>
-        </div>
+        <OptionVotePanel
+          options={poll.options}
+          totalVotes={poll.votes}
+          hasVoted={hasVoted}
+          initialSelectedKey={poll.userOption}
+          isSubmitting={voteMutation.isPending}
+          onVote={(value) => {
+            if (!requireAuth("Sign in to cast your vote.")) return;
+            voteMutation.mutate(value);
+          }}
+        />
       </CardContent>
     </Card>
   );

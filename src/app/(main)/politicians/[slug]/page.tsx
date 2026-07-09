@@ -1,6 +1,5 @@
-import { DetailView } from "@/components/content/detail-view";
-import { endpoints } from "@/services/client/endpoints";
+import { PoliticianDetailView } from "@/components/politicians/politician-detail-view";
 
 export default function PoliticianDetailPage({ params }: { params: { slug: string } }) {
-  return <DetailView title="Politician" endpoint={endpoints.politicians.detail(params.slug)} action="politician" />;
+  return <PoliticianDetailView politicianId={params.slug} />;
 }

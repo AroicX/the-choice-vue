@@ -10,7 +10,7 @@ export const civicQueries = {
   politicians: () => getData<Politician[]>(endpoints.politicians.list),
   polls: () => getData<Poll[]>(endpoints.polls.list),
   elections: () => getData(endpoints.elections.list),
-  ratings: () => getData(endpoints.ratings.leaderboard),
+  ratings: () => getData(endpoints.ratings.list),
   news: () => getData(endpoints.news.list),
   factChecks: () => getData(endpoints.factChecks.list)
 };

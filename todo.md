@@ -18,6 +18,17 @@
 - [x] Make custom actions invalidate data and surface request errors.
 - [x] Re-run build after follow-up fixes.
 
+## Card-Based Control Follow-up
+
+- [x] Re-check backend docs and DTOs for posts, discussions, polls, elections, ratings, parties, and politicians.
+- [x] Replace the admin posts table with post cards, filters, and infinite scrolling.
+- [x] Replace the discussions table with cards and add a slug detail route that shows discussion posts as cards.
+- [x] Replace polls, elections, and ratings tables with 3-column card grids plus rich detail modals.
+- [x] Replace poll/election options JSON inputs with repeatable option fields that submit the backend `options` object.
+- [x] Show political party logos through the existing backend `image` field.
+- [x] Show candidate/politician cards with profile images and details.
+- [x] Run build and update this checklist.
+
 - [x] Read the full admin/control prompt and extract the required routes, components, behaviours, and security rules.
 - [x] Study the existing frontend architecture, routing groups, UI primitives, auth store, middleware, services, and data-fetching patterns.
 - [x] Study the API reference at `/Users/Gabriel/Desktop/Dev/theChoice9ja/thechoice9ja-api/docs/API_REFERENCE.md`.

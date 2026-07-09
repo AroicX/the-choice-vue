@@ -39,20 +39,20 @@ export default function HomePage() {
 
   return (
     <div className="space-y-8">
-      <section className="hero-grid relative overflow-hidden rounded-3xl border border-primary/15 bg-gradient-to-br from-card via-background to-accent/30 p-6 shadow-panel sm:p-10">
+      <section className="hero-grid relative min-w-0 overflow-hidden rounded-3xl border border-primary/15 bg-gradient-to-br from-card via-background to-accent/30 p-5 shadow-panel sm:p-10">
         <div className="absolute -right-10 -top-10 h-40 w-40 rounded-full bg-primary/10 blur-3xl" />
         <div className="absolute bottom-0 left-0 h-32 w-32 rounded-full bg-blue-500/10 blur-3xl" />
         <div className="relative max-w-3xl">
           <p className="text-sm font-semibold uppercase tracking-[0.24em] text-primary">Civic dashboard</p>
-          <h1 className="mt-4 text-4xl font-bold tracking-tight sm:text-6xl">
+          <h1 className="mt-4 text-3xl font-bold tracking-tight sm:text-5xl md:text-6xl">
             <span className="civic-gradient-text">The future of democracy in Nigeria.</span>
           </h1>
-          <p className="mt-5 max-w-2xl text-lg leading-8 text-muted-foreground">
+          <p className="mt-5 max-w-2xl text-base leading-7 text-muted-foreground sm:text-lg sm:leading-8">
             Know your leaders. Track performance. Hold power accountable with live civic intelligence.
           </p>
-          <div className="mt-8 flex flex-wrap gap-3">
-            <Button asChild size="lg"><Link href="/feed">Explore civic feed</Link></Button>
-            <Button variant="outline" size="lg" asChild><Link href="/issues/create">Report an issue</Link></Button>
+          <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
+            <Button asChild size="lg" className="w-full sm:w-auto"><Link href="/feed">Explore civic feed</Link></Button>
+            <Button variant="outline" size="lg" className="w-full sm:w-auto" asChild><Link href="/issues/create">Report an issue</Link></Button>
           </div>
         </div>
       </section>

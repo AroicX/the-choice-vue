@@ -1,17 +1,21 @@
 "use client";
 
 import { create } from "zustand";
-import type { Post } from "@/types";
+import type { MediaAttachment, Post } from "@/types";
 
-export type ShareQuotedPost = Pick<Post, "author" | "handle" | "topic" | "message">;
+export type ShareQuotedPost = Pick<Post, "author" | "handle" | "topic" | "message"> & {
+  attachments?: MediaAttachment[];
+};
 
 export type SharePayload = {
   type: "post" | "comment";
   url: string;
   author: string;
   handle?: string;
+  authorAvatar?: string;
   message: string;
   topic?: string;
+  attachments?: MediaAttachment[];
   quotedPost?: ShareQuotedPost;
 };
 

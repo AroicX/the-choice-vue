@@ -6,19 +6,30 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { gooeyToast } from "goey-toast";
 import { DetailSkeleton, PostCardSkeleton } from "@/components/skeletons/card-skeletons";
 import { AppIcon } from "@/components/ui/icon";
-import { CheckListIcon, Door01Icon, FavouriteIcon } from "@/lib/icons";
+import { Door01Icon, FavouriteIcon } from "@/lib/icons";
 import { api, getData } from "@/services/client/api";
 import { endpoints } from "@/services/client/endpoints";
-import { asArray, displayName, isRoomMember, normalizePoll, normalizePost, recordId } from "@/lib/content-utils";
+import {
+  asArray,
+  displayName,
+  isRoomMember,
+  normalizeElection,
+  normalizePoll,
+  normalizePost,
+  normalizeVoteOptions,
+  recordId
+} from "@/lib/content-utils";
 import type { ApiRecord, RoomRecord } from "@/types";
 import { useRequireAuth } from "@/hooks/use-require-auth";
 import { useAuthStore } from "@/stores/auth-store";
 import { PostActions } from "@/components/actions/post-actions";
 import { PostCard } from "@/components/cards/post-card";
+import { OptionVotePanel } from "@/components/voting/option-vote-panel";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { userQueries } from "@/services/queries/user.queries";
+import { voteElectionMutation, votePollMutation } from "@/services/mutations/civic.mutations";
 
 type DetailAction = "post" | "discussion" | "poll" | "election" | "issue" | "community" | "politician" | "none";
 
@@ -28,6 +39,7 @@ export function DetailView({ title, endpoint, action = "none" }: { title: string
   const userId = user?.id;
   const { requireAuth, isAuthenticated } = useRequireAuth();
   const [optimisticJoined, setOptimisticJoined] = useState(false);
+  const [votedLocally, setVotedLocally] = useState(false);
   const query = useQuery({
     queryKey: ["detail", endpoint],
     queryFn: () => getData<ApiRecord>(endpoint),
@@ -37,6 +49,10 @@ export function DetailView({ title, endpoint, action = "none" }: { title: string
   const record = query.data;
   const id = record ? recordId(record) : "";
   const post = record && action === "post" ? normalizePost(record, userId) : null;
+  const poll = record && action === "poll" ? normalizePoll(record) : null;
+  const election = record && action === "election" ? normalizeElection(record) : null;
+  const voteOptions = record ? normalizeVoteOptions(record) : [];
+  const hasVoted = Boolean(poll?.hasVoted || election?.hasVoted || votedLocally);
 
   const roomsQuery = useQuery({
     queryKey: ["rooms", "me"],
@@ -60,14 +76,12 @@ export function DetailView({ title, endpoint, action = "none" }: { title: string
   });
 
   const quickAction = useMutation({
-    mutationFn: async (value?: string) => {
+    mutationFn: async () => {
       if (!record) return;
       if (action === "discussion") return api.post(endpoints.rooms.join, { discussionsId: id, userId: user?.id });
       if (action === "issue") return api.post(endpoints.issues.upvote(id));
       if (action === "community") return api.post(endpoints.communities.join(id));
       if (action === "politician") return api.post(endpoints.follows.followPolitician(id));
-      if (action === "poll") return api.patch(endpoints.polls.vote(id), { value });
-      if (action === "election") return api.patch(endpoints.elections.vote(id), { value });
     },
     onMutate: async () => {
       if (action !== "discussion") return;
@@ -95,13 +109,31 @@ export function DetailView({ title, endpoint, action = "none" }: { title: string
     }
   });
 
-  const options = record && typeof record.options === "object" && record.options
-    ? Object.entries(record.options as Record<string, { text?: string; value?: number }>)
-    : [];
+  const voteMutation = useMutation({
+    mutationFn: async (value: string) => {
+      if (action === "poll") return votePollMutation({ pollId: id, value });
+      if (action === "election") return voteElectionMutation({ electionId: id, value });
+    },
+    onSuccess: () => {
+      setVotedLocally(true);
+      gooeyToast.success("Vote cast");
+      queryClient.invalidateQueries({ queryKey: ["detail", endpoint] });
+      queryClient.invalidateQueries({ queryKey: ["polls"] });
+      queryClient.invalidateQueries({ queryKey: ["elections"] });
+      queryClient.invalidateQueries({ queryKey: ["discussion-polls"] });
+    },
+    onError: (error) => {
+      const message = error instanceof Error ? error.message : "Try again.";
+      if (/already/i.test(message)) setVotedLocally(true);
+      gooeyToast.error("Could not cast vote", {
+        description: message
+      });
+    }
+  });
 
-  function runQuickAction(message: string, value?: string) {
+  function runQuickAction(message: string) {
     if (!requireAuth(message)) return;
-    quickAction.mutate(value);
+    quickAction.mutate();
   }
 
   return (
@@ -121,7 +153,16 @@ export function DetailView({ title, endpoint, action = "none" }: { title: string
           <Card>
             <CardHeader><CardTitle>{title}</CardTitle></CardHeader>
             <CardContent className="space-y-4">
-              <p className="whitespace-pre-line leading-7">{String(record.description ?? record.message ?? record.content ?? record.explanation ?? "")}</p>
+              <p className="whitespace-pre-line leading-7">
+                {String(
+                  record.description ??
+                  record.message ??
+                  record.content ??
+                  record.explanation ??
+                  record.question ??
+                  ""
+                )}
+              </p>
               <div className="grid gap-3 sm:grid-cols-3">
                 {([
                   ["Status", record.status ?? record.verdict ?? "Available"],
@@ -179,11 +220,11 @@ export function DetailView({ title, endpoint, action = "none" }: { title: string
                   ) : (
                     <>
                       {asArray<ApiRecord>(relatedPollsQuery.data).map((rawPoll) => {
-                        const poll = normalizePoll(rawPoll);
+                        const relatedPoll = normalizePoll(rawPoll);
                         return (
-                          <Link key={poll.id} href={`/polls/${poll.id}`} className="block rounded-md border p-3 hover:bg-accent">
-                            <p className="font-medium">{poll.question}</p>
-                            <p className="mt-1 text-sm text-muted-foreground">{poll.votes.toLocaleString()} votes</p>
+                          <Link key={relatedPoll.id} href={`/polls/${relatedPoll.id}`} className="block rounded-md border p-3 hover:bg-accent">
+                            <p className="font-medium">{relatedPoll.question}</p>
+                            <p className="mt-1 text-sm text-muted-foreground">{relatedPoll.votes.toLocaleString()} votes</p>
                           </Link>
                         );
                       })}
@@ -214,23 +255,22 @@ export function DetailView({ title, endpoint, action = "none" }: { title: string
             </Button>
           ) : null}
 
-          {["poll", "election"].includes(action) && options.length ? (
+          {["poll", "election"].includes(action) && voteOptions.length ? (
             <Card>
               <CardContent className="space-y-3 p-5">
-                <h2 className="font-semibold">Vote</h2>
-                {options.map(([key, option]) => (
-                  <div key={key} className="rounded-md border p-3">
-                    <div className="flex items-center justify-between gap-3">
-                      <div>
-                        <p className="font-medium">{option.text ?? key}</p>
-                        <p className="text-sm text-muted-foreground">{Number(option.value ?? 0).toLocaleString()} votes</p>
-                      </div>
-                      <Button variant="outline" onClick={() => runQuickAction("Sign in to cast your vote.", key)} disabled={quickAction.isPending}>
-                        <AppIcon icon={CheckListIcon} size={18} className="mr-2" />Vote
-                      </Button>
-                    </div>
-                  </div>
-                ))}
+                <h2 className="font-semibold">Cast your vote</h2>
+                <p className="text-sm text-muted-foreground">Select an option, then confirm with Vote.</p>
+                <OptionVotePanel
+                  options={voteOptions}
+                  totalVotes={poll?.votes ?? election?.votes}
+                  hasVoted={hasVoted}
+                  initialSelectedKey={poll?.userOption ?? election?.userOption}
+                  isSubmitting={voteMutation.isPending}
+                  onVote={(value) => {
+                    if (!requireAuth("Sign in to cast your vote.")) return;
+                    voteMutation.mutate(value);
+                  }}
+                />
               </CardContent>
             </Card>
           ) : null}

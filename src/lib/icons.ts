@@ -3,6 +3,7 @@ export {
   AiMagicIcon,
   Analytics01Icon,
   ArrowLeft01Icon,
+  ArrowRight01Icon,
   ArrowUp01Icon,
   Attachment01Icon,
   Bookmark02Icon,
@@ -20,6 +21,7 @@ export {
   FireIcon,
   GavelIcon,
   Home01Icon,
+  ImageAdd01Icon,
   JusticeScaleIcon,
   LandmarkIcon,
   Link01Icon,
@@ -29,9 +31,12 @@ export {
   Megaphone01Icon,
   Message01Icon,
   Moon02Icon,
+  MuteIcon,
   News01Icon,
   Notification03Icon,
+  PauseIcon,
   PencilEdit01Icon,
+  PlayIcon,
   Search01Icon,
   SecurityCheckIcon,
   SentIcon,
@@ -41,5 +46,7 @@ export {
   Task01Icon,
   ThumbsDownIcon,
   UserAdd01Icon,
-  UserCircleIcon
+  UserCircleIcon,
+  Video01Icon,
+  VolumeHighIcon
 } from "@hugeicons/core-free-icons";

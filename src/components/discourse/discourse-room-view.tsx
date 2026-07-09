@@ -7,6 +7,8 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { gooeyToast } from "goey-toast";
 import { IssueCard } from "@/components/cards/issue-card";
 import { PollCard } from "@/components/cards/poll-card";
+import { MediaAttachmentGrid } from "@/components/media/media-attachment-grid";
+import { MediaAttachmentPicker, readyMediaAttachments, type PendingMedia } from "@/components/media/media-attachment-picker";
 import { DetailSkeleton, IssueCardSkeleton, PollCardSkeleton, PostCardSkeleton } from "@/components/skeletons/card-skeletons";
 import { AppIcon } from "@/components/ui/icon";
 import { Button } from "@/components/ui/button";
@@ -18,7 +20,6 @@ import {
   Add01Icon,
   AiMagicIcon,
   ArrowLeft01Icon,
-  Attachment01Icon,
   CheckmarkBadge01Icon,
   Comment01Icon,
   FavouriteIcon,
@@ -39,6 +40,7 @@ import {
   userDisplayName,
   userInitials
 } from "@/lib/content-utils";
+import { toAttachmentsPayload } from "@/lib/media-utils";
 import { cn } from "@/lib/utils";
 import { api, getData } from "@/services/client/api";
 import { endpoints } from "@/services/client/endpoints";
@@ -48,7 +50,7 @@ import { userQueries } from "@/services/queries/user.queries";
 import { useAuthStore } from "@/stores/auth-store";
 import { useCommentModalStore } from "@/stores/comment-modal-store";
 import { useShareModalStore } from "@/stores/share-modal-store";
-import type { ApiRecord, Post, RoomRecord } from "@/types";
+import type { ApiRecord, MediaAttachment, Post, RoomRecord } from "@/types";
 
 type RoomTab = "Posts" | "Polls" | "Issues" | "Top voices";
 
@@ -86,13 +88,6 @@ function aiSummary(raw: ApiRecord) {
   return summary ? String(summary) : null;
 }
 
-function attachmentCount(raw: ApiRecord) {
-  const attachments = raw.attachments;
-  if (Array.isArray(attachments)) return attachments.length;
-  if (attachments && typeof attachments === "object") return Object.keys(attachments).length;
-  return Number(raw.attachmentCount ?? 0);
-}
-
 function RoomPostCard({
   post,
   raw,
@@ -110,7 +105,6 @@ function RoomPostCard({
   const { likes, react, isPending, isLiked } = usePostReaction(post);
   const commentCount = post._count?.comments ?? post.comments;
   const summary = aiSummary(raw);
-  const files = attachmentCount(raw);
   const verified = isVerified(post);
   const factChecked = isFactChecked(post);
 
@@ -129,8 +123,10 @@ function RoomPostCard({
       url: `${window.location.origin}/threads/post/${post.id}`,
       author: postAuthorName(post),
       handle: post.handle,
+      authorAvatar: post.user?.profilePic,
       message: post.message,
-      topic: post.topic
+      topic: post.topic,
+      attachments: post.attachments
     });
   }
 
@@ -163,6 +159,7 @@ function RoomPostCard({
       </div>
 
       <p className="text-[13px] leading-relaxed text-foreground">{post.message}</p>
+      {post.attachments?.length ? <MediaAttachmentGrid items={post.attachments} /> : null}
 
       {summary ? (
         <div className="mt-2 rounded-r-lg border-l-2 border-lime-400 bg-slate-50 px-2.5 py-1.5 dark:bg-slate-900/50">
@@ -200,12 +197,6 @@ function RoomPostCard({
           >
             <AppIcon icon={Share08Icon} size={13} />
           </button>
-          {files > 0 ? (
-            <span className="inline-flex items-center gap-1">
-              <AppIcon icon={Attachment01Icon} size={13} />
-              {files} file{files === 1 ? "" : "s"}
-            </span>
-          ) : null}
         </div>
       ) : (
         <div className="mt-2 flex items-center gap-3.5 text-[11px] text-muted-foreground">
@@ -217,12 +208,6 @@ function RoomPostCard({
             <AppIcon icon={Comment01Icon} size={13} />
             {commentCount}
           </span>
-          {files > 0 ? (
-            <span className="inline-flex items-center gap-1">
-              <AppIcon icon={Attachment01Icon} size={13} />
-              {files} file{files === 1 ? "" : "s"}
-            </span>
-          ) : null}
         </div>
       )}
     </article>
@@ -264,6 +249,7 @@ export function DiscourseRoomView({ discussionId }: { discussionId: string }) {
   const [tab, setTab] = useState<RoomTab>("Posts");
   const [optimisticJoined, setOptimisticJoined] = useState(false);
   const [draft, setDraft] = useState("");
+  const [media, setMedia] = useState<PendingMedia[]>([]);
 
   const query = useQuery({
     queryKey: ["detail", endpoints.discussions.detail(discussionId)],
@@ -356,14 +342,15 @@ export function DiscourseRoomView({ discussionId }: { discussionId: string }) {
   });
 
   const createPostMutation = useMutation({
-    mutationFn: async (message: string) =>
+    mutationFn: async ({ message, attachments }: { message: string; attachments: MediaAttachment[] }) =>
       postsService.create({
         discussionsId: id,
         message,
-        attachments: {}
+        attachments: toAttachmentsPayload(attachments)
       }),
     onSuccess: () => {
       setDraft("");
+      setMedia([]);
       gooeyToast.success("Posted to discussion");
       queryClient.invalidateQueries({ queryKey: ["discussion-posts", id] });
     },
@@ -384,13 +371,18 @@ export function DiscourseRoomView({ discussionId }: { discussionId: string }) {
   function handleCompose(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const message = draft.trim();
-    if (!message) return;
+    const attachments = readyMediaAttachments(media);
+    if (!message && !attachments.length) return;
     if (!requireAuth("Sign in to add to the discussion.")) return;
     if (!isMember) {
       gooeyToast.info("Join the discussion to post.");
       return;
     }
-    createPostMutation.mutate(message);
+    if (media.some((item) => item.uploading)) {
+      gooeyToast.info("Wait for media uploads to finish.");
+      return;
+    }
+    createPostMutation.mutate({ message: message || " ", attachments });
   }
 
   if (query.isLoading) {
@@ -524,22 +516,29 @@ export function DiscourseRoomView({ discussionId }: { discussionId: string }) {
       </div>
 
       {tab === "Posts" && isMember ? (
-        <form onSubmit={handleCompose} className="flex items-center gap-2.5 border-t border-border/80 bg-card px-4 py-2.5">
-          <Input
-            value={draft}
-            onChange={(event) => setDraft(event.target.value)}
-            placeholder="Add to the discussion"
-            className="h-9 flex-1 rounded-full bg-slate-50 text-xs dark:bg-muted/40"
-            disabled={createPostMutation.isPending}
-          />
-          <button
-            type="submit"
-            disabled={createPostMutation.isPending || !draft.trim()}
-            className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-primary text-primary-foreground transition-opacity disabled:opacity-50"
-            aria-label="Send post"
-          >
-            <AppIcon icon={SentIcon} size={15} />
-          </button>
+        <form onSubmit={handleCompose} className="space-y-2.5 border-t border-border/80 bg-card px-4 py-2.5">
+          <MediaAttachmentPicker items={media} onChange={setMedia} disabled={createPostMutation.isPending} />
+          <div className="flex items-center gap-2.5">
+            <Input
+              value={draft}
+              onChange={(event) => setDraft(event.target.value)}
+              placeholder="Add to the discussion"
+              className="h-9 flex-1 rounded-full bg-slate-50 text-xs dark:bg-muted/40"
+              disabled={createPostMutation.isPending}
+            />
+            <button
+              type="submit"
+              disabled={
+                createPostMutation.isPending ||
+                media.some((item) => item.uploading) ||
+                (!draft.trim() && !readyMediaAttachments(media).length)
+              }
+              className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-primary text-primary-foreground transition-opacity disabled:opacity-50"
+              aria-label="Send post"
+            >
+              <AppIcon icon={SentIcon} size={15} />
+            </button>
+          </div>
         </form>
       ) : null}
 

@@ -42,10 +42,23 @@ api.interceptors.response.use(
   }
 );
 
+const SINGULAR_RESOURCE_KEYS = ["poll", "election", "post", "comment", "discussion", "user"] as const;
+
 export async function getData<T>(url: string, params?: Record<string, unknown>) {
   const response = await api.get<ApiEnvelope<T> | T>(url, { params });
   const payload = response.data;
-  return typeof payload === "object" && payload !== null && "data" in payload
-    ? (payload as ApiEnvelope<T>).data as T
-    : (payload as T);
+  if (!payload || typeof payload !== "object") return payload as T;
+
+  if ("data" in payload && (payload as ApiEnvelope<T>).data !== undefined) {
+    return (payload as ApiEnvelope<T>).data as T;
+  }
+
+  // Backend often returns `{ poll: ... }` / `{ election: ... }` instead of `{ data: ... }`.
+  for (const key of SINGULAR_RESOURCE_KEYS) {
+    if (key in payload && (payload as Record<string, unknown>)[key] != null) {
+      return (payload as Record<string, unknown>)[key] as T;
+    }
+  }
+
+  return payload as T;
 }
