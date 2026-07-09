@@ -1,19 +1,23 @@
 import { NextRequest, NextResponse } from "next/server";
 import type { UserRole } from "@/types";
 
-const adminOnlyRoles: UserRole[] = ["ADMIN", "SUPER_ADMIN"];
+const controlRoles: UserRole[] = ["ADMIN", "SUPER_ADMIN", "MODERATOR"];
 
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const authCookie = request.cookies.get("choice9ja-role")?.value as UserRole | undefined;
 
   if (pathname.startsWith("/control")) {
-    if (!authCookie || !adminOnlyRoles.includes(authCookie)) {
-      return NextResponse.redirect(new URL("/home", request.url));
+    if (!authCookie) {
+      return NextResponse.redirect(new URL("/login", request.url));
+    }
+
+    if (!controlRoles.includes(authCookie)) {
+      return NextResponse.redirect(new URL("/", request.url));
     }
 
     if (pathname.startsWith("/control/settings") && authCookie !== "SUPER_ADMIN") {
-      return NextResponse.redirect(new URL("/control/dashboard", request.url));
+      return NextResponse.redirect(new URL("/control", request.url));
     }
   }
 

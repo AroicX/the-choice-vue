@@ -3,7 +3,8 @@
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { MessageSquareText, Search } from "lucide-react";
+import { Message01Icon, Search01Icon } from "@/lib/icons";
+import { AppIcon } from "@/components/ui/icon";
 import { PageHeader } from "@/components/shared/page-header";
 import { QueryListState } from "@/components/shared/query-states";
 import { GenericCardSkeleton, PollCardSkeleton } from "@/components/skeletons/card-skeletons";
@@ -36,7 +37,7 @@ export default function DiscoursePage() {
     <div>
       <PageHeader title="Discourse Forums" description="Join focused civic rooms around policy, places, elections, and public services." />
       <div className="relative mb-5">
-        <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
+        <AppIcon icon={Search01Icon} size={18} className="absolute left-3 top-3 text-muted-foreground" />
         <Input className="pl-9" placeholder="Search discourse rooms" value={search} onChange={(event) => setSearch(event.target.value)} />
       </div>
       <div className="grid gap-4 md:grid-cols-2">
@@ -52,7 +53,7 @@ export default function DiscoursePage() {
               <CardContent className="p-5">
                 <div className="flex gap-4">
                   <div className="grid h-11 w-11 place-items-center rounded-md bg-accent text-accent-foreground">
-                    <MessageSquareText className="h-5 w-5" />
+                    <AppIcon icon={Message01Icon} size={20} />
                   </div>
                   <div className="flex-1">
                     <div className="flex items-start justify-between gap-3">

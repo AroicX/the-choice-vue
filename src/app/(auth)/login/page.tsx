@@ -16,11 +16,9 @@ export default function LoginPage() {
             onSuccess={() => {
               const user = useAuthStore.getState().user;
               router.push(
-                user && ["ADMIN", "SUPER_ADMIN"].includes(user.role)
-                  ? "/control/dashboard"
-                  : user?.role === "MODERATOR"
-                    ? "/control/moderation"
-                    : "/home"
+                user && ["ADMIN", "SUPER_ADMIN", "MODERATOR"].includes(user.role)
+                  ? "/control"
+                  : "/"
               );
             }}
           />

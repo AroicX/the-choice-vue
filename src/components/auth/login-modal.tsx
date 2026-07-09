@@ -1,8 +1,9 @@
 "use client";
 
 import { useEffect } from "react";
-import { X } from "lucide-react";
+import { Cancel01Icon } from "@/lib/icons";
 import { LoginForm } from "@/components/auth/login-form";
+import { AppIcon } from "@/components/ui/icon";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { useLoginModalStore } from "@/stores/login-modal-store";
@@ -34,15 +35,15 @@ export function LoginModal() {
       <button
         type="button"
         aria-label="Close login modal"
-        className="absolute inset-0 bg-background/70 backdrop-blur-md"
+        className="absolute inset-0 bg-background/75 backdrop-blur-xl"
         onClick={close}
       />
-      <Card className="relative z-10 w-full max-w-md shadow-2xl">
+      <Card className="relative z-10 w-full max-w-md border-primary/15 shadow-panel">
         <CardContent className="p-6">
           <div className="mb-4 flex items-start justify-between gap-4">
             {message ? <p className="text-sm text-muted-foreground">{message}</p> : <span />}
             <Button variant="ghost" size="icon" aria-label="Close" onClick={close}>
-              <X className="h-4 w-4" />
+              <AppIcon icon={Cancel01Icon} size={18} />
             </Button>
           </div>
           <LoginForm onSuccess={close} showLinks />

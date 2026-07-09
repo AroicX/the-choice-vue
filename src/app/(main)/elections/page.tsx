@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
-import { Vote } from "lucide-react";
+import { GavelIcon } from "@/lib/icons";
+import { AppIcon } from "@/components/ui/icon";
 import { PageHeader } from "@/components/shared/page-header";
 import { QueryListState } from "@/components/shared/query-states";
 import { GenericCardSkeleton } from "@/components/skeletons/card-skeletons";
@@ -38,7 +39,7 @@ export default function ElectionsPage() {
           <Card key={recordId(election)}>
             <CardContent className="p-5">
               <div className="flex items-center justify-between">
-                <Vote className="h-6 w-6 text-primary" />
+                <AppIcon icon={GavelIcon} size={24} className="text-primary" />
                 <Badge variant={status.toUpperCase().includes("LIVE") || status.toUpperCase().includes("ONGOING") ? "default" : "secondary"}>{status}</Badge>
               </div>
               <h2 className="mt-5 font-semibold">{displayName(election)}</h2>

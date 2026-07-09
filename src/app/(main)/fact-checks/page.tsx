@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
-import { ShieldCheck } from "lucide-react";
+import { SecurityCheckIcon } from "@/lib/icons";
+import { AppIcon } from "@/components/ui/icon";
 import { PageHeader } from "@/components/shared/page-header";
 import { QueryListState } from "@/components/shared/query-states";
 import { GenericCardSkeleton } from "@/components/skeletons/card-skeletons";
@@ -34,7 +35,7 @@ export default function FactChecksPage() {
           <Link key={recordId(factCheck)} href={`/fact-checks/${recordId(factCheck)}`}>
           <Card className="transition-colors hover:bg-accent">
             <CardContent className="p-5">
-              <ShieldCheck className="h-6 w-6 text-primary" />
+              <AppIcon icon={SecurityCheckIcon} size={24} className="text-primary" />
               <h2 className="mt-4 font-semibold">{displayName(factCheck)}</h2>
               <p className="mt-2 line-clamp-2 text-sm text-muted-foreground">{String(factCheck.explanation ?? factCheck.description ?? "")}</p>
               <Badge className="mt-4" variant="info">{String(factCheck.verdict ?? "UNVERIFIED")}</Badge>

@@ -4,11 +4,23 @@ export function asArray<T = ApiRecord>(value: unknown): T[] {
   if (Array.isArray(value)) return value as T[];
   if (value && typeof value === "object") {
     const record = value as Record<string, unknown>;
-    for (const key of ["items", "results", "records", "data"]) {
+    for (const key of ["items", "results", "records", "data", "comments"]) {
       if (Array.isArray(record[key])) return record[key] as T[];
     }
   }
   return [];
+}
+
+export function extractComments(value: unknown): ApiRecord[] {
+  return asArray<ApiRecord>(value);
+}
+
+export function commentAuthor(comment: ApiRecord) {
+  const user = (comment.user ?? comment.createdBy) as ApiRecord | undefined;
+  if (user && typeof user === "object" && Object.keys(user).length > 0) {
+    return displayName(user);
+  }
+  return "Citizen";
 }
 
 export function displayName(record: ApiRecord) {
@@ -34,9 +46,24 @@ export function formatDate(value: unknown) {
   return Number.isNaN(date.getTime()) ? String(value) : date.toLocaleDateString();
 }
 
-export function normalizePost(raw: ApiRecord): Post {
+export function resolveUserReaction(raw: ApiRecord, userId?: string): Post["userReaction"] {
+  if (!userId) return null;
+  const stores = asArray<ApiRecord>(raw.postStore);
+  const mine = stores.find((store) => String(store.userId) === userId);
+  if (!mine) return null;
+  if (mine.liked) return "like";
+  if (mine.disliked) return "dislike";
+  return null;
+}
+
+export function normalizeBadge(value: string): string | undefined {
+  return value.replace(/_/g, " ").trim();
+}
+
+export function normalizePost(raw: ApiRecord, userId?: string): Post {
   const user = (raw.user ?? raw.createdBy ?? raw.author) as ApiRecord | string | undefined;
   const discussion = (raw.discussion ?? raw.discussions) as ApiRecord | string | undefined;
+  const count = raw._count && typeof raw._count === "object" ? raw._count as ApiRecord : {};
   const author =
     typeof user === "object" && user
       ? String(user.username ?? user.firstName ?? user.email ?? "Citizen")
@@ -46,6 +73,7 @@ export function normalizePost(raw: ApiRecord): Post {
     id: recordId(raw),
     author,
     handle: author.startsWith("@") ? author : `@${author}`,
+    user: user as User,
     topic:
       typeof discussion === "object" && discussion
         ? String(discussion.topic ?? discussion.question ?? "Civic discourse")
@@ -57,7 +85,11 @@ export function normalizePost(raw: ApiRecord): Post {
     shares: Number(raw.shares ?? raw.shareCount ?? 0),
     badge: raw.type ? String(raw.type) : undefined,
     discussionId: raw.discussionsId ? String(raw.discussionsId) : undefined,
-    createdAt: raw.createdAt ? String(raw.createdAt) : undefined
+    createdAt: raw.createdAt ? String(raw.createdAt) : undefined,
+    userReaction: resolveUserReaction(raw, userId),
+    _count: {
+      comments: Number(count.comments ?? raw.comments ?? raw.commentCount ?? 0),
+    },
   };
 }
 

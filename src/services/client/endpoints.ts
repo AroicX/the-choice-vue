@@ -33,6 +33,7 @@ export const endpoints = {
   },
   comments: {
     list: "/comments",
+    byPost: (postId: string) => `/comments/post/${postId}`,
     create: (postId: string) => `/comments/create/${postId}`,
     detail: (id: string) => `/comments/${id}`,
     update: (id: string) => `/comments/${id}`,
@@ -188,7 +189,7 @@ export const endpoints = {
     create: "/reports"
   },
   moderation: {
-    action: "/moderation/action",
+    action: "/moderation/actions",
     reports: "/moderation/reports"
   },
   analytics: {
@@ -210,7 +211,7 @@ export const endpoints = {
   admin: {
     users: "/auth/users",
     user: (id: string) => `/auth/users/${id}`,
-    suspendUser: (id: string) => `/auth/users/${id}/suspend`,
+    suspendUser: (id: string) => `/auth/users/suspend/${id}`,
     reports: "/reports",
     moderation: "/moderation",
     analytics: "/analytics"

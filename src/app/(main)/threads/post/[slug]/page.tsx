@@ -1,6 +1,5 @@
-import { DetailView } from "@/components/content/detail-view";
-import { endpoints } from "@/services/client/endpoints";
+import { PostDetailView } from "@/components/posts/post-detail-view";
 
 export default function ThreadPostPage({ params }: { params: { slug: string } }) {
-  return <DetailView title="Post" endpoint={endpoints.posts.detail(params.slug)} action="post" />;
+  return <PostDetailView slug={params.slug} />;
 }

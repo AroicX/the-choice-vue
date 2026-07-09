@@ -6,7 +6,7 @@ import type { Poll } from "@/types";
 
 export function PollCard({ poll }: { poll: Poll }) {
   return (
-    <Card>
+    <Card className="animate-fade-up">
       <CardHeader>
         <div className="flex items-start justify-between gap-3">
           <CardTitle>{poll.question}</CardTitle>
@@ -21,8 +21,8 @@ export function PollCard({ poll }: { poll: Poll }) {
                 <span>{option.label}</span>
                 <span className="font-medium">{option.value}%</span>
               </div>
-              <div className="h-2 overflow-hidden rounded-full bg-muted">
-                <div className="h-2 rounded-full bg-primary transition-all" style={{ width: `${option.value}%` }} />
+              <div className="h-2.5 overflow-hidden rounded-full bg-muted">
+                <div className="h-2.5 rounded-full bg-gradient-to-r from-primary to-emerald-400 transition-all" style={{ width: `${option.value}%` }} />
               </div>
             </div>
           ))}

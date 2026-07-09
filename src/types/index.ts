@@ -47,8 +47,11 @@ export type RoomRecord = {
   };
 };
 
+export type UserReaction = "like" | "dislike";
+
 export type Post = {
   id: string;
+  user: User;
   author: string;
   handle: string;
   topic: string;
@@ -60,6 +63,10 @@ export type Post = {
   badge?: string;
   discussionId?: string;
   createdAt?: string;
+  userReaction?: UserReaction | null;
+  _count: {
+    comments: number;
+  };
 };
 
 export type Issue = {

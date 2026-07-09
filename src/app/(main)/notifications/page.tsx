@@ -1,7 +1,8 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { Bell } from "lucide-react";
+import { Notification03Icon } from "@/lib/icons";
+import { AppIcon } from "@/components/ui/icon";
 import { PageHeader } from "@/components/shared/page-header";
 import { QueryListState } from "@/components/shared/query-states";
 import { NotificationCardSkeleton } from "@/components/skeletons/card-skeletons";
@@ -49,7 +50,7 @@ export default function NotificationsPage() {
             {notifications.map((item) => (
               <Card key={String(item.id)}>
                 <CardContent className="flex items-center gap-4 p-4">
-                  <Bell className="h-5 w-5 text-primary" />
+                  <AppIcon icon={Notification03Icon} size={20} className="text-primary" />
                   <div>
                     <p>{String(item.message ?? displayName(item))}</p>
                     <p className="text-sm text-muted-foreground">{formatDate(item.createdAt)}</p>

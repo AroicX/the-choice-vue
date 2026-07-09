@@ -13,6 +13,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { civicQueries } from "@/services/queries/civic.queries";
 import { asArray, displayName, normalizePost, recordId } from "@/lib/content-utils";
 import type { ApiRecord } from "@/types";
+import { useAuthStore } from "@/stores/auth-store";
 
 const tabs = ["For You", "Following", "Local", "Trending", "Fact Checks"];
 const feedEndpointByTab: Record<string, () => Promise<unknown>> = {
@@ -33,13 +34,14 @@ export default function FeedPage() {
 
 function FeedContent() {
   const searchParams = useSearchParams();
+  const userId = useAuthStore((state) => state.user?.id);
   const active = searchParams.get("tab") ?? tabs[0];
   const query = useQuery({
     queryKey: ["feed", active],
     queryFn: feedEndpointByTab[active] ?? feedEndpointByTab["For You"]
   });
   const records = asArray<ApiRecord>(query.data);
-  const posts = active === "Fact Checks" ? [] : records.map(normalizePost);
+  const posts = active === "Fact Checks" ? [] : records.map((record) => normalizePost(record, userId));
 
   return (
     <div>

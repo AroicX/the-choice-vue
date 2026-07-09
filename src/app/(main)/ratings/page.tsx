@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
-import { BarChart3 } from "lucide-react";
+import { Analytics01Icon } from "@/lib/icons";
+import { AppIcon } from "@/components/ui/icon";
 import { PageHeader } from "@/components/shared/page-header";
 import { QueryListState } from "@/components/shared/query-states";
 import { GenericCardSkeleton } from "@/components/skeletons/card-skeletons";
@@ -36,7 +37,7 @@ export default function RatingsPage() {
           <Link key={recordId(row)} href={href}>
           <Card className="transition-colors hover:bg-accent">
             <CardContent className="p-5">
-              <BarChart3 className="h-6 w-6 text-primary" />
+              <AppIcon icon={Analytics01Icon} size={24} className="text-primary" />
               <h2 className="mt-4 font-semibold">{displayName(politician)}</h2>
               <p className="mt-2 text-sm text-muted-foreground">{String(row.category ?? politician.position ?? "Leaderboard score")}</p>
               <p className="mt-4 text-2xl font-bold">{Number(row.score ?? row.performanceScore ?? row.approvalScore ?? 0)}%</p>

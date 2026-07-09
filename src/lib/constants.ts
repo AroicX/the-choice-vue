@@ -1,65 +1,56 @@
 import {
-  BarChart3,
-  Bell,
-  Building2,
-  CircleUserRound,
-  ClipboardCheck,
-  Compass,
-  Home,
-  Landmark,
-  Megaphone,
-  MessageSquareText,
-  Newspaper,
-  ShieldCheck,
-  Vote
-} from "lucide-react";
+  Analytics01Icon,
+  Building01Icon,
+  CheckListIcon,
+  GavelIcon,
+  Home01Icon,
+  LandmarkIcon,
+  Megaphone01Icon,
+  Message01Icon,
+  News01Icon,
+  Notification03Icon,
+  SecurityCheckIcon,
+  Task01Icon,
+  UserCircleIcon
+} from "@/lib/icons";
 
 export const mainNav = [
-  { href: "/home", label: "Home", icon: Home },
-  { href: "/feed", label: "Feed", icon: Megaphone },
-  { href: "/discourse", label: "Discourse", icon: MessageSquareText },
-  { href: "/issues", label: "Issues", icon: ClipboardCheck },
-  { href: "/politicians", label: "Politicians", icon: Landmark },
-  { href: "/ratings", label: "Ratings", icon: BarChart3 },
-  { href: "/elections", label: "Elections", icon: Vote },
-  { href: "/polls", label: "Polls", icon: Compass },
-  { href: "/news", label: "News", icon: Newspaper },
-  { href: "/fact-checks", label: "Fact Checks", icon: ShieldCheck },
-  { href: "/communities", label: "Communities", icon: Building2 },
-  { href: "/notifications", label: "Notifications", icon: Bell },
-  { href: "/profile", label: "Profile", icon: CircleUserRound }
+  { href: "/home", label: "Home", icon: Home01Icon },
+  { href: "/feed", label: "Feed", icon: Megaphone01Icon },
+  { href: "/discourse", label: "Discourse", icon: Message01Icon },
+  { href: "/issues", label: "Issues", icon: Task01Icon },
+  { href: "/politicians", label: "Politicians", icon: LandmarkIcon },
+  { href: "/ratings", label: "Ratings", icon: Analytics01Icon },
+  { href: "/elections", label: "Elections", icon: GavelIcon },
+  { href: "/polls", label: "Polls", icon: CheckListIcon },
+  { href: "/news", label: "News", icon: News01Icon },
+  { href: "/fact-checks", label: "Fact Checks", icon: SecurityCheckIcon },
+  { href: "/communities", label: "Communities", icon: Building01Icon },
+  { href: "/notifications", label: "Notifications", icon: Notification03Icon },
+  { href: "/profile", label: "Profile", icon: UserCircleIcon }
 ];
 
 export const mobileNav = [
-  { href: "/home", label: "Home", icon: Home },
-  { href: "/discourse", label: "Discourse", icon: MessageSquareText },
-  { href: "/issues", label: "Issues", icon: ClipboardCheck },
-  { href: "/notifications", label: "Alerts", icon: Bell },
-  { href: "/ratings", label: "Ratings", icon: BarChart3 }
+  { href: "/home", label: "Home", icon: Home01Icon },
+  { href: "/discourse", label: "Discourse", icon: Message01Icon },
+  { href: "/issues", label: "Issues", icon: Task01Icon },
+  { href: "/notifications", label: "Alerts", icon: Notification03Icon },
+  { href: "/ratings", label: "Ratings", icon: Analytics01Icon }
 ];
 
 export const controlNav = [
-  "Dashboard",
-  "Users",
-  "Politicians",
-  "Parties",
-  "Issues",
-  "Posts",
-  "Discussions",
-  "Polls",
-  "Elections",
-  "Ratings",
-  "Promises",
-  "Reports",
-  "Moderation",
-  "News",
-  "Fact Checks",
-  "Topics",
-  "Communities",
-  "Analytics",
-  "Notifications",
-  "Settings"
-].map((label) => ({
-  label,
-  href: `/control/${label.toLowerCase().replaceAll(" ", "-")}`
-}));
+  { label: "Dashboard", href: "/control" },
+  { label: "Users", href: "/control/users" },
+  { label: "Discussions", href: "/control/discussions" },
+  { label: "Posts", href: "/control/posts" },
+  { label: "Comments", href: "/control/comments" },
+  { label: "Polls", href: "/control/polls" },
+  { label: "Elections", href: "/control/elections" },
+  { label: "Ratings", href: "/control/ratings" },
+  { label: "Political Parties", href: "/control/parties" },
+  { label: "Candidates / Politicians", href: "/control/politicians" },
+  { label: "Notifications", href: "/control/notifications" },
+  { label: "Reports / Moderation", href: "/control/moderation" },
+  { label: "Analytics", href: "/control/analytics" },
+  { label: "Settings", href: "/control/settings" }
+];

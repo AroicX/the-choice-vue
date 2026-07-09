@@ -3,27 +3,28 @@
 import Link from "next/link";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { gooeyToast } from "goey-toast";
-import {
-  BarChart3,
-  CheckCircle2,
-  DoorOpen,
-  Heart,
-  MessageSquareText,
-  Pencil,
-  Settings,
-  UserPlus,
-  UserRound
-} from "lucide-react";
 import { PostCard } from "@/components/cards/post-card";
 import { PageHeader } from "@/components/shared/page-header";
 import { QueryListState } from "@/components/shared/query-states";
 import { PostCardSkeleton, ProfileSkeleton } from "@/components/skeletons/card-skeletons";
+import { AppIcon } from "@/components/ui/icon";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { api } from "@/services/client/api";
 import { endpoints } from "@/services/client/endpoints";
 import { userQueries } from "@/services/queries/user.queries";
+import {
+  Analytics01Icon,
+  CheckmarkBadge01Icon,
+  Door01Icon,
+  Edit02Icon,
+  FavouriteIcon,
+  Message01Icon,
+  Settings01Icon,
+  UserAdd01Icon,
+  UserCircleIcon
+} from "@/lib/icons";
 import {
   asArray,
   formatDate,
@@ -85,7 +86,7 @@ export function ProfileView({ userId }: ProfileViewProps) {
 
   const embeddedPosts = asArray<ApiRecord>(profile?.posts);
   const fetchedPosts = asArray<ApiRecord>(postsQuery.data);
-  const posts = (embeddedPosts.length ? embeddedPosts : fetchedPosts).map(normalizePost);
+  const posts = (embeddedPosts.length ? embeddedPosts : fetchedPosts).map((record) => normalizePost(record, sessionUser?.id));
   const follows = asArray<FollowRecord>(followsQuery.data);
   const rooms = asArray<RoomRecord>(roomsQuery.data);
   const totalLikes = sumPostLikes(embeddedPosts.length ? embeddedPosts : fetchedPosts);
@@ -141,10 +142,10 @@ export function ProfileView({ userId }: ProfileViewProps) {
   }
 
   const stats = [
-    { label: "Posts", value: posts.length, icon: MessageSquareText },
-    { label: "Likes received", value: totalLikes, icon: Heart },
-    { label: "Rooms joined", value: rooms.length, icon: DoorOpen },
-    { label: "Following", value: follows.length, icon: UserRound }
+    { label: "Posts", value: posts.length, icon: Message01Icon },
+    { label: "Likes received", value: totalLikes, icon: FavouriteIcon },
+    { label: "Rooms joined", value: rooms.length, icon: Door01Icon },
+    { label: "Following", value: follows.length, icon: UserCircleIcon }
   ];
 
   const followingGroups = [
@@ -166,7 +167,7 @@ export function ProfileView({ userId }: ProfileViewProps) {
           isOwnProfile ? (
             <Button asChild>
               <Link href="/settings">
-                <Settings className="mr-2 h-4 w-4" />
+                <AppIcon icon={Settings01Icon} size={18} className="mr-2" />
                 Edit profile
               </Link>
             </Button>
@@ -191,7 +192,7 @@ export function ProfileView({ userId }: ProfileViewProps) {
             <div className="min-w-0 flex-1">
               <div className="flex flex-wrap items-center gap-2">
                 <h2 className="text-2xl font-semibold">{userDisplayName(profile)}</h2>
-                {profile.verified ? <CheckCircle2 className="h-5 w-5 text-primary" /> : null}
+                {profile.verified ? <AppIcon icon={CheckmarkBadge01Icon} size={20} className="text-primary" /> : null}
               </div>
               <p className="mt-1 text-muted-foreground">
                 @{profile.username}
@@ -214,7 +215,7 @@ export function ProfileView({ userId }: ProfileViewProps) {
               <>
                 <Button asChild>
                   <Link href="/settings">
-                    <Pencil className="mr-2 h-4 w-4" />
+                    <AppIcon icon={Edit02Icon} size={18} className="mr-2" />
                     Update profile
                   </Link>
                 </Button>
@@ -227,7 +228,7 @@ export function ProfileView({ userId }: ProfileViewProps) {
               </>
             ) : (
               <Button onClick={() => { if (!requireAuth("Sign in to follow this citizen.")) return; followMutation.mutate(); }} disabled={followMutation.isPending}>
-                <UserPlus className="mr-2 h-4 w-4" />
+                <AppIcon icon={UserAdd01Icon} size={18} className="mr-2" />
                 Follow citizen
               </Button>
             )}
@@ -236,14 +237,16 @@ export function ProfileView({ userId }: ProfileViewProps) {
       </Card>
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        {stats.map(({ label, value, icon: Icon }) => (
-          <Card key={label}>
+        {stats.map(({ label, value, icon }) => (
+          <Card key={label} className="glass-panel">
             <CardContent className="flex items-center justify-between p-5">
               <div>
                 <p className="text-sm text-muted-foreground">{label}</p>
                 <p className="mt-1 text-2xl font-bold">{value.toLocaleString()}</p>
               </div>
-              <Icon className="h-6 w-6 text-primary" />
+              <div className="rounded-2xl bg-primary/10 p-3 text-primary">
+                <AppIcon icon={icon} size={22} />
+              </div>
             </CardContent>
           </Card>
         ))}
@@ -254,7 +257,7 @@ export function ProfileView({ userId }: ProfileViewProps) {
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <DoorOpen className="h-5 w-5 text-primary" />
+                <AppIcon icon={Door01Icon} size={20} className="text-primary" />
                 Rooms joined
               </CardTitle>
             </CardHeader>
@@ -287,7 +290,7 @@ export function ProfileView({ userId }: ProfileViewProps) {
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <BarChart3 className="h-5 w-5 text-primary" />
+                <AppIcon icon={Analytics01Icon} size={20} className="text-primary" />
                 Following
               </CardTitle>
             </CardHeader>

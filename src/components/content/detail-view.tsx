@@ -1,10 +1,12 @@
 "use client";
 
 import Link from "next/link";
+import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { gooeyToast } from "goey-toast";
-import { DoorOpen, Heart, Vote } from "lucide-react";
 import { DetailSkeleton, PostCardSkeleton } from "@/components/skeletons/card-skeletons";
+import { AppIcon } from "@/components/ui/icon";
+import { CheckListIcon, Door01Icon, FavouriteIcon } from "@/lib/icons";
 import { api, getData } from "@/services/client/api";
 import { endpoints } from "@/services/client/endpoints";
 import { asArray, displayName, normalizePoll, normalizePost, recordId, stringifyJson } from "@/lib/content-utils";
@@ -22,7 +24,9 @@ type DetailAction = "post" | "discussion" | "poll" | "election" | "issue" | "com
 export function DetailView({ title, endpoint, action = "none" }: { title: string; endpoint: string; action?: DetailAction }) {
   const queryClient = useQueryClient();
   const user = useAuthStore((state) => state.user);
+  const userId = user?.id;
   const { requireAuth } = useRequireAuth();
+  const [joinedRoom, setJoinedRoom] = useState(false);
   const query = useQuery({
     queryKey: ["detail", endpoint],
     queryFn: () => getData<ApiRecord>(endpoint),
@@ -31,7 +35,7 @@ export function DetailView({ title, endpoint, action = "none" }: { title: string
 
   const record = query.data;
   const id = record ? recordId(record) : "";
-  const post = record && action === "post" ? normalizePost(record) : null;
+  const post = record && action === "post" ? normalizePost(record, userId) : null;
   const relatedPostsQuery = useQuery({
     queryKey: ["discussion-posts", id],
     queryFn: () => getData<unknown>(endpoints.posts.byDiscussion(id)),
@@ -55,12 +59,30 @@ export function DetailView({ title, endpoint, action = "none" }: { title: string
       if (action === "poll") return api.patch(endpoints.polls.vote(id), { value });
       if (action === "election") return api.patch(endpoints.elections.vote(id), { value });
     },
-    onSuccess: () => {
-      gooeyToast.success("Action completed");
-      queryClient.invalidateQueries({ queryKey: ["detail", endpoint] });
+    onMutate: async () => {
+      if (action !== "discussion") return;
+      const previousJoined = joinedRoom;
+      setJoinedRoom(true);
+      return { joinedRoom: previousJoined };
     },
-    onError: (error) => {
+    onSuccess: () => {
+      if (action !== "discussion") {
+        gooeyToast.success("Action completed");
+      }
+      queryClient.invalidateQueries({ queryKey: ["detail", endpoint] });
+      queryClient.invalidateQueries({ queryKey: ["profile"] });
+    },
+    onError: (error, _value, context) => {
+      if (action === "discussion") {
+        setJoinedRoom(context?.joinedRoom ?? false);
+        return;
+      }
       gooeyToast.error("Action failed", { description: error instanceof Error ? error.message : "Try again." });
+    },
+    onSettled: () => {
+      if (action === "discussion") {
+        queryClient.invalidateQueries({ queryKey: ["profile"] });
+      }
     }
   });
 
@@ -106,12 +128,17 @@ export function DetailView({ title, endpoint, action = "none" }: { title: string
             </CardContent>
           </Card>
 
-          {post ? <PostActions postId={post.id} likes={post.likes} dislikes={post.dislikes} /> : null}
+          {post ? <PostActions post={post} /> : null}
 
           {action === "discussion" ? (
             <div className="space-y-5">
-              <Button onClick={() => runQuickAction("Sign in to join this discussion room.")} disabled={quickAction.isPending}>
-                <DoorOpen className="mr-2 h-4 w-4" />Join room
+              <Button
+                onClick={() => runQuickAction("Sign in to join this discussion room.")}
+                disabled={quickAction.isPending || joinedRoom}
+                variant={joinedRoom ? "secondary" : "default"}
+              >
+                <AppIcon icon={Door01Icon} size={18} className="mr-2" />
+                {joinedRoom ? "Joined" : quickAction.isPending ? "Joining..." : "Join room"}
               </Button>
               <Card>
                 <CardContent className="space-y-4 p-5">
@@ -124,7 +151,7 @@ export function DetailView({ title, endpoint, action = "none" }: { title: string
                   ) : (
                     <>
                       {asArray<ApiRecord>(relatedPostsQuery.data).map((rawPost) => {
-                        const relatedPost = normalizePost(rawPost);
+                        const relatedPost = normalizePost(rawPost, userId);
                         return <PostCard key={relatedPost.id} post={relatedPost} />;
                       })}
                       {asArray<ApiRecord>(relatedPostsQuery.data).length === 0 ? (
@@ -173,7 +200,7 @@ export function DetailView({ title, endpoint, action = "none" }: { title: string
               }
               disabled={quickAction.isPending}
             >
-              <Heart className="mr-2 h-4 w-4" />{action === "issue" ? "Upvote issue" : action === "community" ? "Join community" : "Follow politician"}
+              <AppIcon icon={FavouriteIcon} size={18} className="mr-2" />{action === "issue" ? "Upvote issue" : action === "community" ? "Join community" : "Follow politician"}
             </Button>
           ) : null}
 
@@ -189,7 +216,7 @@ export function DetailView({ title, endpoint, action = "none" }: { title: string
                         <p className="text-sm text-muted-foreground">{Number(option.value ?? 0).toLocaleString()} votes</p>
                       </div>
                       <Button variant="outline" onClick={() => runQuickAction("Sign in to cast your vote.", key)} disabled={quickAction.isPending}>
-                        <Vote className="mr-2 h-4 w-4" />Vote
+                        <AppIcon icon={CheckListIcon} size={18} className="mr-2" />Vote
                       </Button>
                     </div>
                   </div>
