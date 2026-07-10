@@ -36,6 +36,7 @@ import {
   normalizeIssue,
   normalizePoll,
   normalizePost,
+  profilePath,
   recordId,
   userDisplayName,
   userInitials
@@ -133,16 +134,20 @@ function RoomPostCard({
   return (
     <article className="rounded-xl border border-border/80 bg-card p-3.5 shadow-sm">
       <div className="mb-2 flex items-center gap-2">
-        {post.user?.profilePic ? (
-          <Image src={post.user.profilePic} alt={postAuthorName(post)} width={28} height={28} className="h-7 w-7 rounded-full object-cover" />
-        ) : (
-          <div className="grid h-7 w-7 place-items-center rounded-full bg-emerald-100 text-[11px] font-medium text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-200">
-            {postInitials(post)}
-          </div>
-        )}
+        <Link href={profilePath(post.user, post.handle)} className="shrink-0">
+          {post.user?.profilePic ? (
+            <Image src={post.user.profilePic} alt={postAuthorName(post)} width={28} height={28} className="h-7 w-7 rounded-full object-cover" />
+          ) : (
+            <div className="grid h-7 w-7 place-items-center rounded-full bg-emerald-100 text-[11px] font-medium text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-200">
+              {postInitials(post)}
+            </div>
+          )}
+        </Link>
         <div className="min-w-0 flex-1">
           <p className="truncate text-xs font-medium text-foreground">
-            {postAuthorName(post)}
+            <Link href={profilePath(post.user, post.handle)} className="hover:underline">
+              {postAuthorName(post)}
+            </Link>
             {post.createdAt ? <span className="font-normal text-muted-foreground"> · {formatRelativeTime(post.createdAt)}</span> : null}
           </p>
         </div>

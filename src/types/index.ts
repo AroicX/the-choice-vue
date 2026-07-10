@@ -7,6 +7,19 @@ export type UserRole =
   | "VERIFIED_ORG"
   | "POLITICIAN";
 
+export type UserProfileStats = {
+  posts: number;
+  comments: number;
+  likesGiven: number;
+  likesReceived: number;
+  shares: number;
+  votes: number;
+  issues: number;
+  media: number;
+  followers: number;
+  following: number;
+};
+
 export type User = {
   id: string;
   email?: string;
@@ -27,6 +40,11 @@ export type User = {
   interests?: string[];
   createdAt?: string;
   posts?: ApiRecord[];
+  stats?: UserProfileStats;
+  viewer?: {
+    isFollowing?: boolean;
+    isSelf?: boolean;
+  };
 };
 
 export type FollowRecord = {

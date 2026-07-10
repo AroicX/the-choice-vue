@@ -136,6 +136,7 @@ export function ShareModal() {
   }
 
   async function copyImage() {
+    if (!sharePayload) return;
     try {
       setBusy("copy");
       const { blob } = await cardAsFile();
@@ -170,6 +171,7 @@ export function ShareModal() {
   }
 
   async function copyLink() {
+    if (!sharePayload) return;
     try {
       await navigator.clipboard.writeText(sharePayload.url);
       gooeyToast.success("Link copied");
@@ -179,6 +181,7 @@ export function ShareModal() {
   }
 
   async function nativeShare() {
+    if (!sharePayload) return;
     try {
       setBusy("native");
       const { file } = await cardAsFile();
@@ -210,6 +213,7 @@ export function ShareModal() {
   }
 
   async function shareWhatsApp() {
+    if (!sharePayload) return;
     try {
       setBusy("whatsapp");
       const { file } = await cardAsFile();
@@ -261,7 +265,7 @@ export function ShareModal() {
             <div className="mb-4 flex items-start justify-between gap-3">
               <div className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1.5">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src="/legacy/logo.png" alt="TheChoice9ja" className="h-7 w-7 rounded-lg object-contain" />
+                <img src="/legacy/logo.png" alt="TheChoice9ja" className=" rounded-lg object-contain" />
                 <div className="pr-1">
                   <p className="text-[11px] font-bold leading-none tracking-wide text-slate-900">TheChoice9ja</p>
                   <p className="mt-0.5 text-[9px] font-medium uppercase tracking-[0.14em] text-emerald-700">Civic share</p>

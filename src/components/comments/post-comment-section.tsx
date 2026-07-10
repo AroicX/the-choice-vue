@@ -8,7 +8,7 @@ import { PostCommentComposer } from "@/components/comments/post-comment-composer
 import { CommentSkeleton } from "@/components/skeletons/card-skeletons";
 import { useInfiniteScroll } from "@/hooks/use-infinite-scroll";
 import { flattenComments, usePostComments } from "@/hooks/use-post-comments";
-import { commentAuthor, commentAuthorProfilePic } from "@/lib/content-utils";
+import { commentAuthor, commentAuthorProfilePic, profilePath } from "@/lib/content-utils";
 import { normalizeMediaAttachments } from "@/lib/media-utils";
 import { Comment01Icon, Share08Icon } from "@/lib/icons";
 import { useShareModalStore } from "@/stores/share-modal-store";
@@ -16,6 +16,7 @@ import type { ApiRecord, Post } from "@/types";
 import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import Image from "next/image";
+import Link from "next/link";
 
 type PostCommentSectionProps = {
   post: Post;
@@ -145,14 +146,30 @@ export function PostCommentSection({ post }: PostCommentSectionProps) {
                     )}
                   >
                     <div className="mb-2 flex items-center gap-2">
-                      {profilePic ? (
-                        <Image src={profilePic} alt={author} width={24} height={24} className="rounded-full object-cover" />
-                      ) : (
-                        <span className="grid h-6 w-6 place-items-center rounded-full bg-primary/15 text-[10px] font-semibold text-primary">
-                          {author.slice(0, 2).toUpperCase()}
-                        </span>
-                      )}
-                      <p className="text-sm font-semibold">{author}</p>
+                      <Link
+                        href={profilePath(
+                          (() => {
+                            const user = (comment.user ?? comment.createdBy) as ApiRecord | undefined;
+                            if (!user || typeof user !== "object") return undefined;
+                            return {
+                              id: user.id ? String(user.id) : undefined,
+                              username: user.username ? String(user.username) : undefined
+                            };
+                          })(),
+                          author
+                        )}
+                        onClick={(event) => event.stopPropagation()}
+                        className="flex min-w-0 items-center gap-2 hover:opacity-90"
+                      >
+                        {profilePic ? (
+                          <Image src={profilePic} alt={author} width={24} height={24} className="rounded-full object-cover" />
+                        ) : (
+                          <span className="grid h-6 w-6 place-items-center rounded-full bg-primary/15 text-[10px] font-semibold text-primary">
+                            {author.slice(0, 2).toUpperCase()}
+                          </span>
+                        )}
+                        <p className="truncate text-sm font-semibold hover:underline">{author}</p>
+                      </Link>
                     </div>
                     {attachments.length ? (
                       <div onClick={(event) => event.stopPropagation()}>

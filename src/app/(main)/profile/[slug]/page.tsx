@@ -1,7 +1,7 @@
 "use client";
 
-import { ProfileView } from "@/components/profile/profile-view";
+import { PublicUserProfile } from "@/components/profile/public-user-profile";
 
 export default function ProfileDetailPage({ params }: { params: { slug: string } }) {
-  return <ProfileView userId={params.slug} />;
+  return <PublicUserProfile identifier={decodeURIComponent(params.slug)} />;
 }

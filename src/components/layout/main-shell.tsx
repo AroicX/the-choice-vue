@@ -27,7 +27,7 @@ import {
 import { useRequireAuth } from "@/hooks/use-require-auth";
 import { useAuthStore } from "@/stores/auth-store";
 import { useLoginModalStore } from "@/stores/login-modal-store";
-import { Logout01Icon, Message01Icon, Search01Icon } from "@/lib/icons";
+import { Logout01Icon, Message01Icon, Search01Icon, Settings01Icon } from "@/lib/icons";
 import { cn } from "@/lib/utils";
 import type { ApiRecord, RoomRecord } from "@/types";
 
@@ -178,28 +178,37 @@ export function MainShell({ children }: { children: React.ReactNode }) {
               <div className="flex shrink-0 items-center gap-2">
                 <ThemeToggle />
                 {isAuthenticated && user ? (
-                  <Link
-                    href="/profile"
-                    className="flex items-center gap-2 rounded-xl border border-white/10 bg-card/70 px-2 py-1.5 transition-colors hover:bg-accent/60"
-                  >
-                    {user.profilePic ? (
-                      <Image
-                        src={user.profilePic}
-                        alt={userDisplayName(user)}
-                        width={32}
-                        height={32}
-                        className="h-8 w-8 rounded-full object-cover"
-                      />
-                    ) : (
-                      <span className="grid h-8 w-8 place-items-center rounded-full bg-primary/15 text-xs font-semibold text-primary">
-                        {userInitials(user)}
+                  <>
+                    <Link
+                      href="/settings"
+                      className="grid h-10 w-10 place-items-center rounded-xl border border-white/10 bg-card/70 text-muted-foreground transition-colors hover:bg-accent/60 hover:text-foreground"
+                      aria-label="Settings"
+                    >
+                      <AppIcon icon={Settings01Icon} size={18} />
+                    </Link>
+                    <Link
+                      href="/profile"
+                      className="flex items-center gap-2 rounded-xl border border-white/10 bg-card/70 px-2 py-1.5 transition-colors hover:bg-accent/60"
+                    >
+                      {user.profilePic ? (
+                        <Image
+                          src={user.profilePic}
+                          alt={userDisplayName(user)}
+                          width={32}
+                          height={32}
+                          className="h-8 w-8 rounded-full object-cover"
+                        />
+                      ) : (
+                        <span className="grid h-8 w-8 place-items-center rounded-full bg-primary/15 text-xs font-semibold text-primary">
+                          {userInitials(user)}
+                        </span>
+                      )}
+                      <span className="hidden min-w-0 sm:block">
+                        <span className="block truncate text-sm font-semibold leading-tight">{userDisplayName(user)}</span>
+                        <span className="block truncate text-xs text-muted-foreground">@{user.username}</span>
                       </span>
-                    )}
-                    <span className="hidden min-w-0 sm:block">
-                      <span className="block truncate text-sm font-semibold leading-tight">{userDisplayName(user)}</span>
-                      <span className="block truncate text-xs text-muted-foreground">@{user.username}</span>
-                    </span>
-                  </Link>
+                    </Link>
+                  </>
                 ) : (
                   <Button size="sm" onClick={() => openLoginModal("Sign in to continue.")}>
                     Sign in

@@ -10,6 +10,7 @@ import {
   News01Icon,
   Notification03Icon,
   SecurityCheckIcon,
+  Settings01Icon,
   Task01Icon,
   UserCircleIcon
 } from "@/lib/icons";
@@ -27,7 +28,8 @@ export const mainNav = [
   { href: "/fact-checks", label: "Fact Checks", icon: SecurityCheckIcon },
   { href: "/communities", label: "Communities", icon: Building01Icon },
   { href: "/notifications", label: "Notifications", icon: Notification03Icon },
-  { href: "/profile", label: "Account", icon: UserCircleIcon }
+  { href: "/profile", label: "Account", icon: UserCircleIcon },
+  { href: "/settings", label: "Settings", icon: Settings01Icon }
 ];
 
 export const mobileNav = [

@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { AppIcon } from "@/components/ui/icon";
 import { usePostReaction } from "@/hooks/use-post-reaction";
 import { useRequireAuth } from "@/hooks/use-require-auth";
+import { profilePath } from "@/lib/content-utils";
 import { Bookmark02Icon, Comment01Icon, FavouriteIcon, Share08Icon, ThumbsDownIcon } from "@/lib/icons";
 import { cn } from "@/lib/utils";
 import { useCommentModalStore } from "@/stores/comment-modal-store";
@@ -14,6 +15,7 @@ import { useShareModalStore } from "@/stores/share-modal-store";
 import type { Post } from "@/types";
 import { gooeyToast } from "goey-toast";
 import Image from "next/image";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { PostBadge } from "./post-badge";
 
@@ -31,6 +33,7 @@ export function PostCard({ post, interactive = true, showActions = true }: PostC
   const { likes, dislikes, react, isPending, isLiked, isDisliked } = usePostReaction(post);
   const profilePic = post.user?.profilePic;
   const commentCount = post._count?.comments ?? post.comments;
+  const authorHref = profilePath(post.user, post.handle);
 
   function sharePost(event: React.MouseEvent) {
     event.stopPropagation();
@@ -68,15 +71,24 @@ export function PostCard({ post, interactive = true, showActions = true }: PostC
     >
       <CardHeader>
         <div className="flex items-start justify-between gap-3">
-          <div className="flex items-start gap-3">
-            {profilePic ?
-              (<Image src={profilePic} alt={post.author} width={44} height={44} className="rounded-full" />) :
-              (<div className="grid h-11 w-11 place-items-center rounded-xl bg-gradient-to-br from-primary/20 to-emerald-500/10 text-sm font-bold text-primary">
-                {post.author.slice(0, 2).toUpperCase()}
-              </div>)}
-            <div>
-              <p className="font-semibold">{post.author}</p>
-              <p className="text-sm text-muted-foreground">{post.topic}</p>
+          <div className="flex min-w-0 items-start gap-3">
+            <Link href={authorHref} onClick={stop} className="shrink-0">
+              {profilePic ? (
+                <Image src={profilePic} alt={post.author} width={44} height={44} className="rounded-full object-cover" />
+              ) : (
+                <div className="grid h-11 w-11 place-items-center rounded-xl bg-gradient-to-br from-primary/20 to-emerald-500/10 text-sm font-bold text-primary">
+                  {post.author.slice(0, 2).toUpperCase()}
+                </div>
+              )}
+            </Link>
+            <div className="min-w-0">
+              <Link href={authorHref} onClick={stop} className="block truncate font-semibold hover:underline">
+                {post.author}
+              </Link>
+              <Link href={authorHref} onClick={stop} className="mt-0.5 block truncate text-sm text-muted-foreground hover:text-primary hover:underline">
+                {post.handle}
+              </Link>
+              {post.topic ? <p className="mt-1 text-xs text-muted-foreground">{post.topic}</p> : null}
             </div>
           </div>
           <PostBadge badge={post.badge ?? "default"} />
@@ -84,7 +96,7 @@ export function PostCard({ post, interactive = true, showActions = true }: PostC
       </CardHeader>
       <CardContent>
         {post.attachments?.length ? <MediaAttachmentGrid items={post.attachments} /> : null}
-        <p className="leading-7 text-foreground">{post.message}</p>
+        <p className="text-sm leading-5 text-foreground">{post.message}</p>
         {showActions ? (
           <div
             className="mt-5 flex flex-wrap items-center justify-between gap-2 border-t border-primary/10 pt-3 text-sm text-muted-foreground"

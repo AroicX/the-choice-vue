@@ -316,18 +316,48 @@ export function normalizeElection(raw: ApiRecord): Election {
   };
 }
 
+export function normalizeRatingOffice(value: unknown) {
+  const raw = String(value ?? "").trim().toUpperCase().replace(/\s+/g, "_");
+  if (!raw) return "OTHER";
+  if (/(PRESIDEN|PRESIDENCY)/.test(raw)) return "PRESIDENCY";
+  if (/SENAT/.test(raw)) return "SENATOR";
+  if (/GOVERN/.test(raw)) return "GOVERNOR";
+  if (/(HOUSE|REPRESENT|ASSEMBLY)/.test(raw)) return "HOUSE";
+  if (["PRESIDENCY", "SENATOR", "GOVERNOR", "HOUSE"].includes(raw)) return raw;
+  return raw;
+}
+
+export function ratingOfficeLabel(office: string) {
+  switch (normalizeRatingOffice(office)) {
+    case "PRESIDENCY":
+      return "President";
+    case "SENATOR":
+      return "Senators";
+    case "GOVERNOR":
+      return "Governors";
+    case "HOUSE":
+      return "House of Reps";
+    default:
+      return office
+        .replaceAll("_", " ")
+        .toLowerCase()
+        .replace(/\b\w/g, (char) => char.toUpperCase());
+  }
+}
+
 export function normalizeRatingCandidate(raw: ApiRecord): RatingCandidate {
   const party = raw.party as ApiRecord | string | undefined;
   const partyName = typeof party === "object" && party
-    ? String(party.acronym ?? party.name ?? "")
+    ? String(party.acronym ?? party.slug ?? party.name ?? "").toUpperCase()
     : String(party ?? raw.partyName ?? "");
   const partyImage = typeof party === "object" && party ? String(party.image ?? "").trim() : "";
   const image = String(raw.image ?? raw.imageUrl ?? raw.avatar ?? "").trim();
+  const office = normalizeRatingOffice(raw.candidate ?? raw.position);
   return {
     id: recordId(raw),
     name: String(raw.name ?? "Unnamed candidate"),
     image: image || undefined,
-    position: String(raw.position ?? raw.candidate ?? "Public office"),
+    position: office === "OTHER" ? String(raw.position ?? raw.candidate ?? "Public office") : office,
     party: partyName || undefined,
     partyImage: partyImage || undefined,
     state: raw.state ? String(raw.state) : undefined,
@@ -364,6 +394,9 @@ export function userInitials(user: Pick<User, "firstName" | "lastName" | "userna
 }
 
 export function normalizeUserProfile(raw: ApiRecord): User {
+  const statsRaw = raw.stats && typeof raw.stats === "object" ? (raw.stats as ApiRecord) : null;
+  const viewerRaw = raw.viewer && typeof raw.viewer === "object" ? (raw.viewer as ApiRecord) : null;
+
   return {
     id: recordId(raw),
     email: raw.email ? String(raw.email) : undefined,
@@ -383,6 +416,37 @@ export function normalizeUserProfile(raw: ApiRecord): User {
     verifiedPhone: Boolean(raw.verifiedPhone),
     interests: Array.isArray(raw.interests) ? raw.interests.map(String) : undefined,
     createdAt: raw.createdAt ? String(raw.createdAt) : undefined,
-    posts: asArray<ApiRecord>(raw.posts)
+    posts: asArray<ApiRecord>(raw.posts),
+    stats: statsRaw
+      ? {
+          posts: Number(statsRaw.posts ?? 0),
+          comments: Number(statsRaw.comments ?? 0),
+          likesGiven: Number(statsRaw.likesGiven ?? 0),
+          likesReceived: Number(statsRaw.likesReceived ?? 0),
+          shares: Number(statsRaw.shares ?? 0),
+          votes: Number(statsRaw.votes ?? 0),
+          issues: Number(statsRaw.issues ?? 0),
+          media: Number(statsRaw.media ?? 0),
+          followers: Number(statsRaw.followers ?? 0),
+          following: Number(statsRaw.following ?? 0)
+        }
+      : undefined,
+    viewer: viewerRaw
+      ? {
+          isFollowing: Boolean(viewerRaw.isFollowing),
+          isSelf: Boolean(viewerRaw.isSelf)
+        }
+      : undefined
   };
+}
+
+export function profilePath(
+  user?: { username?: string; id?: string } | null,
+  fallback?: string
+) {
+  const username = user?.username?.trim().replace(/^@+/, "");
+  if (username) return `/u/${encodeURIComponent(username)}`;
+  if (user?.id) return `/u/${encodeURIComponent(user.id)}`;
+  if (fallback) return `/u/${encodeURIComponent(fallback.replace(/^@+/, ""))}`;
+  return "/profile";
 }

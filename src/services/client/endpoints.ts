@@ -9,6 +9,13 @@ export const endpoints = {
   users: {
     me: "/users/me",
     profile: (id: string) => `/users/profile/${id}`,
+    public: (identifier: string) => `/users/public/${encodeURIComponent(identifier)}`,
+    publicPosts: (identifier: string) => `/users/public/${encodeURIComponent(identifier)}/posts`,
+    publicComments: (identifier: string) => `/users/public/${encodeURIComponent(identifier)}/comments`,
+    publicMedia: (identifier: string) => `/users/public/${encodeURIComponent(identifier)}/media`,
+    publicLikes: (identifier: string) => `/users/public/${encodeURIComponent(identifier)}/likes`,
+    publicVotes: (identifier: string) => `/users/public/${encodeURIComponent(identifier)}/votes`,
+    publicIssues: (identifier: string) => `/users/public/${encodeURIComponent(identifier)}/issues`,
     search: "/users/search",
     update: "/users/me",
     changePassword: "/users/password-reset"

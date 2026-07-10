@@ -57,7 +57,24 @@ export default function HomePage() {
         </div>
       </section>
 
-      <section>
+      <Card className="glass-panel">
+        <CardHeader>
+          <CardTitle>Daily civic brief</CardTitle>
+        </CardHeader>
+        <CardContent className="grid gap-4 md:grid-cols-3">
+          <Link href="/issues" className="rounded-2xl bg-gradient-to-br from-primary/15 to-emerald-500/10 p-4 text-sm font-medium transition-transform hover:scale-[1.01]">
+            There are {issues.length.toLocaleString()} citizen issues available to track.
+          </Link>
+          <Link href="/polls" className="rounded-2xl border border-primary/10 bg-background/70 p-4 text-sm font-medium transition-transform hover:scale-[1.01]">
+            There are {asArray<ApiRecord>(pollsQuery.data).length.toLocaleString()} polls open or listed.
+          </Link>
+          <Link href="/news" className="rounded-2xl border border-primary/10 bg-background/70 p-4 text-sm font-medium transition-transform hover:scale-[1.01]">
+            There are {news.length.toLocaleString()} civic news stories.
+          </Link>
+        </CardContent>
+      </Card>
+
+      {/* <section>
         <h2 className="section-title mb-4">Politician scorecard highlights</h2>
         <div className="grid gap-4 md:grid-cols-3">
           {politiciansQuery.isLoading ? (
@@ -70,7 +87,7 @@ export default function HomePage() {
             politicians.map((politician) => <PoliticianCard politician={politician} key={politician.id} />)
           )}
         </div>
-      </section>
+      </section> */}
 
       {/* <div className="grid gap-4 md:grid-cols-4">
         {issuesQuery.isLoading ? <StatCardSkeleton /> : (
@@ -119,22 +136,7 @@ export default function HomePage() {
         )}
       </div> */}
 
-      <Card className="glass-panel">
-        <CardHeader>
-          <CardTitle>Daily civic brief</CardTitle>
-        </CardHeader>
-        <CardContent className="grid gap-4 md:grid-cols-3">
-          <Link href="/issues" className="rounded-2xl bg-gradient-to-br from-primary/15 to-emerald-500/10 p-4 text-sm font-medium transition-transform hover:scale-[1.01]">
-            There are {issues.length.toLocaleString()} citizen issues available to track.
-          </Link>
-          <Link href="/polls" className="rounded-2xl border border-primary/10 bg-background/70 p-4 text-sm font-medium transition-transform hover:scale-[1.01]">
-            There are {asArray<ApiRecord>(pollsQuery.data).length.toLocaleString()} polls open or listed.
-          </Link>
-          <Link href="/news" className="rounded-2xl border border-primary/10 bg-background/70 p-4 text-sm font-medium transition-transform hover:scale-[1.01]">
-            There are {news.length.toLocaleString()} civic news stories.
-          </Link>
-        </CardContent>
-      </Card>
+
 
       <section className="grid gap-6 xl:grid-cols-[1.2fr_0.8fr]">
         <div className="space-y-4">

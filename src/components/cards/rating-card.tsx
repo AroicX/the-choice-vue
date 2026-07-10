@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { useRequireAuth } from "@/hooks/use-require-auth";
+import { ratingOfficeLabel } from "@/lib/content-utils";
 import { cn } from "@/lib/utils";
 import { getData } from "@/services/client/api";
 import { endpoints } from "@/services/client/endpoints";
@@ -79,7 +80,7 @@ export function RatingCard({ candidate }: { candidate: RatingCandidate }) {
         <div className="min-w-0">
           <h2 className="font-semibold leading-5">{candidate.name}</h2>
           <p className="mt-1 text-sm text-muted-foreground">
-            {candidate.position}
+            {ratingOfficeLabel(candidate.position)}
             {candidate.party ? ` · ${candidate.party}` : ""}
           </p>
           <div className="mt-2 flex flex-wrap items-center gap-2">
