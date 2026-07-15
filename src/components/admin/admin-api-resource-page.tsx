@@ -16,8 +16,9 @@ import {
   SearchInput,
   useFilteredRecords
 } from "@/components/admin/admin-ui";
-import { Button } from "@/components/ui/button";
 import type { AdminPageMeta, AdminRecord } from "@/lib/admin-control-data";
+import { displayApiError, getApiFieldErrors, type FieldErrors } from "@/lib/api-validation";
+import { Button } from "@/components/ui/button";
 
 type AdminApiResourcePageProps = {
   meta: AdminPageMeta;
@@ -55,7 +56,24 @@ function extractList(payload: unknown): Record<string, unknown>[] {
 }
 
 function displayError(error: unknown) {
-  return error instanceof Error ? error.message : "Something went wrong. Please try again.";
+  return displayApiError(error);
+}
+
+function applyMutationFormError(
+  error: unknown,
+  fieldNames: string[],
+  setFieldErrors: (errors: FieldErrors) => void,
+  setFormError: (message: string | null) => void
+) {
+  const parsed = getApiFieldErrors(error, fieldNames);
+  setFieldErrors(parsed.fieldErrors);
+  if (Object.keys(parsed.fieldErrors).length) {
+    setFormError(parsed.message || "Please fix the highlighted fields.");
+    gooeyToast.error(parsed.message || "Please fix the highlighted fields.");
+    return;
+  }
+  setFormError(parsed.message);
+  gooeyToast.error(parsed.message);
 }
 
 function dateMatches(record: AdminRecord, range: string) {
@@ -92,6 +110,14 @@ export function AdminApiResourcePage({
   const [createOpen, setCreateOpen] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
   const [confirm, setConfirm] = useState<ConfirmState>(null);
+  const [createFieldErrors, setCreateFieldErrors] = useState<FieldErrors>({});
+  const [createFormError, setCreateFormError] = useState<string | null>(null);
+  const [editFieldErrors, setEditFieldErrors] = useState<FieldErrors>({});
+  const [editFormError, setEditFormError] = useState<string | null>(null);
+  const formFieldNames = useMemo(
+    () => [...(meta.createFields ?? []), ...(meta.editFields ?? [])].map((field) => field.name),
+    [meta.createFields, meta.editFields]
+  );
   const { data, isLoading, isError, error, refetch } = useQuery({ queryKey, queryFn });
   const records = useMemo(() => extractList(data).map(mapRecord), [data, mapRecord]);
   const searched = useFilteredRecords(records, query);
@@ -117,10 +143,12 @@ export function AdminApiResourcePage({
     },
     onSuccess: () => {
       gooeyToast.success("Action completed successfully");
+      setCreateFieldErrors({});
+      setCreateFormError(null);
       setCreateOpen(false);
       queryClient.invalidateQueries({ queryKey });
     },
-    onError: (mutationError) => gooeyToast.error("Something went wrong. Please try again.", { description: displayError(mutationError) })
+    onError: (mutationError) => applyMutationFormError(mutationError, formFieldNames, setCreateFieldErrors, setCreateFormError)
   });
 
   const updateMutation = useMutation({
@@ -130,10 +158,12 @@ export function AdminApiResourcePage({
     },
     onSuccess: () => {
       gooeyToast.success("Action completed successfully");
+      setEditFieldErrors({});
+      setEditFormError(null);
       setEditOpen(false);
       queryClient.invalidateQueries({ queryKey });
     },
-    onError: (mutationError) => gooeyToast.error("Something went wrong. Please try again.", { description: displayError(mutationError) })
+    onError: (mutationError) => applyMutationFormError(mutationError, formFieldNames, setEditFieldErrors, setEditFormError)
   });
 
   const deleteMutation = useMutation({
@@ -285,7 +315,18 @@ export function AdminApiResourcePage({
         open={createOpen}
         title={meta.primaryAction ?? `Create ${meta.title}`}
         fields={meta.createFields ?? []}
-        onClose={() => setCreateOpen(false)}
+        fieldErrors={createFieldErrors}
+        formError={createFormError}
+        onClearFieldError={(field) => setCreateFieldErrors((current) => {
+          const next = { ...current };
+          delete next[field];
+          return next;
+        })}
+        onClose={() => {
+          setCreateFieldErrors({});
+          setCreateFormError(null);
+          setCreateOpen(false);
+        }}
         onSubmit={(payload) => createMutation.mutate(payload)}
       />
       <EditModal
@@ -293,7 +334,18 @@ export function AdminApiResourcePage({
         title={`Edit ${activeRecord?.title ?? meta.title}`}
         fields={meta.editFields ?? meta.createFields ?? []}
         initialValues={activeRecord?.values}
-        onClose={() => setEditOpen(false)}
+        fieldErrors={editFieldErrors}
+        formError={editFormError}
+        onClearFieldError={(field) => setEditFieldErrors((current) => {
+          const next = { ...current };
+          delete next[field];
+          return next;
+        })}
+        onClose={() => {
+          setEditFieldErrors({});
+          setEditFormError(null);
+          setEditOpen(false);
+        }}
         onSubmit={(payload) => updateMutation.mutate(payload)}
       />
       <ConfirmModal

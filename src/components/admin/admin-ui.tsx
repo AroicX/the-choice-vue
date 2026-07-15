@@ -363,17 +363,20 @@ const IMAGE_FIELD_NAMES = new Set(["image", "imageUrl", "optionImage", "profileP
 function FieldControl({
   field,
   value,
-  loadingOptions
+  loadingOptions,
+  hasError
 }: {
   field: AdminField;
   value?: string | number | boolean | null;
   loadingOptions?: boolean;
+  hasError?: boolean;
 }) {
   const stringValue = value === undefined || value === null ? "" : String(value);
   const isImageField = field.type === "file" || IMAGE_FIELD_NAMES.has(field.name);
+  const errorClass = hasError ? "border-destructive focus-visible:ring-destructive" : "";
 
   if (field.type === "textarea") {
-    return <textarea name={field.name} defaultValue={stringValue} className="min-h-24 w-full rounded-lg border border-input bg-background p-3 text-sm text-foreground" placeholder={field.placeholder} />;
+    return <textarea name={field.name} defaultValue={stringValue} className={cn("min-h-24 w-full rounded-lg border border-input bg-background p-3 text-sm text-foreground", errorClass)} placeholder={field.placeholder} />;
   }
   if (field.type === "select") {
     const items = field.optionItems?.length
@@ -385,7 +388,7 @@ function FieldControl({
         name={field.name}
         defaultValue={stringValue}
         disabled={loadingOptions}
-        className="h-10 w-full rounded-lg border border-input bg-background px-3 text-sm text-foreground"
+        className={cn("h-10 w-full rounded-lg border border-input bg-background px-3 text-sm text-foreground", errorClass)}
       >
         <option value="">{loadingOptions ? "Loading..." : `Select ${field.label.toLowerCase()}`}</option>
         {items.map((option) => (
@@ -397,12 +400,12 @@ function FieldControl({
     );
   }
   if (field.type === "checkbox") {
-    return <input name={field.name} type="checkbox" defaultChecked={value === true || stringValue.toLowerCase() === "true" || stringValue.toLowerCase() === "verified"} className="h-4 w-4 rounded border-border" />;
+    return <input name={field.name} type="checkbox" defaultChecked={value === true || stringValue.toLowerCase() === "true" || stringValue.toLowerCase() === "verified"} className={cn("h-4 w-4 rounded border-border", hasError && "border-destructive")} />;
   }
   if (isImageField) {
     return <FileUpload name={field.name} defaultValue={stringValue} label={field.label} />;
   }
-  return <Input name={field.name} type={field.type ?? "text"} defaultValue={stringValue} className="rounded-lg" placeholder={field.placeholder} />;
+  return <Input name={field.name} type={field.type ?? "text"} defaultValue={stringValue} className={cn("rounded-lg", errorClass)} placeholder={field.placeholder} />;
 }
 
 export function ResourceModal({
@@ -411,16 +414,22 @@ export function ResourceModal({
   fields,
   submitLabel,
   initialValues,
+  fieldErrors,
+  formError,
   onClose,
-  onSubmit
+  onSubmit,
+  onClearFieldError
 }: {
   open: boolean;
   title: string;
   fields: AdminField[];
   submitLabel: string;
   initialValues?: Record<string, string | number | boolean | null | undefined>;
+  fieldErrors?: Record<string, string>;
+  formError?: string | null;
   onClose: () => void;
   onSubmit: (payload: Record<string, string | boolean>) => void;
+  onClearFieldError?: (field: string) => void;
 }) {
   const [saving, setSaving] = useState(false);
   const needsParties = fields.some((field) => field.optionsSource === "parties");
@@ -452,6 +461,11 @@ export function ResourceModal({
             Close
           </Button>
         </div>
+        {formError ? (
+          <div className="mt-4 rounded-xl border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+            {formError}
+          </div>
+        ) : null}
         <form
           className="mt-5 grid gap-4 sm:grid-cols-2"
           id={`admin-form-${title.replace(/\s+/g, "-").toLowerCase()}`}
@@ -468,13 +482,26 @@ export function ResourceModal({
               onSubmit(payload);
             }, 250);
           }}
+          onChange={(event) => {
+            const target = event.target as HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement;
+            if (target?.name) onClearFieldError?.(target.name);
+          }}
         >
-          {resolvedFields.map((field) => (
-            <label key={field.name} className={cn("block space-y-2 text-sm font-medium text-foreground", (field.type === "textarea" || field.type === "file" || IMAGE_FIELD_NAMES.has(field.name)) && "sm:col-span-2")}>
-              <span>{field.label}</span>
-              <FieldControl field={field} value={initialValues?.[field.name]} loadingOptions={field.optionsSource === "parties" && partiesQuery.isLoading} />
-            </label>
-          ))}
+          {resolvedFields.map((field) => {
+            const error = fieldErrors?.[field.name];
+            return (
+              <label key={field.name} className={cn("block space-y-2 text-sm font-medium text-foreground", (field.type === "textarea" || field.type === "file" || IMAGE_FIELD_NAMES.has(field.name)) && "sm:col-span-2")}>
+                <span>{field.label}</span>
+                <FieldControl
+                  field={field}
+                  value={initialValues?.[field.name]}
+                  loadingOptions={field.optionsSource === "parties" && partiesQuery.isLoading}
+                  hasError={Boolean(error)}
+                />
+                {error ? <p className="text-xs font-normal text-destructive">{error}</p> : null}
+              </label>
+            );
+          })}
         </form>
         <div className="mt-6 flex justify-end gap-2">
           <Button variant="outline" className="rounded-lg" onClick={onClose}>

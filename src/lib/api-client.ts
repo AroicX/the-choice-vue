@@ -1,19 +1,9 @@
 import { api, type ApiEnvelope } from "@/services/client/api";
+import { ApiClientError, parseValidationPayload, type FieldErrors } from "@/lib/api-validation";
 import { useAuthStore } from "@/stores/auth-store";
 
 export type ApiClientParams = Record<string, string | number | boolean | undefined | null>;
-
-export class ApiClientError extends Error {
-  status?: number;
-  errors?: string[];
-
-  constructor(message: string, status?: number, errors?: string[]) {
-    super(message);
-    this.name = "ApiClientError";
-    this.status = status;
-    this.errors = errors;
-  }
-}
+export { ApiClientError, type FieldErrors };
 
 function unwrap<T>(payload: ApiEnvelope<T> | T): T {
   if (payload && typeof payload === "object" && "data" in payload) {
@@ -31,7 +21,16 @@ async function request<T>(method: "get" | "post" | "patch" | "delete", url: stri
       useAuthStore.getState().clearSession();
       window.location.assign("/login");
     }
-    throw error instanceof ApiClientError ? error : new ApiClientError(error instanceof Error ? error.message : "Something went wrong. Please try again.");
+    if (error instanceof ApiClientError) throw error;
+
+    const parsed = parseValidationPayload(error);
+    throw new ApiClientError(
+      error instanceof Error ? error.message : parsed.message || "Something went wrong. Please try again.",
+      undefined,
+      undefined,
+      parsed.fieldErrors,
+      error
+    );
   }
 }
 

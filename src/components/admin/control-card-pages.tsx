@@ -32,6 +32,7 @@ import {
 } from "@/components/admin/admin-record-mappers";
 import type { AdminField, AdminPageMeta, AdminRecord } from "@/lib/admin-control-data";
 import { normalizePost } from "@/lib/content-utils";
+import { displayApiError, getApiFieldErrors, type FieldErrors } from "@/lib/api-validation";
 import { cn } from "@/lib/utils";
 import { discussionsService } from "@/services/discussions.service";
 import { electionsService } from "@/services/elections.service";
@@ -60,7 +61,24 @@ function extractList(payload: unknown): Raw[] {
 }
 
 function displayError(error: unknown) {
-  return error instanceof Error ? error.message : "Something went wrong. Please try again.";
+  return displayApiError(error);
+}
+
+function applyMutationFormError(
+  error: unknown,
+  fieldNames: string[],
+  setFieldErrors: (errors: FieldErrors) => void,
+  setFormError: (message: string | null) => void
+) {
+  const parsed = getApiFieldErrors(error, fieldNames);
+  setFieldErrors(parsed.fieldErrors);
+  if (Object.keys(parsed.fieldErrors).length) {
+    setFormError(parsed.message || "Please fix the highlighted fields.");
+    gooeyToast.error(parsed.message || "Please fix the highlighted fields.");
+    return;
+  }
+  setFormError(parsed.message);
+  gooeyToast.error(parsed.message);
 }
 
 function dateMatches(raw: Raw, range: DateFilter) {
@@ -200,15 +218,21 @@ function OptionBuilderModal({
   title,
   variant,
   initialRecord,
+  fieldErrors,
+  formError,
   onClose,
-  onSubmit
+  onSubmit,
+  onClearFieldError
 }: {
   open: boolean;
   title: string;
   variant: "poll" | "election";
   initialRecord?: AdminRecord | null;
+  fieldErrors?: FieldErrors;
+  formError?: string | null;
   onClose: () => void;
   onSubmit: (payload: OptionPayload) => void;
+  onClearFieldError?: (field: string) => void;
 }) {
   const raw = initialRecord?.raw as Raw | undefined;
   const existingOptions = optionEntries(raw);
@@ -241,6 +265,8 @@ function OptionBuilderModal({
 
   if (!open) return null;
 
+  const errorClass = "border-destructive focus-visible:ring-destructive";
+
   return (
     <div className="fixed inset-0 z-50 grid place-items-center bg-background/70 p-4 backdrop-blur-sm">
       <div className="max-h-[90vh] w-full max-w-3xl overflow-y-auto rounded-2xl border border-border bg-card p-5 text-foreground shadow-2xl">
@@ -248,6 +274,11 @@ function OptionBuilderModal({
           <h2 className="text-lg font-semibold text-foreground">{title}</h2>
           <Button variant="ghost" className="rounded-lg" onClick={onClose}>Close</Button>
         </div>
+        {formError ? (
+          <div className="mt-4 rounded-xl border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+            {formError}
+          </div>
+        ) : null}
         <form
           className="mt-5 space-y-4"
           onSubmit={(event) => {
@@ -267,6 +298,10 @@ function OptionBuilderModal({
               : { title: String(form.get("title") ?? ""), description: String(form.get("description") ?? ""), options: optionObject };
             onSubmit(payload);
           }}
+          onChange={(event) => {
+            const target = event.target as HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement;
+            if (target?.name) onClearFieldError?.(target.name);
+          }}
         >
           {variant === "poll" ? (
             <div className="grid gap-4 sm:grid-cols-2">
@@ -276,7 +311,7 @@ function OptionBuilderModal({
                   name="discussionId"
                   required
                   defaultValue={selectedDiscussionId}
-                  className="h-10 w-full rounded-lg border border-input bg-background px-3 text-sm text-foreground"
+                  className={cn("h-10 w-full rounded-lg border border-input bg-background px-3 text-sm text-foreground", fieldErrors?.discussionId && errorClass)}
                   disabled={discussionsQuery.isLoading}
                 >
                   <option value="">
@@ -288,21 +323,25 @@ function OptionBuilderModal({
                     </option>
                   ))}
                 </select>
+                {fieldErrors?.discussionId ? <p className="text-xs font-normal text-destructive">{fieldErrors.discussionId}</p> : null}
               </label>
               <label className="block space-y-2 text-sm font-medium text-foreground sm:col-span-2">
                 <span>Question</span>
-                <textarea name="question" defaultValue={String(raw?.question ?? "")} className="min-h-24 w-full rounded-lg border border-input bg-background p-3 text-sm text-foreground" />
+                <textarea name="question" defaultValue={String(raw?.question ?? "")} className={cn("min-h-24 w-full rounded-lg border border-input bg-background p-3 text-sm text-foreground", fieldErrors?.question && errorClass)} />
+                {fieldErrors?.question ? <p className="text-xs font-normal text-destructive">{fieldErrors.question}</p> : null}
               </label>
             </div>
           ) : (
             <div className="grid gap-4 sm:grid-cols-2">
               <label className="block space-y-2 text-sm font-medium text-foreground">
                 <span>Title</span>
-                <Input name="title" defaultValue={String(raw?.title ?? "")} className="rounded-lg" />
+                <Input name="title" defaultValue={String(raw?.title ?? "")} className={cn("rounded-lg", fieldErrors?.title && errorClass)} />
+                {fieldErrors?.title ? <p className="text-xs font-normal text-destructive">{fieldErrors.title}</p> : null}
               </label>
               <label className="block space-y-2 text-sm font-medium text-foreground sm:col-span-2">
                 <span>Description</span>
-                <textarea name="description" defaultValue={String(raw?.description ?? "")} className="min-h-24 w-full rounded-lg border border-input bg-background p-3 text-sm text-foreground" />
+                <textarea name="description" defaultValue={String(raw?.description ?? "")} className={cn("min-h-24 w-full rounded-lg border border-input bg-background p-3 text-sm text-foreground", fieldErrors?.description && errorClass)} />
+                {fieldErrors?.description ? <p className="text-xs font-normal text-destructive">{fieldErrors.description}</p> : null}
               </label>
             </div>
           )}
@@ -311,6 +350,7 @@ function OptionBuilderModal({
               <p className="text-sm font-semibold text-foreground">Options</p>
               <Button type="button" variant="outline" className="rounded-lg" onClick={() => setOptions((current) => [...current, { text: "", image: "", value: "0" }])}>Add option</Button>
             </div>
+            {fieldErrors?.options ? <p className="text-xs text-destructive">{fieldErrors.options}</p> : null}
             {options.map((option, index) => (
               <div key={index} className="grid gap-3 rounded-lg border border-border bg-background/50 p-3 sm:grid-cols-[1fr_1fr_96px_auto]">
                 <Input value={option.text} onChange={(event) => setOptions((current) => current.map((item, itemIndex) => itemIndex === index ? { ...item, text: event.target.value } : item))} placeholder={`Option ${index + 1}`} className="rounded-lg" />
@@ -393,6 +433,14 @@ export function ControlPostsCardsPage({ discussionId }: { discussionId?: string 
   const [createOpen, setCreateOpen] = useState(false);
   const [editingRecord, setEditingRecord] = useState<AdminRecord | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [createFieldErrors, setCreateFieldErrors] = useState<FieldErrors>({});
+  const [createFormError, setCreateFormError] = useState<string | null>(null);
+  const [editFieldErrors, setEditFieldErrors] = useState<FieldErrors>({});
+  const [editFormError, setEditFormError] = useState<string | null>(null);
+  const postFieldNames = useMemo(
+    () => [...(postsMeta.createFields ?? []), ...(postsMeta.editFields ?? [])].map((field) => field.name),
+    []
+  );
   const postsQuery = useInfiniteQuery({
     queryKey: ["control", "posts", discussionId ?? "all"],
     queryFn: ({ pageParam }) => discussionId ? postsService.byDiscussion<Raw>(discussionId, { skip: pageParam, take: PAGE_SIZE }) : postsService.list<Raw>({ skip: pageParam, take: PAGE_SIZE }),
@@ -415,19 +463,23 @@ export function ControlPostsCardsPage({ discussionId }: { discussionId?: string 
     mutationFn: (body: Record<string, unknown>) => postsService.create(omitEmpty(body as Record<string, string | boolean>)),
     onSuccess: () => {
       gooeyToast.success("Post created");
+      setCreateFieldErrors({});
+      setCreateFormError(null);
       setCreateOpen(false);
       queryClient.invalidateQueries({ queryKey: ["control", "posts"] });
     },
-    onError: (error) => gooeyToast.error(displayError(error))
+    onError: (error) => applyMutationFormError(error, postFieldNames, setCreateFieldErrors, setCreateFormError)
   });
   const updateMutation = useMutation({
     mutationFn: ({ id, body }: { id: string; body: Record<string, unknown> }) => postsService.update(id, body),
     onSuccess: () => {
       gooeyToast.success("Post updated");
+      setEditFieldErrors({});
+      setEditFormError(null);
       setEditingRecord(null);
       queryClient.invalidateQueries({ queryKey: ["control", "posts"] });
     },
-    onError: (error) => gooeyToast.error(displayError(error))
+    onError: (error) => applyMutationFormError(error, postFieldNames, setEditFieldErrors, setEditFormError)
   });
   const records = useMemo(() => postsQuery.data?.pages.flatMap(extractList).map(mapPost) ?? [], [postsQuery.data]);
   const typeOptions = useMemo(() => Array.from(new Set(records.map((record) => String(record.raw && typeof record.raw === "object" ? ((record.raw as Raw).type ?? "Post") : "Post")))), [records]);
@@ -472,13 +524,41 @@ export function ControlPostsCardsPage({ discussionId }: { discussionId?: string 
           </Button>
         </div>
       ) : null}
-      <CreateModal open={createOpen} title={postsMeta.primaryAction ?? "Create Post"} fields={postsMeta.createFields ?? []} onClose={() => setCreateOpen(false)} onSubmit={(body) => createMutation.mutate(body)} />
+      <CreateModal
+        open={createOpen}
+        title={postsMeta.primaryAction ?? "Create Post"}
+        fields={postsMeta.createFields ?? []}
+        fieldErrors={createFieldErrors}
+        formError={createFormError}
+        onClearFieldError={(field) => setCreateFieldErrors((current) => {
+          const next = { ...current };
+          delete next[field];
+          return next;
+        })}
+        onClose={() => {
+          setCreateFieldErrors({});
+          setCreateFormError(null);
+          setCreateOpen(false);
+        }}
+        onSubmit={(body) => createMutation.mutate(body)}
+      />
       <EditModal
         open={Boolean(editingRecord)}
         title="Edit post"
         fields={postsMeta.editFields ?? [{ name: "message", label: "Content", type: "textarea" }]}
         initialValues={{ message: String((editingRecord?.raw as Raw)?.message ?? editingRecord?.values.preview ?? "") }}
-        onClose={() => setEditingRecord(null)}
+        fieldErrors={editFieldErrors}
+        formError={editFormError}
+        onClearFieldError={(field) => setEditFieldErrors((current) => {
+          const next = { ...current };
+          delete next[field];
+          return next;
+        })}
+        onClose={() => {
+          setEditFieldErrors({});
+          setEditFormError(null);
+          setEditingRecord(null);
+        }}
         onSubmit={(body) => editingRecord ? updateMutation.mutate({ id: editingRecord.id, body: { message: body.message } }) : undefined}
       />
       <AdminConfirmDeleteModal
@@ -534,7 +614,15 @@ export function ControlDiscussionsCardsPage() {
   const [status, setStatus] = useState("all");
   const [createOpen, setCreateOpen] = useState(false);
   const [editingRecord, setEditingRecord] = useState<AdminRecord | null>(null);
+  const [createFieldErrors, setCreateFieldErrors] = useState<FieldErrors>({});
+  const [createFormError, setCreateFormError] = useState<string | null>(null);
+  const [editFieldErrors, setEditFieldErrors] = useState<FieldErrors>({});
+  const [editFormError, setEditFormError] = useState<string | null>(null);
   const queryClient = useQueryClient();
+  const discussionFieldNames = useMemo(
+    () => [...(discussionsMeta.createFields ?? []), ...(discussionsMeta.editFields ?? [])].map((field) => field.name),
+    []
+  );
   const discussions = useQuery({ queryKey: ["control", "discussions"], queryFn: () => discussionsService.list<Raw>() });
   const records = useMemo(() => extractList(discussions.data).map(mapDiscussion), [discussions.data]);
   const filtered = records.filter((record) => contains(record, query) && dateMatches((record.raw as Raw) ?? {}, dateRange) && (status === "all" || String(record.status ?? "active") === status));
@@ -543,19 +631,23 @@ export function ControlDiscussionsCardsPage() {
     mutationFn: (body: Record<string, unknown>) => discussionsService.create(omitEmpty(body as Record<string, string | boolean>)),
     onSuccess: () => {
       gooeyToast.success("Discussion created");
+      setCreateFieldErrors({});
+      setCreateFormError(null);
       setCreateOpen(false);
       invalidate();
     },
-    onError: (error) => gooeyToast.error(displayError(error))
+    onError: (error) => applyMutationFormError(error, discussionFieldNames, setCreateFieldErrors, setCreateFormError)
   });
   const updateMutation = useMutation({
     mutationFn: ({ id, body }: { id: string; body: Record<string, unknown> }) => discussionsService.update(id, omitEmpty(body as Record<string, string | boolean>)),
     onSuccess: () => {
       gooeyToast.success("Discussion updated");
+      setEditFieldErrors({});
+      setEditFormError(null);
       setEditingRecord(null);
       invalidate();
     },
-    onError: (error) => gooeyToast.error(displayError(error))
+    onError: (error) => applyMutationFormError(error, discussionFieldNames, setEditFieldErrors, setEditFormError)
   });
   const deleteMutation = useMutation({
     mutationFn: (id: string) => discussionsService.remove(id),
@@ -576,8 +668,43 @@ export function ControlDiscussionsCardsPage() {
       <div className="grid gap-4 lg:grid-cols-2 xl:grid-cols-3">
         {filtered.map((record) => <DiscussionCard key={record.id} record={record} onEdit={() => setEditingRecord(record)} onDelete={() => deleteMutation.mutate(record.id)} />)}
       </div>
-      <CreateModal open={createOpen} title={discussionsMeta.primaryAction ?? "Create Discussion"} fields={discussionsMeta.createFields ?? []} onClose={() => setCreateOpen(false)} onSubmit={(body) => createMutation.mutate(body)} />
-      <EditModal open={Boolean(editingRecord)} title={`Edit ${editingRecord?.title ?? "Discussion"}`} fields={discussionsMeta.editFields ?? discussionsMeta.createFields ?? []} initialValues={editingRecord?.values} onClose={() => setEditingRecord(null)} onSubmit={(body) => editingRecord ? updateMutation.mutate({ id: editingRecord.id, body }) : undefined} />
+      <CreateModal
+        open={createOpen}
+        title={discussionsMeta.primaryAction ?? "Create Discussion"}
+        fields={discussionsMeta.createFields ?? []}
+        fieldErrors={createFieldErrors}
+        formError={createFormError}
+        onClearFieldError={(field) => setCreateFieldErrors((current) => {
+          const next = { ...current };
+          delete next[field];
+          return next;
+        })}
+        onClose={() => {
+          setCreateFieldErrors({});
+          setCreateFormError(null);
+          setCreateOpen(false);
+        }}
+        onSubmit={(body) => createMutation.mutate(body)}
+      />
+      <EditModal
+        open={Boolean(editingRecord)}
+        title={`Edit ${editingRecord?.title ?? "Discussion"}`}
+        fields={discussionsMeta.editFields ?? discussionsMeta.createFields ?? []}
+        initialValues={editingRecord?.values}
+        fieldErrors={editFieldErrors}
+        formError={editFormError}
+        onClearFieldError={(field) => setEditFieldErrors((current) => {
+          const next = { ...current };
+          delete next[field];
+          return next;
+        })}
+        onClose={() => {
+          setEditFieldErrors({});
+          setEditFormError(null);
+          setEditingRecord(null);
+        }}
+        onSubmit={(body) => editingRecord ? updateMutation.mutate({ id: editingRecord.id, body }) : undefined}
+      />
     </div>
   );
 }
@@ -677,11 +804,32 @@ function CardGridResourcePage({
   const [editingRecord, setEditingRecord] = useState<AdminRecord | null>(null);
   const [createOpen, setCreateOpen] = useState(false);
   const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [createFieldErrors, setCreateFieldErrors] = useState<FieldErrors>({});
+  const [createFormError, setCreateFormError] = useState<string | null>(null);
+  const [editFieldErrors, setEditFieldErrors] = useState<FieldErrors>({});
+  const [editFormError, setEditFormError] = useState<string | null>(null);
+  const formFieldNames = useMemo(() => {
+    const fields = [...(createFields ?? meta.createFields ?? []), ...(editFields ?? meta.editFields ?? [])];
+    const optionFields = optionVariant === "poll"
+      ? ["discussionId", "question", "options"]
+      : optionVariant === "election"
+        ? ["title", "description", "options"]
+        : [];
+    return Array.from(new Set([...fields.map((field) => field.name), ...optionFields]));
+  }, [createFields, editFields, meta.createFields, meta.editFields, optionVariant]);
   const recordsQuery = useQuery({ queryKey, queryFn });
   const records = useMemo(() => extractList(recordsQuery.data).map(mapRecord), [recordsQuery.data, mapRecord]);
   const typeOptions = useMemo(() => Array.from(new Set(records.map((record) => String(record.values.type ?? record.values.position ?? record.values.status ?? "Active")))), [records]);
   const filtered = records.filter((record) => contains(record, query) && dateMatches((record.raw as Raw) ?? {}, dateRange) && (typeValue === "all" || Object.values(record.values).map(String).includes(typeValue)));
   const invalidate = () => queryClient.invalidateQueries({ queryKey });
+  const clearCreateErrors = () => {
+    setCreateFieldErrors({});
+    setCreateFormError(null);
+  };
+  const clearEditErrors = () => {
+    setEditFieldErrors({});
+    setEditFormError(null);
+  };
   const createMutation = useMutation({
     mutationFn: (body: Raw) => {
       if (!createFn) throw new Error("Creating is not available for this module yet.");
@@ -689,10 +837,11 @@ function CardGridResourcePage({
     },
     onSuccess: () => {
       gooeyToast.success("Created successfully");
+      clearCreateErrors();
       setCreateOpen(false);
       invalidate();
     },
-    onError: (error) => gooeyToast.error(displayError(error))
+    onError: (error) => applyMutationFormError(error, formFieldNames, setCreateFieldErrors, setCreateFormError)
   });
   const updateMutation = useMutation({
     mutationFn: ({ id, body }: { id: string; body: Raw }) => {
@@ -701,10 +850,11 @@ function CardGridResourcePage({
     },
     onSuccess: () => {
       gooeyToast.success("Updated successfully");
+      clearEditErrors();
       setEditingRecord(null);
       invalidate();
     },
-    onError: (error) => gooeyToast.error(displayError(error))
+    onError: (error) => applyMutationFormError(error, formFieldNames, setEditFieldErrors, setEditFormError)
   });
   const deleteMutation = useMutation({
     mutationFn: (id: string) => {
@@ -751,13 +901,79 @@ function CardGridResourcePage({
       />
       {optionVariant ? (
         <>
-          <OptionBuilderModal open={createOpen} title={meta.primaryAction ?? "Create"} variant={optionVariant} onClose={() => setCreateOpen(false)} onSubmit={(body) => createMutation.mutate(body as Raw)} />
-          <OptionBuilderModal open={Boolean(editingRecord)} title={`Edit ${editingRecord?.title ?? meta.title}`} variant={optionVariant} initialRecord={editingRecord} onClose={() => setEditingRecord(null)} onSubmit={(body) => editingRecord ? updateMutation.mutate({ id: editingRecord.id, body: body as Raw }) : undefined} />
+          <OptionBuilderModal
+            open={createOpen}
+            title={meta.primaryAction ?? "Create"}
+            variant={optionVariant}
+            fieldErrors={createFieldErrors}
+            formError={createFormError}
+            onClearFieldError={(field) => setCreateFieldErrors((current) => {
+              const next = { ...current };
+              delete next[field];
+              return next;
+            })}
+            onClose={() => {
+              clearCreateErrors();
+              setCreateOpen(false);
+            }}
+            onSubmit={(body) => createMutation.mutate(body as Raw)}
+          />
+          <OptionBuilderModal
+            open={Boolean(editingRecord)}
+            title={`Edit ${editingRecord?.title ?? meta.title}`}
+            variant={optionVariant}
+            initialRecord={editingRecord}
+            fieldErrors={editFieldErrors}
+            formError={editFormError}
+            onClearFieldError={(field) => setEditFieldErrors((current) => {
+              const next = { ...current };
+              delete next[field];
+              return next;
+            })}
+            onClose={() => {
+              clearEditErrors();
+              setEditingRecord(null);
+            }}
+            onSubmit={(body) => editingRecord ? updateMutation.mutate({ id: editingRecord.id, body: body as Raw }) : undefined}
+          />
         </>
       ) : (
         <>
-          <CreateModal open={createOpen} title={meta.primaryAction ?? `Create ${meta.title}`} fields={createFields ?? meta.createFields ?? []} onClose={() => setCreateOpen(false)} onSubmit={(formPayload) => createMutation.mutate(payload(formPayload))} />
-          <EditModal open={Boolean(editingRecord)} title={`Edit ${editingRecord?.title ?? meta.title}`} fields={editFields ?? meta.editFields ?? createFields ?? meta.createFields ?? []} initialValues={editingRecord?.values} onClose={() => setEditingRecord(null)} onSubmit={(formPayload) => editingRecord ? updateMutation.mutate({ id: editingRecord.id, body: payload(formPayload) }) : undefined} />
+          <CreateModal
+            open={createOpen}
+            title={meta.primaryAction ?? `Create ${meta.title}`}
+            fields={createFields ?? meta.createFields ?? []}
+            fieldErrors={createFieldErrors}
+            formError={createFormError}
+            onClearFieldError={(field) => setCreateFieldErrors((current) => {
+              const next = { ...current };
+              delete next[field];
+              return next;
+            })}
+            onClose={() => {
+              clearCreateErrors();
+              setCreateOpen(false);
+            }}
+            onSubmit={(formPayload) => createMutation.mutate(payload(formPayload))}
+          />
+          <EditModal
+            open={Boolean(editingRecord)}
+            title={`Edit ${editingRecord?.title ?? meta.title}`}
+            fields={editFields ?? meta.editFields ?? createFields ?? meta.createFields ?? []}
+            initialValues={editingRecord?.values}
+            fieldErrors={editFieldErrors}
+            formError={editFormError}
+            onClearFieldError={(field) => setEditFieldErrors((current) => {
+              const next = { ...current };
+              delete next[field];
+              return next;
+            })}
+            onClose={() => {
+              clearEditErrors();
+              setEditingRecord(null);
+            }}
+            onSubmit={(formPayload) => editingRecord ? updateMutation.mutate({ id: editingRecord.id, body: payload(formPayload) }) : undefined}
+          />
         </>
       )}
     </div>

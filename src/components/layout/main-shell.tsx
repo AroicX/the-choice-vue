@@ -159,8 +159,7 @@ export function MainShell({ children }: { children: React.ReactNode }) {
           <header className="sticky top-0 z-30 border-b border-white/10 bg-background/80 backdrop-blur-xl">
             <div className="flex h-16 items-center gap-3 px-4 sm:px-6 lg:px-8">
               <Link href="/home" className="flex shrink-0 items-center gap-2 font-bold lg:hidden">
-                <img src="/legacy/logo.png" alt="Choice9ja" className="h-9 w-9 rounded-xl object-contain shadow-glow" />
-                <span className="civic-gradient-text hidden sm:inline">TheChoice9ja</span>
+                <img src="/legacy/logo.png" alt="Choice9ja" className="size-16 rounded-xl object-contain" />
               </Link>
 
               <form onSubmit={handleSearch} className="relative min-w-0 flex-1">

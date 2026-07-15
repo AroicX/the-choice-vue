@@ -13,13 +13,14 @@ import { Button } from "@/components/ui/button";
 import { useInfiniteScroll } from "@/hooks/use-infinite-scroll";
 import { flattenComments, usePostComments } from "@/hooks/use-post-comments";
 import { commentAuthor, commentAuthorProfilePic, normalizePost } from "@/lib/content-utils";
+import { displayApiError, getApiFieldErrors, type FieldErrors } from "@/lib/api-validation";
 import { normalizeMediaAttachments } from "@/lib/media-utils";
 import { commentsService } from "@/services/comments.service";
 import { postsService } from "@/services/posts.service";
 import type { ApiRecord } from "@/types";
 
 function displayError(error: unknown) {
-  return error instanceof Error ? error.message : "Something went wrong. Please try again.";
+  return displayApiError(error);
 }
 
 export function ControlPostDetail({ postId }: { postId: string }) {
@@ -27,6 +28,10 @@ export function ControlPostDetail({ postId }: { postId: string }) {
   const [editingPost, setEditingPost] = useState(false);
   const [editingComment, setEditingComment] = useState<ApiRecord | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<{ type: "post" | "comment"; id: string; label: string } | null>(null);
+  const [postFieldErrors, setPostFieldErrors] = useState<FieldErrors>({});
+  const [postFormError, setPostFormError] = useState<string | null>(null);
+  const [commentFieldErrors, setCommentFieldErrors] = useState<FieldErrors>({});
+  const [commentFormError, setCommentFormError] = useState<string | null>(null);
 
   const postQuery = useQuery({
     queryKey: ["control", "posts", "detail", postId],
@@ -53,21 +58,35 @@ export function ControlPostDetail({ postId }: { postId: string }) {
     mutationFn: (payload: Record<string, string | boolean>) => postsService.update(postId, { message: payload.message }),
     onSuccess: () => {
       gooeyToast.success("Post updated");
+      setPostFieldErrors({});
+      setPostFormError(null);
       setEditingPost(false);
       queryClient.invalidateQueries({ queryKey: ["control", "posts", "detail", postId] });
       queryClient.invalidateQueries({ queryKey: ["control", "posts"] });
     },
-    onError: (error) => gooeyToast.error(displayError(error))
+    onError: (error) => {
+      const parsed = getApiFieldErrors(error, ["message"]);
+      setPostFieldErrors(parsed.fieldErrors);
+      setPostFormError(parsed.message);
+      gooeyToast.error(parsed.message);
+    }
   });
 
   const updateCommentMutation = useMutation({
     mutationFn: ({ id, message }: { id: string; message: string }) => commentsService.update(id, { message }),
     onSuccess: () => {
       gooeyToast.success("Comment updated");
+      setCommentFieldErrors({});
+      setCommentFormError(null);
       setEditingComment(null);
       queryClient.invalidateQueries({ queryKey: ["comments", postId] });
     },
-    onError: (error) => gooeyToast.error(displayError(error))
+    onError: (error) => {
+      const parsed = getApiFieldErrors(error, ["message"]);
+      setCommentFieldErrors(parsed.fieldErrors);
+      setCommentFormError(parsed.message);
+      gooeyToast.error(parsed.message);
+    }
   });
 
   const deleteMutation = useMutation({
@@ -234,7 +253,18 @@ export function ControlPostDetail({ postId }: { postId: string }) {
         title="Edit post"
         fields={[{ name: "message", label: "Content", type: "textarea" }]}
         initialValues={{ message: post?.message ?? "" }}
-        onClose={() => setEditingPost(false)}
+        fieldErrors={postFieldErrors}
+        formError={postFormError}
+        onClearFieldError={(field) => setPostFieldErrors((current) => {
+          const next = { ...current };
+          delete next[field];
+          return next;
+        })}
+        onClose={() => {
+          setPostFieldErrors({});
+          setPostFormError(null);
+          setEditingPost(false);
+        }}
         onSubmit={(payload) => updatePostMutation.mutate(payload)}
       />
 
@@ -243,7 +273,18 @@ export function ControlPostDetail({ postId }: { postId: string }) {
         title="Edit comment"
         fields={[{ name: "message", label: "Comment", type: "textarea" }]}
         initialValues={{ message: String(editingComment?.message ?? editingComment?.content ?? "") }}
-        onClose={() => setEditingComment(null)}
+        fieldErrors={commentFieldErrors}
+        formError={commentFormError}
+        onClearFieldError={(field) => setCommentFieldErrors((current) => {
+          const next = { ...current };
+          delete next[field];
+          return next;
+        })}
+        onClose={() => {
+          setCommentFieldErrors({});
+          setCommentFormError(null);
+          setEditingComment(null);
+        }}
         onSubmit={(payload) => {
           if (!editingComment) return;
           updateCommentMutation.mutate({ id: String(editingComment.id), message: String(payload.message) });

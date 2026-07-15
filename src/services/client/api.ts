@@ -1,4 +1,5 @@
 import axios, { AxiosError } from "axios";
+import { ApiClientError, parseValidationPayload } from "@/lib/api-validation";
 import { useAuthStore } from "@/stores/auth-store";
 
 export type ApiEnvelope<T> = {
@@ -27,18 +28,31 @@ api.interceptors.request.use((config) => {
 
 api.interceptors.response.use(
   (response) => response,
-  (error: AxiosError<{ message?: string; errors?: string[] }>) => {
+  (error: AxiosError<unknown>) => {
     if (error.response?.status === 401 && typeof window !== "undefined") {
       useAuthStore.getState().clearSession();
     }
 
+    const payload = error.response?.data;
+    const parsed = parseValidationPayload(payload);
     const message =
-      error.response?.data?.message ??
-      error.response?.data?.errors?.join(", ") ??
-      error.message ??
+      parsed.message ||
+      (payload && typeof payload === "object" && "message" in payload && typeof (payload as { message?: unknown }).message === "string"
+        ? String((payload as { message: string }).message)
+        : null) ||
+      error.message ||
       "Request failed";
 
-    return Promise.reject(new Error(message));
+    const listErrors =
+      payload && typeof payload === "object" && Array.isArray((payload as { errors?: unknown }).errors)
+        ? ((payload as { errors: unknown[] }).errors).map(String)
+        : Array.isArray((payload as { message?: unknown } | undefined)?.message)
+          ? ((payload as { message: unknown[] }).message).map(String)
+          : undefined;
+
+    return Promise.reject(
+      new ApiClientError(message, error.response?.status, listErrors, parsed.fieldErrors, payload)
+    );
   }
 );
 
