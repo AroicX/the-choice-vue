@@ -12,7 +12,7 @@ import { ShareModal } from "@/components/share/share-modal";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000"),
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL ?? "https://thechoice9ja.com"),
   title: "Choice9ja",
   description:
     "Choice9ja provides a platform for Nigerian citizens to increase transparency, strengthen participatory governance, and ensure accountability of leaders.",

@@ -8,7 +8,7 @@ export type ApiEnvelope<T> = {
 };
 
 export const api = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3333/api",
+  baseURL: process.env.NEXT_PUBLIC_API_URL ?? "https://thechoice9ja-api-production.up.railway.app/api",
   timeout: 20_000,
   headers: {
     "Content-Type": "application/json"
