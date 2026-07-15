@@ -114,8 +114,8 @@ export function MainShell({ children }: { children: React.ReactNode }) {
       <div className="mx-auto grid max-w-[1440px] grid-cols-1 lg:grid-cols-[270px_minmax(0,1fr)_340px]">
         <aside className="sticky top-0 hidden h-screen border-r border-white/10 bg-card/70 px-4 py-5 backdrop-blur-xl lg:block">
           <Link href="/home" className="mb-8 flex items-center gap-3 font-bold">
-            <img src="/legacy/logo.png" alt="Choice9ja" className="h-10 w-10 rounded-xl object-contain shadow-glow" />
-            <span className="civic-gradient-text">TheChoice9ja</span>
+            <img src="/legacy/logo.png" alt="Choice9ja" className="size-24 rounded-xl object-contain shadow-glow" />
+
           </Link>
           <nav className="space-y-1.5 overflow-y-auto pb-36">
             {mainNav.map((item) => {
