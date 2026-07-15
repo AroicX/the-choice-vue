@@ -305,7 +305,7 @@ export const ratingsMeta: AdminPageMeta = {
   createFields: [
     { name: "name", label: "Name" },
     { name: "candidate", label: "Candidate type", type: "select", options: ["PRESIDENCY", "GOVERNOR", "SENATOR", "HOUSE"] },
-    { name: "partyId", label: "Party ID", type: "number" },
+    { name: "partyId", label: "Party", type: "select", optionsSource: "parties" },
     { name: "position", label: "Position" },
     { name: "constituency", label: "Constituency" },
     { name: "age", label: "Age" },
@@ -329,6 +329,7 @@ export const ratingsMeta: AdminPageMeta = {
 };
 
 export function mapRating(raw: Raw): AdminRecord {
+  const partyId = String(raw.partyId ?? (raw.party && typeof raw.party === "object" ? (raw.party as Raw).id : "") ?? "");
   const values = {
     name: String(raw.name ?? "-"),
     position: String(raw.position ?? raw.candidate ?? "-"),
@@ -336,7 +337,8 @@ export function mapRating(raw: Raw): AdminRecord {
     state: String(raw.state ?? "-"),
     education: String(raw.education ?? "-"),
     profession: String(raw.profession ?? "-"),
-    image: String(raw.image ?? "")
+    image: String(raw.image ?? ""),
+    partyId
   };
   return recordFrom(raw, String(values.name), values, "active", String(values.position));
 }
@@ -412,7 +414,7 @@ export const politiciansMeta: AdminPageMeta = {
   createFields: [
     { name: "name", label: "Full name" },
     { name: "slug", label: "Slug" },
-    { name: "partyId", label: "Party ID" },
+    { name: "partyId", label: "Party", type: "select", optionsSource: "parties" },
     { name: "position", label: "Position", type: "select", options: ["PRESIDENCY", "GOVERNOR", "SENATOR", "HOUSE"] },
     { name: "state", label: "State", type: "select", options: states },
     { name: "lga", label: "LGA" },
@@ -429,7 +431,7 @@ export const politiciansMeta: AdminPageMeta = {
   editFields: [
     { name: "name", label: "Full name" },
     { name: "slug", label: "Slug" },
-    { name: "partyId", label: "Party ID" },
+    { name: "partyId", label: "Party", type: "select", optionsSource: "parties" },
     { name: "position", label: "Position", type: "select", options: ["PRESIDENCY", "GOVERNOR", "SENATOR", "HOUSE"] },
     { name: "state", label: "State", type: "select", options: states },
     { name: "lga", label: "LGA" },
@@ -448,9 +450,11 @@ export const politiciansMeta: AdminPageMeta = {
 };
 
 export function mapPolitician(raw: Raw): AdminRecord {
+  const partyId = String(raw.partyId ?? (raw.party && typeof raw.party === "object" ? (raw.party as Raw).id : "") ?? "");
   const values = {
     name: String(raw.name ?? "-"),
-    party: nestedValue(raw, "party", ["acronym", "name"], String(raw.partyId ?? "-")),
+    party: nestedValue(raw, "party", ["acronym", "name"], partyId || "-"),
+    partyId,
     position: String(raw.position ?? "-"),
     state: String(raw.state ?? "-"),
     constituency: String(raw.constituency ?? "-"),
@@ -733,12 +737,16 @@ export function omitEmpty(payload: Record<string, string | boolean>) {
   return Object.fromEntries(Object.entries(payload).filter(([, value]) => value !== ""));
 }
 
-export function ratingPayload(payload: Record<string, string | boolean>) {
+export function withNumericPartyId(payload: Record<string, string | boolean>) {
   const clean: Record<string, unknown> = omitEmpty(payload);
   if (clean.partyId !== undefined) {
     clean.partyId = Number(clean.partyId);
   }
   return clean;
+}
+
+export function ratingPayload(payload: Record<string, string | boolean>) {
+  return withNumericPartyId(payload);
 }
 
 export function userPayload(payload: Record<string, string | boolean>) {

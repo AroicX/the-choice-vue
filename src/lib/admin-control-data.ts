@@ -1,12 +1,37 @@
 import type { UserRole } from "@/types";
+import {
+  Alert02Icon,
+  Analytics01Icon,
+  Building01Icon,
+  CheckListIcon,
+  DashboardSquare01Icon,
+  Flag01Icon,
+  GavelIcon,
+  LandmarkIcon,
+  Megaphone01Icon,
+  Message01Icon,
+  Notification03Icon,
+  SecurityCheckIcon,
+  Settings01Icon,
+  StarIcon,
+  Task01Icon,
+  UserMultipleIcon
+} from "@/lib/icons";
 
 export type AdminStatus = "active" | "pending" | "suspended" | "draft" | "archived" | "verified" | "hidden" | "closed" | "open";
+
+export type AdminFieldOption = {
+  value: string;
+  label: string;
+};
 
 export type AdminField = {
   name: string;
   label: string;
   type?: "text" | "email" | "password" | "tel" | "textarea" | "select" | "date" | "file" | "checkbox" | "number";
   options?: string[];
+  optionItems?: AdminFieldOption[];
+  optionsSource?: "parties";
   placeholder?: string;
 };
 
@@ -43,22 +68,22 @@ export type AdminPageMeta = {
 };
 
 export const adminNav = [
-  { href: "/control", label: "Dashboard" },
-  { href: "/control/users", label: "Users" },
-  { href: "/control/discussions", label: "Discussions" },
-  { href: "/control/posts", label: "Posts" },
-  { href: "/control/polls", label: "Polls" },
-  { href: "/control/elections", label: "Elections" },
-  { href: "/control/ratings", label: "Ratings" },
-  { href: "/control/parties", label: "Political Parties" },
-  { href: "/control/politicians", label: "Candidates / Politicians" },
-  { href: "/control/issues", label: "Issues" },
-  { href: "/control/fact-checks", label: "Fact Checks" },
-  { href: "/control/communities", label: "Communities" },
-  { href: "/control/notifications", label: "Notifications" },
-  { href: "/control/moderation", label: "Reports / Moderation" },
-  { href: "/control/analytics", label: "Analytics" },
-  { href: "/control/settings", label: "Settings" }
+  { href: "/control", label: "Dashboard", icon: DashboardSquare01Icon },
+  { href: "/control/users", label: "Users", icon: UserMultipleIcon },
+  { href: "/control/discussions", label: "Discussions", icon: Message01Icon },
+  { href: "/control/posts", label: "Posts", icon: Megaphone01Icon },
+  { href: "/control/polls", label: "Polls", icon: CheckListIcon },
+  { href: "/control/elections", label: "Elections", icon: GavelIcon },
+  { href: "/control/ratings", label: "Ratings", icon: StarIcon },
+  { href: "/control/parties", label: "Political Parties", icon: Flag01Icon },
+  { href: "/control/politicians", label: "Candidates / Politicians", icon: LandmarkIcon },
+  { href: "/control/issues", label: "Issues", icon: Task01Icon },
+  { href: "/control/fact-checks", label: "Fact Checks", icon: SecurityCheckIcon },
+  { href: "/control/communities", label: "Communities", icon: Building01Icon },
+  { href: "/control/notifications", label: "Notifications", icon: Notification03Icon },
+  { href: "/control/moderation", label: "Reports / Moderation", icon: Alert02Icon },
+  { href: "/control/analytics", label: "Analytics", icon: Analytics01Icon },
+  { href: "/control/settings", label: "Settings", icon: Settings01Icon }
 ];
 
 export const roles: UserRole[] = ["USER", "ADMIN", "SUPER_ADMIN", "MODERATOR", "JOURNALIST", "POLITICIAN"];

@@ -1,6 +1,7 @@
 "use client";
 
 import { type ComponentProps, useEffect, useMemo, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { gooeyToast } from "goey-toast";
 import { AdminActionMenu } from "@/components/admin/admin-action-menu";
 import { AdminImageUpload } from "@/components/admin/admin-image-upload";
@@ -10,7 +11,31 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Search01Icon } from "@/lib/icons";
 import { cn } from "@/lib/utils";
-import type { AdminField, AdminPageMeta, AdminRecord, AdminStatus } from "@/lib/admin-control-data";
+import type { AdminField, AdminFieldOption, AdminPageMeta, AdminRecord, AdminStatus } from "@/lib/admin-control-data";
+import { partiesService } from "@/services/parties.service";
+
+function extractSelectList(payload: unknown): Record<string, unknown>[] {
+  if (Array.isArray(payload)) return payload.filter(Boolean) as Record<string, unknown>[];
+  if (!payload || typeof payload !== "object") return [];
+  const record = payload as Record<string, unknown>;
+  for (const key of ["data", "items", "results", "records", "parties"]) {
+    const value = record[key];
+    if (Array.isArray(value)) return value.filter(Boolean) as Record<string, unknown>[];
+  }
+  return [];
+}
+
+function partySelectOptions(payload: unknown): AdminFieldOption[] {
+  return extractSelectList(payload)
+    .map((party) => {
+      const id = String(party.id ?? "");
+      const acronym = String(party.acronym ?? "").trim();
+      const name = String(party.name ?? "").trim();
+      const label = acronym && name ? `${acronym} — ${name}` : name || acronym || id;
+      return { value: id, label };
+    })
+    .filter((party) => party.value);
+}
 
 export function SearchInput({ value, onChange, placeholder = "Search..." }: { value: string; onChange: (value: string) => void; placeholder?: string }) {
   return (
@@ -335,19 +360,38 @@ export function ConfirmModal({
 
 const IMAGE_FIELD_NAMES = new Set(["image", "imageUrl", "optionImage", "profilePic", "logo", "avatar", "coverImage", "banner"]);
 
-function FieldControl({ field, value }: { field: AdminField; value?: string | number | boolean | null }) {
+function FieldControl({
+  field,
+  value,
+  loadingOptions
+}: {
+  field: AdminField;
+  value?: string | number | boolean | null;
+  loadingOptions?: boolean;
+}) {
   const stringValue = value === undefined || value === null ? "" : String(value);
   const isImageField = field.type === "file" || IMAGE_FIELD_NAMES.has(field.name);
 
   if (field.type === "textarea") {
-    return <textarea name={field.name} defaultValue={stringValue} className="min-h-24 w-full rounded-lg border border-input bg-background p-3 text-sm" placeholder={field.placeholder} />;
+    return <textarea name={field.name} defaultValue={stringValue} className="min-h-24 w-full rounded-lg border border-input bg-background p-3 text-sm text-foreground" placeholder={field.placeholder} />;
   }
   if (field.type === "select") {
+    const items = field.optionItems?.length
+      ? field.optionItems
+      : (field.options ?? []).map((option) => ({ value: option, label: option }));
     return (
-      <select name={field.name} defaultValue={stringValue} className="h-10 w-full rounded-lg border border-input bg-background px-3 text-sm">
-        <option value="">Select {field.label.toLowerCase()}</option>
-        {field.options?.map((option) => (
-          <option key={option}>{option}</option>
+      <select
+        key={`${field.name}-${items.length}-${loadingOptions ? "loading" : "ready"}`}
+        name={field.name}
+        defaultValue={stringValue}
+        disabled={loadingOptions}
+        className="h-10 w-full rounded-lg border border-input bg-background px-3 text-sm text-foreground"
+      >
+        <option value="">{loadingOptions ? "Loading..." : `Select ${field.label.toLowerCase()}`}</option>
+        {items.map((option) => (
+          <option key={option.value} value={option.value}>
+            {option.label}
+          </option>
         ))}
       </select>
     );
@@ -379,11 +423,29 @@ export function ResourceModal({
   onSubmit: (payload: Record<string, string | boolean>) => void;
 }) {
   const [saving, setSaving] = useState(false);
+  const needsParties = fields.some((field) => field.optionsSource === "parties");
+  const partiesQuery = useQuery({
+    queryKey: ["control", "parties", "select-options"],
+    queryFn: () => partiesService.list(),
+    enabled: open && needsParties
+  });
+  const resolvedFields = useMemo(() => {
+    const partyItems = partySelectOptions(partiesQuery.data);
+    return fields.map((field) => {
+      if (field.optionsSource !== "parties") return field;
+      return {
+        ...field,
+        type: "select" as const,
+        optionItems: partyItems
+      };
+    });
+  }, [fields, partiesQuery.data]);
+
   if (!open) return null;
 
   return (
     <div className="fixed inset-0 z-[100] grid place-items-center bg-background/70 p-4 backdrop-blur-sm">
-      <div className="max-h-[90vh] w-full max-w-3xl overflow-y-auto rounded-2xl border border-border bg-card p-5 shadow-2xl">
+      <div className="max-h-[90vh] w-full max-w-3xl overflow-y-auto rounded-2xl border border-border bg-card p-5 text-foreground shadow-2xl">
         <div className="flex items-start justify-between gap-4">
           <h2 className="text-lg font-semibold text-foreground">{title}</h2>
           <Button variant="ghost" className="rounded-lg" onClick={onClose}>
@@ -396,7 +458,7 @@ export function ResourceModal({
           onSubmit={(event) => {
             event.preventDefault();
             const form = new FormData(event.currentTarget);
-            const payload = fields.reduce<Record<string, string | boolean>>((acc, field) => {
+            const payload = resolvedFields.reduce<Record<string, string | boolean>>((acc, field) => {
               acc[field.name] = field.type === "checkbox" ? form.get(field.name) === "on" : String(form.get(field.name) ?? "");
               return acc;
             }, {});
@@ -407,10 +469,10 @@ export function ResourceModal({
             }, 250);
           }}
         >
-          {fields.map((field) => (
+          {resolvedFields.map((field) => (
             <label key={field.name} className={cn("block space-y-2 text-sm font-medium text-foreground", (field.type === "textarea" || field.type === "file" || IMAGE_FIELD_NAMES.has(field.name)) && "sm:col-span-2")}>
               <span>{field.label}</span>
-              <FieldControl field={field} value={initialValues?.[field.name]} />
+              <FieldControl field={field} value={initialValues?.[field.name]} loadingOptions={field.optionsSource === "parties" && partiesQuery.isLoading} />
             </label>
           ))}
         </form>

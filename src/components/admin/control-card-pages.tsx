@@ -26,8 +26,8 @@ import {
   politiciansMeta,
   pollsMeta,
   postsMeta,
-  ratingPayload,
   ratingsMeta,
+  withNumericPartyId,
   type OptionPayload
 } from "@/components/admin/admin-record-mappers";
 import type { AdminField, AdminPageMeta, AdminRecord } from "@/lib/admin-control-data";
@@ -160,13 +160,13 @@ function DetailModal({ record, onClose }: { record: AdminRecord | null; onClose:
   const options = optionEntries(record.raw);
 
   return (
-    <div className="fixed inset-0 z-50 grid place-items-center bg-slate-950/40 p-4">
-      <div className="max-h-[90vh] w-full max-w-4xl overflow-y-auto rounded-lg bg-white p-5 shadow-panel">
+    <div className="fixed inset-0 z-50 grid place-items-center bg-background/70 p-4 backdrop-blur-sm">
+      <div className="max-h-[90vh] w-full max-w-4xl overflow-y-auto rounded-2xl border border-border bg-card p-5 text-foreground shadow-2xl">
         <div className="flex items-start justify-between gap-4">
           <div>
-            <p className="text-sm font-medium text-slate-500">Details</p>
-            <h2 className="text-xl font-semibold text-slate-950">{record.title}</h2>
-            {record.subtitle ? <p className="mt-1 text-sm text-slate-500">{record.subtitle}</p> : null}
+            <p className="text-sm font-medium text-muted-foreground">Details</p>
+            <h2 className="text-xl font-semibold text-foreground">{record.title}</h2>
+            {record.subtitle ? <p className="mt-1 text-sm text-muted-foreground">{record.subtitle}</p> : null}
           </div>
           <Button variant="ghost" className="rounded-lg" onClick={onClose}>Close</Button>
         </div>
@@ -174,19 +174,19 @@ function DetailModal({ record, onClose }: { record: AdminRecord | null; onClose:
         {options.length ? (
           <div className="mt-5 grid gap-3 sm:grid-cols-2">
             {options.map((option) => (
-              <div key={option.key} className="rounded-lg border border-slate-200 p-3">
+              <div key={option.key} className="rounded-lg border border-border bg-background/50 p-3">
                 {option.image ? <img src={option.image} alt={option.text} className="mb-3 h-36 w-full rounded-lg object-cover" /> : null}
-                <p className="font-semibold text-slate-950">{option.text}</p>
-                <p className="mt-1 text-sm text-slate-500">{option.value} votes</p>
+                <p className="font-semibold text-foreground">{option.text}</p>
+                <p className="mt-1 text-sm text-muted-foreground">{option.value} votes</p>
               </div>
             ))}
           </div>
         ) : null}
         <div className="mt-5 grid gap-3 sm:grid-cols-2">
           {record.details.map((detail) => (
-            <div key={detail.label} className="rounded-lg border border-slate-200 p-3">
-              <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">{detail.label}</p>
-              <p className="mt-1 text-sm text-slate-900">{String(detail.value ?? "-")}</p>
+            <div key={detail.label} className="rounded-lg border border-border bg-background/50 p-3">
+              <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{detail.label}</p>
+              <p className="mt-1 text-sm text-foreground">{String(detail.value ?? "-")}</p>
             </div>
           ))}
         </div>
@@ -212,12 +212,24 @@ function OptionBuilderModal({
 }) {
   const raw = initialRecord?.raw as Raw | undefined;
   const existingOptions = optionEntries(raw);
+  const selectedDiscussionId = String(raw?.discussionsId ?? raw?.discussionId ?? "");
   const [options, setOptions] = useState<OptionDraft[]>(
     existingOptions.length ? existingOptions.map((option) => ({ text: option.text, image: option.image, value: String(option.value) })) : [
       { text: "", image: "", value: "0" },
       { text: "", image: "", value: "0" }
     ]
   );
+  const discussionsQuery = useQuery({
+    queryKey: ["control", "discussions", "poll-options"],
+    queryFn: () => discussionsService.list<Raw>({ take: 100 }),
+    enabled: open && variant === "poll"
+  });
+  const discussionOptions = useMemo(() => {
+    return extractList(discussionsQuery.data).map((discussion) => ({
+      id: String(discussion.id ?? ""),
+      label: String(discussion.topic ?? discussion.title ?? discussion.slug ?? discussion.id ?? "Untitled discussion")
+    })).filter((discussion) => discussion.id);
+  }, [discussionsQuery.data]);
 
   useEffect(() => {
     if (!open) return;
@@ -230,10 +242,10 @@ function OptionBuilderModal({
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-50 grid place-items-center bg-slate-950/40 p-4">
-      <div className="max-h-[90vh] w-full max-w-3xl overflow-y-auto rounded-lg bg-white p-5 shadow-panel">
+    <div className="fixed inset-0 z-50 grid place-items-center bg-background/70 p-4 backdrop-blur-sm">
+      <div className="max-h-[90vh] w-full max-w-3xl overflow-y-auto rounded-2xl border border-border bg-card p-5 text-foreground shadow-2xl">
         <div className="flex items-start justify-between gap-4">
-          <h2 className="text-lg font-semibold text-slate-950">{title}</h2>
+          <h2 className="text-lg font-semibold text-foreground">{title}</h2>
           <Button variant="ghost" className="rounded-lg" onClick={onClose}>Close</Button>
         </div>
         <form
@@ -258,34 +270,49 @@ function OptionBuilderModal({
         >
           {variant === "poll" ? (
             <div className="grid gap-4 sm:grid-cols-2">
-              <label className="block space-y-2 text-sm font-medium text-slate-700">
-                <span>Discussion ID</span>
-                <Input name="discussionId" defaultValue={String(raw?.discussionsId ?? raw?.discussionId ?? "")} className="rounded-lg" />
+              <label className="block space-y-2 text-sm font-medium text-foreground sm:col-span-2">
+                <span>Discussion</span>
+                <select
+                  name="discussionId"
+                  required
+                  defaultValue={selectedDiscussionId}
+                  className="h-10 w-full rounded-lg border border-input bg-background px-3 text-sm text-foreground"
+                  disabled={discussionsQuery.isLoading}
+                >
+                  <option value="">
+                    {discussionsQuery.isLoading ? "Loading discussions..." : "Select a discussion"}
+                  </option>
+                  {discussionOptions.map((discussion) => (
+                    <option key={discussion.id} value={discussion.id}>
+                      {discussion.label}
+                    </option>
+                  ))}
+                </select>
               </label>
-              <label className="block space-y-2 text-sm font-medium text-slate-700 sm:col-span-2">
+              <label className="block space-y-2 text-sm font-medium text-foreground sm:col-span-2">
                 <span>Question</span>
-                <textarea name="question" defaultValue={String(raw?.question ?? "")} className="min-h-24 w-full rounded-lg border border-slate-200 p-3 text-sm" />
+                <textarea name="question" defaultValue={String(raw?.question ?? "")} className="min-h-24 w-full rounded-lg border border-input bg-background p-3 text-sm text-foreground" />
               </label>
             </div>
           ) : (
             <div className="grid gap-4 sm:grid-cols-2">
-              <label className="block space-y-2 text-sm font-medium text-slate-700">
+              <label className="block space-y-2 text-sm font-medium text-foreground">
                 <span>Title</span>
                 <Input name="title" defaultValue={String(raw?.title ?? "")} className="rounded-lg" />
               </label>
-              <label className="block space-y-2 text-sm font-medium text-slate-700 sm:col-span-2">
+              <label className="block space-y-2 text-sm font-medium text-foreground sm:col-span-2">
                 <span>Description</span>
-                <textarea name="description" defaultValue={String(raw?.description ?? "")} className="min-h-24 w-full rounded-lg border border-slate-200 p-3 text-sm" />
+                <textarea name="description" defaultValue={String(raw?.description ?? "")} className="min-h-24 w-full rounded-lg border border-input bg-background p-3 text-sm text-foreground" />
               </label>
             </div>
           )}
           <div className="space-y-3">
             <div className="flex items-center justify-between">
-              <p className="text-sm font-semibold text-slate-950">Options</p>
+              <p className="text-sm font-semibold text-foreground">Options</p>
               <Button type="button" variant="outline" className="rounded-lg" onClick={() => setOptions((current) => [...current, { text: "", image: "", value: "0" }])}>Add option</Button>
             </div>
             {options.map((option, index) => (
-              <div key={index} className="grid gap-3 rounded-lg border border-slate-200 p-3 sm:grid-cols-[1fr_1fr_96px_auto]">
+              <div key={index} className="grid gap-3 rounded-lg border border-border bg-background/50 p-3 sm:grid-cols-[1fr_1fr_96px_auto]">
                 <Input value={option.text} onChange={(event) => setOptions((current) => current.map((item, itemIndex) => itemIndex === index ? { ...item, text: event.target.value } : item))} placeholder={`Option ${index + 1}`} className="rounded-lg" />
                 <AdminImageUpload
                   name={`option-image-${index}`}
@@ -780,7 +807,7 @@ export function ControlRatingsCardsPage() {
       createFn={(body) => ratingsService.create(body)}
       updateFn={(_, body) => ratingsService.update(body)}
       deleteFn={(id) => ratingsService.remove(id)}
-      payload={ratingPayload}
+      payload={withNumericPartyId}
     />
   );
 }
@@ -809,6 +836,7 @@ export function ControlPoliticiansCardsPage() {
       createFn={(body) => politiciansService.create(body)}
       updateFn={(id, body) => politiciansService.update(id, body)}
       deleteFn={(id) => politiciansService.remove(id)}
+      payload={withNumericPartyId}
     />
   );
 }

@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation } from "@tanstack/react-query";
 import { gooeyToast } from "goey-toast";
@@ -18,12 +19,15 @@ const schema = z.object({
 
 type LoginFormValues = z.infer<typeof schema>;
 
+const controlRedirectRoles = new Set(["ADMIN", "SUPER_ADMIN"]);
+
 type LoginFormProps = {
   onSuccess?: () => void;
   showLinks?: boolean;
 };
 
 export function LoginForm({ onSuccess, showLinks = true }: LoginFormProps) {
+  const router = useRouter();
   const setSession = useAuthStore((state) => state.setSession);
   const { register, handleSubmit, formState: { errors } } = useForm<LoginFormValues>({ resolver: zodResolver(schema) });
   const login = useMutation({
@@ -32,6 +36,9 @@ export function LoginForm({ onSuccess, showLinks = true }: LoginFormProps) {
       setSession({ token, user });
       gooeyToast.success("Welcome back", { description: "You are signed in to Choice9ja." });
       onSuccess?.();
+      if (controlRedirectRoles.has(user.role)) {
+        router.replace("/control");
+      }
     },
     onError: (error) => {
       gooeyToast.error("Login failed", { description: error instanceof Error ? error.message : "Check your details and try again." });
@@ -46,7 +53,7 @@ export function LoginForm({ onSuccess, showLinks = true }: LoginFormProps) {
   return (
     <div>
       <div className="mb-6">
-        <div className="grid h-12 w-12 place-items-center rounded-md bg-primary text-xl font-bold text-primary-foreground">9</div>
+        <img src="/legacy/logo.png" alt="Choice9ja" className="size-16 rounded-xl object-contain" />
         <h2 className="mt-5 text-2xl font-bold">Log in to TheChoice9ja</h2>
         <p className="mt-2 text-sm text-muted-foreground">Use email or phone number to continue.</p>
       </div>

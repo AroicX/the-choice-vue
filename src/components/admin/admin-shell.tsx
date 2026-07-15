@@ -75,7 +75,10 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
               active && "bg-primary text-primary-foreground shadow-sm hover:bg-primary hover:text-primary-foreground"
             )}
           >
-            <span>{item.label}</span>
+            <span className="flex items-center gap-3">
+              <AppIcon icon={item.icon} size={18} />
+              {item.label}
+            </span>
             {active ? <span className="h-2 w-2 rounded-full bg-primary-foreground" /> : null}
           </Link>
         );

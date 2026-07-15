@@ -14,12 +14,9 @@ export default function LoginPage() {
         <CardContent className="p-6">
           <LoginForm
             onSuccess={() => {
-              const user = useAuthStore.getState().user;
-              router.push(
-                user && ["ADMIN", "SUPER_ADMIN", "MODERATOR"].includes(user.role)
-                  ? "/control"
-                  : "/"
-              );
+              const role = useAuthStore.getState().user?.role;
+              if (role === "ADMIN" || role === "SUPER_ADMIN") return;
+              router.push("/");
             }}
           />
         </CardContent>
