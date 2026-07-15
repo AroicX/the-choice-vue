@@ -19,7 +19,16 @@ export async function loginMutation(input: LoginInput) {
   return response.data;
 }
 
-export async function signupMutation(input: Record<string, string>) {
+export type SignupInput = {
+  firstName: string;
+  lastName: string;
+  username: string;
+  email: string;
+  phoneNo: string;
+  password: string;
+};
+
+export async function signupMutation(input: SignupInput) {
   const response = await api.post<LoginResponse>(endpoints.auth.signup, input);
   return response.data;
 }

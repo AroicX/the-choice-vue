@@ -2,13 +2,16 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation } from "@tanstack/react-query";
 import { gooeyToast } from "goey-toast";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
+import { AppIcon } from "@/components/ui/icon";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { ViewIcon, ViewOffIcon } from "@/lib/icons";
 import { loginMutation } from "@/services/mutations/auth.mutations";
 import { useAuthStore } from "@/stores/auth-store";
 
@@ -29,6 +32,7 @@ type LoginFormProps = {
 export function LoginForm({ onSuccess, showLinks = true }: LoginFormProps) {
   const router = useRouter();
   const setSession = useAuthStore((state) => state.setSession);
+  const [showPassword, setShowPassword] = useState(false);
   const { register, handleSubmit, formState: { errors } } = useForm<LoginFormValues>({ resolver: zodResolver(schema) });
   const login = useMutation({
     mutationFn: loginMutation,
@@ -62,7 +66,23 @@ export function LoginForm({ onSuccess, showLinks = true }: LoginFormProps) {
           <Input {...register("identifier")} placeholder="you@example.com" autoComplete="username" />
         </Field>
         <Field label="Password" error={errors.password?.message}>
-          <Input type="password" {...register("password")} placeholder="••••••••" autoComplete="current-password" />
+          <div className="relative">
+            <Input
+              {...register("password")}
+              type={showPassword ? "text" : "password"}
+              placeholder="••••••••"
+              autoComplete="current-password"
+              className="pr-11"
+            />
+            <button
+              type="button"
+              className="absolute right-2 top-1/2 grid size-8 -translate-y-1/2 place-items-center rounded-md text-muted-foreground transition hover:bg-accent hover:text-foreground"
+              aria-label={showPassword ? "Hide password" : "Show password"}
+              onClick={() => setShowPassword((open) => !open)}
+            >
+              <AppIcon icon={showPassword ? ViewOffIcon : ViewIcon} size={18} />
+            </button>
+          </div>
         </Field>
         {login.error ? <p className="text-sm text-destructive">{login.error.message}</p> : null}
         <Button className="w-full" disabled={login.isPending}>

@@ -56,5 +56,6 @@ export {
   UserMultipleIcon,
   Video01Icon,
   ViewIcon,
+  ViewOffIcon,
   VolumeHighIcon
 } from "@hugeicons/core-free-icons";
