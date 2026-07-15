@@ -8,5 +8,6 @@ export const postsService = {
   detail: <T = unknown>(id: string) => apiClient.get<T>(endpoints.posts.detail(id)),
   byDiscussion: <T = unknown>(id: string, params?: AdminListParams) => apiClient.get<T[]>(endpoints.posts.byDiscussion(id), params),
   create: <T = unknown>(payload: unknown) => apiClient.post<T>(endpoints.posts.create, payload),
-  remove: <T = unknown>(id: string) => apiClient.delete<T>(endpoints.posts.delete(id))
+  update: <T = unknown>(id: string, payload: unknown) => apiClient.patch<T>(endpoints.posts.update(id), payload),
+  remove: <T = unknown>(id: string, reason?: string) => apiClient.delete<T>(endpoints.posts.delete(id), reason ? { reason } : undefined)
 };

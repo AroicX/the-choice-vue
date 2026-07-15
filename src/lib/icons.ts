@@ -14,6 +14,7 @@ export {
   Comment01Icon,
   Compass01Icon,
   Copy01Icon,
+  Delete02Icon,
   Door01Icon,
   Download01Icon,
   Edit02Icon,
@@ -31,6 +32,7 @@ export {
   Megaphone01Icon,
   Message01Icon,
   Moon02Icon,
+  MoreVerticalCircle01Icon,
   MuteIcon,
   News01Icon,
   Notification03Icon,
@@ -48,5 +50,6 @@ export {
   UserAdd01Icon,
   UserCircleIcon,
   Video01Icon,
+  ViewIcon,
   VolumeHighIcon
 } from "@hugeicons/core-free-icons";

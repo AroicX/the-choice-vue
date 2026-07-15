@@ -1,0 +1,30 @@
+- Control Todo
+    - Make sure all forms that have image upload are using the new image upload component
+    - Change the entire design of the control panel 
+    - the main dashboard page should have chart and statistics of the platform data
+    - Make sure the light/dark mode is working correctly
+    - Make sure for all modules the admin can add, edit, delete, view, and search for the data
+    - Make sure all fields on the schema are editable for all modules on the control panel
+    - The posts should have a grid layout 6 in a row with infinite scroll to pull more posts
+    - When a post is clicked, the slug should have a layout with the post details on the left side and 
+    the comments on the right side following a grid pattern with 4 comments per row with infinite scroll to pull more comments
+    - Each post/comment card should have an action dropdown with the following options: edit, delete, and view
+    - The edit and delete options should be modal with the form to edit the post/comment and a confirmation modal to delete the post/comment and the 
+    user that has that post/comment should be sent a notification that the post/comment has been deleted by the admin for violation of the terms of service
+
+- API Todo
+    - Make sure all API endpoints are rate limited
+    - Make sure the endpoints to create, edit, delete, view, and search for the data are working correctly
+    - Make sure the notifications endpoint is working users can view their notifications and mark them as read
+
+- Frontend Todo
+    - Make sure the frontend is responsive and works on all devices
+    - Make sure the frontend is fast and efficient
+    - Make sure the frontend is secure
+    - Make sure the frontend is SEO friendly
+    - Make sure the frontend is accessible
+    - Make sure the frontend is user friendly
+    - Make sure the frontend is consistent
+    - Make sure the frontend is maintainable
+    - Make sure the frontend is scalable
+    - Make sure users can see notifications and mark them as read

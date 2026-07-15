@@ -36,6 +36,7 @@ export const endpoints = {
     byUser: (id: string) => `/posts/user/${id}`,
     like: (id: string) => `/posts/like/${id}`,
     dislike: (id: string) => `/posts/dislike/${id}`,
+    update: (id: string) => `/posts/update/${id}`,
     delete: (id: string) => `/posts/delete/${id}`
   },
   comments: {
@@ -218,6 +219,7 @@ export const endpoints = {
   admin: {
     users: "/auth/users",
     user: (id: string) => `/auth/users/${id}`,
+    updateUser: (id: string) => `/auth/users/${id}`,
     suspendUser: (id: string) => `/auth/users/suspend/${id}`,
     reports: "/reports",
     moderation: "/moderation",

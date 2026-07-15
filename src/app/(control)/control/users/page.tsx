@@ -12,8 +12,10 @@ export default function ControlUsersPage() {
       queryFn={() => usersService.listUsers()}
       mapRecord={mapUser}
       createFn={(payload) => usersService.signup(payload)}
+      updateFn={(id, payload) => usersService.updateUser(id, payload)}
       createPayload={userPayload}
-      customAction={(action, record) => action.toLowerCase().includes("suspend") ? usersService.suspendUser(record.id) : undefined}
+      updatePayload={(payload) => userPayload(payload)}
+      customAction={(action, record) => (action.toLowerCase().includes("suspend") ? usersService.suspendUser(record.id) : undefined)}
     />
   );
 }

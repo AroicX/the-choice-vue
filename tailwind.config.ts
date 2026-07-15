@@ -39,6 +39,13 @@ const config: Config = {
           DEFAULT: "rgb(var(--destructive) / <alpha-value>)",
           foreground: "rgb(var(--destructive-foreground) / <alpha-value>)"
         },
+        sidebar: {
+          DEFAULT: "rgb(var(--sidebar) / <alpha-value>)",
+          foreground: "rgb(var(--sidebar-foreground) / <alpha-value>)",
+          border: "rgb(var(--sidebar-border) / <alpha-value>)",
+          accent: "rgb(var(--sidebar-accent) / <alpha-value>)",
+          "accent-foreground": "rgb(var(--sidebar-accent-foreground) / <alpha-value>)"
+        },
         brand: {
           50: "#F0FDF4",
           100: "#DCFCE7",

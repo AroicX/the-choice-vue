@@ -9,6 +9,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { CreateModal, EditModal, EmptyState, LoadingSkeleton, SearchInput, StatusBadge } from "@/components/admin/admin-ui";
+import { AdminActionMenu, AdminConfirmDeleteModal } from "@/components/admin/admin-action-menu";
+import { AdminImageUpload } from "@/components/admin/admin-image-upload";
 import {
   discussionsMeta,
   electionsMeta,
@@ -100,11 +102,11 @@ function optionEntries(raw: unknown) {
 
 function ControlHeader({ meta, onCreate }: { meta: Pick<AdminPageMeta, "title" | "description" | "primaryAction">; onCreate?: () => void }) {
   return (
-    <section className="flex flex-col gap-4 rounded-lg border border-slate-200 bg-white p-5 shadow-sm lg:flex-row lg:items-start lg:justify-between">
+    <section className="flex flex-col gap-4 rounded-xl border border-border bg-card p-5 shadow-sm lg:flex-row lg:items-start lg:justify-between">
       <div>
         <p className="text-sm font-semibold uppercase tracking-wide text-primary">Control</p>
-        <h2 className="mt-1 text-2xl font-semibold text-slate-950">{meta.title}</h2>
-        <p className="mt-2 max-w-3xl text-sm text-slate-500">{meta.description}</p>
+        <h2 className="mt-1 text-2xl font-semibold text-foreground">{meta.title}</h2>
+        <p className="mt-2 max-w-3xl text-sm text-muted-foreground">{meta.description}</p>
       </div>
       {meta.primaryAction && onCreate ? <Button className="rounded-lg" onClick={onCreate}>{meta.primaryAction}</Button> : null}
     </section>
@@ -131,18 +133,18 @@ function FilterBar({
   typeLabel?: string;
 }) {
   return (
-    <section className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
+    <section className="rounded-xl border border-border bg-card p-4 shadow-sm">
       <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
         <SearchInput value={query} onChange={onQuery} placeholder="Search records..." />
         <div className="flex flex-wrap gap-2">
-          <select value={dateRange} onChange={(event) => onDateRange(event.target.value as DateFilter)} className="h-10 rounded-lg border border-slate-200 bg-white px-3 text-sm font-medium text-slate-700 shadow-sm">
+          <select value={dateRange} onChange={(event) => onDateRange(event.target.value as DateFilter)} className="h-10 rounded-lg border border-border bg-background px-3 text-sm font-medium text-foreground shadow-sm">
             <option value="all">All dates</option>
             <option value="7">Last 7 days</option>
             <option value="30">Last 30 days</option>
             <option value="90">Last 90 days</option>
             <option value="365">This year</option>
           </select>
-          <select value={typeValue} onChange={(event) => onTypeValue(event.target.value)} className="h-10 rounded-lg border border-slate-200 bg-white px-3 text-sm font-medium text-slate-700 shadow-sm">
+          <select value={typeValue} onChange={(event) => onTypeValue(event.target.value)} className="h-10 rounded-lg border border-border bg-background px-3 text-sm font-medium text-foreground shadow-sm">
             <option value="all">All {typeLabel.toLowerCase()}</option>
             {typeOptions.map((option) => <option key={option} value={option}>{option}</option>)}
           </select>
@@ -285,7 +287,12 @@ function OptionBuilderModal({
             {options.map((option, index) => (
               <div key={index} className="grid gap-3 rounded-lg border border-slate-200 p-3 sm:grid-cols-[1fr_1fr_96px_auto]">
                 <Input value={option.text} onChange={(event) => setOptions((current) => current.map((item, itemIndex) => itemIndex === index ? { ...item, text: event.target.value } : item))} placeholder={`Option ${index + 1}`} className="rounded-lg" />
-                <Input value={option.image} onChange={(event) => setOptions((current) => current.map((item, itemIndex) => itemIndex === index ? { ...item, image: event.target.value } : item))} placeholder="Image URL" className="rounded-lg" />
+                <AdminImageUpload
+                  name={`option-image-${index}`}
+                  value={option.image}
+                  label={`Option ${index + 1} image`}
+                  onChange={(url) => setOptions((current) => current.map((item, itemIndex) => itemIndex === index ? { ...item, image: url } : item))}
+                />
                 <Input value={option.value} onChange={(event) => setOptions((current) => current.map((item, itemIndex) => itemIndex === index ? { ...item, value: event.target.value } : item))} type="number" placeholder="Votes" className="rounded-lg" />
                 <Button type="button" variant="ghost" className="rounded-lg" disabled={options.length <= 2} onClick={() => setOptions((current) => current.filter((_, itemIndex) => itemIndex !== index))}>Remove</Button>
               </div>
@@ -301,47 +308,51 @@ function OptionBuilderModal({
   );
 }
 
-function PostControlCard({ record, onDelete }: { record: AdminRecord; onDelete: (id: string) => void }) {
+function PostControlCard({
+  record,
+  onView,
+  onEdit,
+  onDelete
+}: {
+  record: AdminRecord;
+  onView: () => void;
+  onEdit: () => void;
+  onDelete: () => void;
+}) {
   const post = normalizePost(record.raw as ApiRecord);
   const href = `/control/posts/${encodeURIComponent(record.id)}`;
   return (
-    <article className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm transition hover:border-primary/40">
-      <Link href={href} className="block">
-        <div className="flex items-start justify-between gap-3">
-          <div className="flex items-start gap-3">
-            <div className="grid h-11 w-11 place-items-center rounded-lg bg-emerald-50 text-sm font-bold text-emerald-700">{post.author.slice(0, 2).toUpperCase()}</div>
-            <div>
-              <p className="font-semibold text-slate-950">{post.author}</p>
-              <p className="text-sm text-slate-500">{post.topic}</p>
+    <article className="rounded-xl border border-border bg-card p-3 shadow-sm transition hover:border-primary/40">
+      <div className="flex items-start justify-between gap-2">
+        <Link href={href} className="min-w-0 flex-1">
+          <div className="flex items-start gap-2">
+            <div className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-primary/10 text-xs font-bold text-primary">{post.author.slice(0, 2).toUpperCase()}</div>
+            <div className="min-w-0">
+              <p className="truncate text-sm font-semibold text-foreground">{post.author}</p>
+              <p className="truncate text-xs text-muted-foreground">{post.topic}</p>
             </div>
           </div>
-          <Badge variant="secondary">{post.badge ?? "Post"}</Badge>
-        </div>
-        <p className="mt-4 line-clamp-5 text-sm leading-6 text-slate-700">{post.message || "No post message available."}</p>
-        {post.attachments?.length ? <img src={post.attachments[0].url} alt="" className="mt-4 h-52 w-full rounded-lg object-cover" /> : null}
-        <div className="mt-4 flex flex-wrap items-center gap-3 border-t border-slate-100 pt-3 text-xs font-medium text-slate-500">
+        </Link>
+        <AdminActionMenu
+          actions={["View", "Edit", "Delete"]}
+          onAction={(action) => {
+            if (action === "View") onView();
+            if (action === "Edit") onEdit();
+            if (action === "Delete") onDelete();
+          }}
+        />
+      </div>
+      <Link href={href} className="mt-3 block">
+        <p className="line-clamp-4 text-sm leading-5 text-muted-foreground">{post.message || "No post message available."}</p>
+        {post.attachments?.length ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={post.attachments[0].url} alt="" className="mt-3 h-28 w-full rounded-lg object-cover" />
+        ) : null}
+        <div className="mt-3 flex flex-wrap items-center gap-2 border-t border-border pt-2 text-[11px] font-medium text-muted-foreground">
           <span>{post.likes} likes</span>
-          <span>{post.dislikes ?? 0} dislikes</span>
           <span>{post.comments} comments</span>
-          <span>{record.createdAt}</span>
         </div>
       </Link>
-      <div className="mt-4 flex items-center justify-between gap-2">
-        <Button asChild variant="outline" size="sm" className="rounded-lg">
-          <Link href={href}>View comments</Link>
-        </Button>
-        <Button
-          variant="destructive"
-          size="sm"
-          className="rounded-lg"
-          onClick={(event) => {
-            event.preventDefault();
-            onDelete(record.id);
-          }}
-        >
-          Delete
-        </Button>
-      </div>
     </article>
   );
 }
@@ -353,6 +364,8 @@ export function ControlPostsCardsPage({ discussionId }: { discussionId?: string 
   const [dateRange, setDateRange] = useState<DateFilter>("all");
   const [type, setType] = useState("all");
   const [createOpen, setCreateOpen] = useState(false);
+  const [editingRecord, setEditingRecord] = useState<AdminRecord | null>(null);
+  const [deleteId, setDeleteId] = useState<string | null>(null);
   const postsQuery = useInfiniteQuery({
     queryKey: ["control", "posts", discussionId ?? "all"],
     queryFn: ({ pageParam }) => discussionId ? postsService.byDiscussion<Raw>(discussionId, { skip: pageParam, take: PAGE_SIZE }) : postsService.list<Raw>({ skip: pageParam, take: PAGE_SIZE }),
@@ -363,9 +376,10 @@ export function ControlPostsCardsPage({ discussionId }: { discussionId?: string 
     }
   });
   const deleteMutation = useMutation({
-    mutationFn: (id: string) => postsService.remove(id),
+    mutationFn: ({ id, reason }: { id: string; reason: string }) => postsService.remove(id, reason),
     onSuccess: () => {
       gooeyToast.success("Post deleted");
+      setDeleteId(null);
       queryClient.invalidateQueries({ queryKey: ["control", "posts"] });
     },
     onError: (error) => gooeyToast.error(displayError(error))
@@ -375,6 +389,15 @@ export function ControlPostsCardsPage({ discussionId }: { discussionId?: string 
     onSuccess: () => {
       gooeyToast.success("Post created");
       setCreateOpen(false);
+      queryClient.invalidateQueries({ queryKey: ["control", "posts"] });
+    },
+    onError: (error) => gooeyToast.error(displayError(error))
+  });
+  const updateMutation = useMutation({
+    mutationFn: ({ id, body }: { id: string; body: Record<string, unknown> }) => postsService.update(id, body),
+    onSuccess: () => {
+      gooeyToast.success("Post updated");
+      setEditingRecord(null);
       queryClient.invalidateQueries({ queryKey: ["control", "posts"] });
     },
     onError: (error) => gooeyToast.error(displayError(error))
@@ -401,10 +424,18 @@ export function ControlPostsCardsPage({ discussionId }: { discussionId?: string 
       {!discussionId ? <ControlHeader meta={{ ...postsMeta, description: "Review posts as content cards with scrolling, filters, and real moderation actions." }} onCreate={() => setCreateOpen(true)} /> : null}
       <FilterBar query={query} onQuery={setQuery} dateRange={dateRange} onDateRange={setDateRange} typeValue={type} onTypeValue={setType} typeOptions={typeOptions} />
       {postsQuery.isLoading ? <LoadingSkeleton /> : null}
-      {postsQuery.isError ? <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700">{displayError(postsQuery.error)}</div> : null}
+      {postsQuery.isError ? <div className="rounded-xl border border-destructive/30 bg-destructive/10 p-4 text-sm text-destructive">{displayError(postsQuery.error)}</div> : null}
       {!postsQuery.isLoading && !filtered.length ? <EmptyState title="No posts found" description="No posts match the current filters." /> : null}
-      <div className="grid gap-4 xl:grid-cols-2">
-        {filtered.map((record) => <PostControlCard key={record.id} record={record} onDelete={(id) => deleteMutation.mutate(id)} />)}
+      <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-6">
+        {filtered.map((record) => (
+          <PostControlCard
+            key={record.id}
+            record={record}
+            onView={() => { window.location.assign(`/control/posts/${encodeURIComponent(record.id)}`); }}
+            onEdit={() => setEditingRecord(record)}
+            onDelete={() => setDeleteId(record.id)}
+          />
+        ))}
       </div>
       <div ref={loadMoreRef} className="h-2" />
       {postsQuery.hasNextPage ? (
@@ -415,6 +446,24 @@ export function ControlPostsCardsPage({ discussionId }: { discussionId?: string 
         </div>
       ) : null}
       <CreateModal open={createOpen} title={postsMeta.primaryAction ?? "Create Post"} fields={postsMeta.createFields ?? []} onClose={() => setCreateOpen(false)} onSubmit={(body) => createMutation.mutate(body)} />
+      <EditModal
+        open={Boolean(editingRecord)}
+        title="Edit post"
+        fields={postsMeta.editFields ?? [{ name: "message", label: "Content", type: "textarea" }]}
+        initialValues={{ message: String((editingRecord?.raw as Raw)?.message ?? editingRecord?.values.preview ?? "") }}
+        onClose={() => setEditingRecord(null)}
+        onSubmit={(body) => editingRecord ? updateMutation.mutate({ id: editingRecord.id, body: { message: body.message } }) : undefined}
+      />
+      <AdminConfirmDeleteModal
+        open={Boolean(deleteId)}
+        title="Delete this post?"
+        message="The author will be notified that this post was removed for a Terms of Service violation."
+        onClose={() => setDeleteId(null)}
+        onConfirm={(reason) => {
+          if (!deleteId) return;
+          deleteMutation.mutate({ id: deleteId, reason });
+        }}
+      />
     </div>
   );
 }
@@ -424,24 +473,29 @@ function DiscussionCard({ record, onEdit, onDelete }: { record: AdminRecord; onE
   const slug = String(raw.slug ?? record.id);
   const href = `/control/discussions/${encodeURIComponent(slug)}?id=${encodeURIComponent(record.id)}`;
   return (
-    <article className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm transition hover:border-primary/40">
+    <article className="rounded-xl border border-border bg-card p-4 shadow-sm transition hover:border-primary/40">
       <Link href={href} className="block">
         <div className="flex items-start justify-between gap-3">
           <div>
-            <h3 className="text-lg font-semibold text-slate-950">{record.title}</h3>
-            <p className="mt-2 line-clamp-3 text-sm leading-6 text-slate-500">{String(record.values.description ?? "Open this discussion to review its posts.")}</p>
+            <h3 className="text-lg font-semibold text-foreground">{record.title}</h3>
+            <p className="mt-2 line-clamp-3 text-sm leading-6 text-muted-foreground">{String(record.values.description ?? "Open this discussion to review its posts.")}</p>
           </div>
           <StatusBadge status={record.status} />
         </div>
-        <div className="mt-4 flex flex-wrap gap-2 text-xs font-medium text-slate-500">
-          <span className="rounded-full bg-slate-100 px-2.5 py-1">{String(record.values.posts)} posts</span>
-          <span className="rounded-full bg-slate-100 px-2.5 py-1">{String(record.values.rooms)} rooms</span>
-          <span className="rounded-full bg-slate-100 px-2.5 py-1">{record.createdAt}</span>
+        <div className="mt-4 flex flex-wrap gap-2 text-xs font-medium text-muted-foreground">
+          <span className="rounded-full bg-muted px-2.5 py-1">{String(record.values.posts)} posts</span>
+          <span className="rounded-full bg-muted px-2.5 py-1">{String(record.values.rooms)} rooms</span>
+          <span className="rounded-full bg-muted px-2.5 py-1">{record.createdAt}</span>
         </div>
       </Link>
-      <div className="mt-4 flex justify-end gap-2">
-        <Button size="sm" variant="outline" className="rounded-lg" onClick={onEdit}>Edit</Button>
-        <Button size="sm" variant="destructive" className="rounded-lg" onClick={onDelete}>Delete</Button>
+      <div className="mt-4 flex justify-end">
+        <AdminActionMenu
+          actions={["Edit", "Delete"]}
+          onAction={(action) => {
+            if (action === "Edit") onEdit();
+            if (action === "Delete") onDelete();
+          }}
+        />
       </div>
     </article>
   );
@@ -521,28 +575,42 @@ export function ControlDiscussionPostsPage() {
 function GenericCard({ record, imageLabel, onView, onEdit, onDelete }: { record: AdminRecord; imageLabel?: string; onView: () => void; onEdit?: () => void; onDelete?: () => void }) {
   const image = rawImage(record.raw);
   return (
-    <article className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
-      {image ? <img src={image} alt={imageLabel ?? record.title} className="h-44 w-full object-cover" /> : <div className="grid h-44 place-items-center bg-slate-100 text-2xl font-semibold text-slate-400">{record.title.slice(0, 2).toUpperCase()}</div>}
+    <article className="overflow-hidden rounded-xl border border-border bg-card shadow-sm">
+      {image ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img src={image} alt={imageLabel ?? record.title} className="h-44 w-full object-cover" />
+      ) : (
+        <div className="grid h-44 place-items-center bg-muted text-2xl font-semibold text-muted-foreground">{record.title.slice(0, 2).toUpperCase()}</div>
+      )}
       <div className="p-4">
         <div className="flex items-start justify-between gap-3">
           <div>
-            <h3 className="line-clamp-2 font-semibold text-slate-950">{record.title}</h3>
-            {record.subtitle ? <p className="mt-1 text-sm text-slate-500">{record.subtitle}</p> : null}
+            <h3 className="line-clamp-2 font-semibold text-foreground">{record.title}</h3>
+            {record.subtitle ? <p className="mt-1 text-sm text-muted-foreground">{record.subtitle}</p> : null}
           </div>
-          <StatusBadge status={record.status} />
+          <div className="flex items-center gap-2">
+            <StatusBadge status={record.status} />
+            <AdminActionMenu
+              actions={[
+                "View",
+                ...(onEdit ? ["Edit"] : []),
+                ...(onDelete ? ["Delete"] : [])
+              ]}
+              onAction={(action) => {
+                if (action === "View") onView();
+                if (action === "Edit") onEdit?.();
+                if (action === "Delete") onDelete?.();
+              }}
+            />
+          </div>
         </div>
-        <div className="mt-4 grid gap-2 text-sm text-slate-600">
+        <div className="mt-4 grid gap-2 text-sm text-muted-foreground">
           {record.details.slice(0, 4).map((detail) => (
             <div key={detail.label} className="flex justify-between gap-3">
-              <span className="text-slate-400">{detail.label}</span>
-              <span className="text-right font-medium">{String(detail.value ?? "-")}</span>
+              <span className="text-muted-foreground/80">{detail.label}</span>
+              <span className="text-right font-medium text-foreground">{String(detail.value ?? "-")}</span>
             </div>
           ))}
-        </div>
-        <div className="mt-4 flex flex-wrap justify-end gap-2">
-          <Button size="sm" variant="outline" className="rounded-lg" onClick={onView}>Details</Button>
-          {onEdit ? <Button size="sm" variant="outline" className="rounded-lg" onClick={onEdit}>Edit</Button> : null}
-          {onDelete ? <Button size="sm" variant="destructive" className="rounded-lg" onClick={onDelete}>Delete</Button> : null}
         </div>
       </div>
     </article>
@@ -581,6 +649,7 @@ function CardGridResourcePage({
   const [detailRecord, setDetailRecord] = useState<AdminRecord | null>(null);
   const [editingRecord, setEditingRecord] = useState<AdminRecord | null>(null);
   const [createOpen, setCreateOpen] = useState(false);
+  const [deleteId, setDeleteId] = useState<string | null>(null);
   const recordsQuery = useQuery({ queryKey, queryFn });
   const records = useMemo(() => extractList(recordsQuery.data).map(mapRecord), [recordsQuery.data, mapRecord]);
   const typeOptions = useMemo(() => Array.from(new Set(records.map((record) => String(record.values.type ?? record.values.position ?? record.values.status ?? "Active")))), [records]);
@@ -617,6 +686,7 @@ function CardGridResourcePage({
     },
     onSuccess: () => {
       gooeyToast.success("Deleted successfully");
+      setDeleteId(null);
       invalidate();
     },
     onError: (error) => gooeyToast.error(displayError(error))
@@ -627,7 +697,7 @@ function CardGridResourcePage({
       <ControlHeader meta={meta} onCreate={createFn ? () => setCreateOpen(true) : undefined} />
       <FilterBar query={query} onQuery={setQuery} dateRange={dateRange} onDateRange={setDateRange} typeValue={typeValue} onTypeValue={setTypeValue} typeOptions={typeOptions} />
       {recordsQuery.isLoading ? <LoadingSkeleton /> : null}
-      {recordsQuery.isError ? <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700">{displayError(recordsQuery.error)}</div> : null}
+      {recordsQuery.isError ? <div className="rounded-xl border border-destructive/30 bg-destructive/10 p-4 text-sm text-destructive">{displayError(recordsQuery.error)}</div> : null}
       {!recordsQuery.isLoading && !filtered.length ? <EmptyState title={meta.emptyTitle} description={meta.emptyDescription} actionLabel={meta.primaryAction} onAction={createFn ? () => setCreateOpen(true) : undefined} /> : null}
       <div className={cn("grid gap-4", "lg:grid-cols-2 2xl:grid-cols-3")}>
         {filtered.map((record) => (
@@ -636,11 +706,22 @@ function CardGridResourcePage({
             record={record}
             onView={() => setDetailRecord(record)}
             onEdit={updateFn ? () => setEditingRecord(record) : undefined}
-            onDelete={deleteFn ? () => deleteMutation.mutate(record.id) : undefined}
+            onDelete={deleteFn ? () => setDeleteId(record.id) : undefined}
           />
         ))}
       </div>
       <DetailModal record={detailRecord} onClose={() => setDetailRecord(null)} />
+      <AdminConfirmDeleteModal
+        open={Boolean(deleteId)}
+        title="Delete this record?"
+        message="This action cannot be undone."
+        requireReason={false}
+        onClose={() => setDeleteId(null)}
+        onConfirm={() => {
+          if (!deleteId) return;
+          deleteMutation.mutate(deleteId);
+        }}
+      />
       {optionVariant ? (
         <>
           <OptionBuilderModal open={createOpen} title={meta.primaryAction ?? "Create"} variant={optionVariant} onClose={() => setCreateOpen(false)} onSubmit={(body) => createMutation.mutate(body as Raw)} />

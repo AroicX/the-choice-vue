@@ -50,14 +50,26 @@ export const usersMeta: AdminPageMeta = {
     { key: "accountStatus", label: "Account" },
     { key: "createdAt", label: "Date joined" }
   ],
-  rowActions: ["View", "Suspend", "Unsuspend"],
+  rowActions: ["View", "Edit", "Suspend", "Unsuspend"],
   createFields: [
     { name: "firstName", label: "First name" },
     { name: "lastName", label: "Last name" },
     { name: "username", label: "Username" },
     { name: "email", label: "Email", type: "email" },
     { name: "phoneNo", label: "Phone", type: "tel" },
-    { name: "password", label: "Password", type: "password" }
+    { name: "password", label: "Password", type: "password" },
+    { name: "profilePic", label: "Profile photo", type: "file" }
+  ],
+  editFields: [
+    { name: "firstName", label: "First name" },
+    { name: "lastName", label: "Last name" },
+    { name: "username", label: "Username" },
+    { name: "email", label: "Email", type: "email" },
+    { name: "phoneNo", label: "Phone", type: "tel" },
+    { name: "role", label: "Role", type: "select", options: roles },
+    { name: "state", label: "State", type: "select", options: states },
+    { name: "profilePic", label: "Profile photo", type: "file" },
+    { name: "active", label: "Active", type: "checkbox" }
   ],
   emptyTitle: "No users returned",
   emptyDescription: "No users are available right now."
@@ -67,10 +79,16 @@ export function mapUser(raw: Raw): AdminRecord {
   const active = raw.active !== false && raw.isSuspended !== true;
   const values = {
     name: fullName(raw),
+    firstName: String(raw.firstName ?? ""),
+    lastName: String(raw.lastName ?? ""),
+    username: String(raw.username ?? ""),
     email: String(raw.email ?? "-"),
     phone: String(raw.phone ?? raw.phoneNo ?? "-"),
+    phoneNo: String(raw.phoneNo ?? raw.phone ?? ""),
     role: String(raw.role ?? "USER"),
     state: String(raw.state ?? "-"),
+    profilePic: String(raw.profilePic ?? ""),
+    active,
     verified: raw.verified ? "Verified" : "Unverified",
     accountStatus: active ? "Active" : "Suspended",
     createdAt: dateOf(raw)
@@ -132,11 +150,12 @@ export const postsMeta: AdminPageMeta = {
     { key: "comments", label: "Comments" },
     { key: "createdAt", label: "Created" }
   ],
-  rowActions: ["View", "Delete"],
+  rowActions: ["View", "Edit", "Delete"],
   createFields: [
     { name: "discussionsId", label: "Discussion ID" },
     { name: "message", label: "Content", type: "textarea" }
   ],
+  editFields: [{ name: "message", label: "Content", type: "textarea" }],
   emptyTitle: "No posts returned",
   emptyDescription: "No posts are available right now."
 };
@@ -292,7 +311,7 @@ export const ratingsMeta: AdminPageMeta = {
     { name: "age", label: "Age" },
     { name: "education", label: "Education" },
     { name: "profession", label: "Profession" },
-    { name: "image", label: "Candidate image URL" },
+    { name: "image", label: "Candidate image", type: "file" },
     { name: "state", label: "State", type: "select", options: states }
   ],
   editFields: [
@@ -303,7 +322,7 @@ export const ratingsMeta: AdminPageMeta = {
     { name: "age", label: "Age" },
     { name: "education", label: "Education" },
     { name: "profession", label: "Profession" },
-    { name: "image", label: "Candidate image URL" }
+    { name: "image", label: "Candidate image", type: "file" }
   ],
   emptyTitle: "No ratings returned",
   emptyDescription: "No ratings are available right now."
@@ -341,7 +360,7 @@ export const partiesMeta: AdminPageMeta = {
     { name: "slug", label: "Slug" },
     { name: "acronym", label: "Acronym" },
     { name: "founded", label: "Founded" },
-    { name: "image", label: "Logo image URL" },
+    { name: "image", label: "Logo image", type: "file" },
     { name: "description", label: "Description", type: "textarea" },
     { name: "website", label: "Website" },
     { name: "chairman", label: "Chairman" }
@@ -351,7 +370,7 @@ export const partiesMeta: AdminPageMeta = {
     { name: "slug", label: "Slug" },
     { name: "acronym", label: "Acronym" },
     { name: "founded", label: "Founded" },
-    { name: "image", label: "Logo image URL" },
+    { name: "image", label: "Logo image", type: "file" },
     { name: "description", label: "Description", type: "textarea" },
     { name: "website", label: "Website" },
     { name: "chairman", label: "Chairman" }
@@ -399,7 +418,7 @@ export const politiciansMeta: AdminPageMeta = {
     { name: "lga", label: "LGA" },
     { name: "constituency", label: "Constituency" },
     { name: "biography", label: "Biography", type: "textarea" },
-    { name: "imageUrl", label: "Profile image URL" },
+    { name: "imageUrl", label: "Profile image", type: "file" },
     { name: "manifesto", label: "Manifesto", type: "textarea" },
     { name: "approvalScore", label: "Approval score", type: "number" },
     { name: "performanceScore", label: "Performance score", type: "number" },
@@ -416,7 +435,7 @@ export const politiciansMeta: AdminPageMeta = {
     { name: "lga", label: "LGA" },
     { name: "constituency", label: "Constituency" },
     { name: "biography", label: "Biography", type: "textarea" },
-    { name: "imageUrl", label: "Profile image URL" },
+    { name: "imageUrl", label: "Profile image", type: "file" },
     { name: "manifesto", label: "Manifesto", type: "textarea" },
     { name: "approvalScore", label: "Approval score", type: "number" },
     { name: "performanceScore", label: "Performance score", type: "number" },
@@ -438,7 +457,7 @@ export function mapPolitician(raw: Raw): AdminRecord {
     verified: raw.verified ? "Verified" : "Unverified",
     approval: `${Number(raw.approvalScore ?? 0)}%`,
     performance: `${Number(raw.performanceScore ?? 0)}%`,
-    imageUrl: String(raw.imageUrl ?? ""),
+    // imageUrl: String(raw.imageUrl ?? ""),
     biography: String(raw.biography ?? "-"),
     manifesto: String(raw.manifesto ?? "-"),
     termStart: raw.termStart ? new Date(String(raw.termStart)).toLocaleDateString() : "-",
@@ -607,7 +626,7 @@ export const notificationsMeta: AdminPageMeta = {
     { key: "read", label: "Read" },
     { key: "createdAt", label: "Created" }
   ],
-  rowActions: ["View", "Delete"],
+  rowActions: ["View", "Mark Read", "Delete"],
   createFields: [
     { name: "userId", label: "Target user ID" },
     { name: "message", label: "Message", type: "textarea" },

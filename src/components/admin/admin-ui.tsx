@@ -1,7 +1,9 @@
 "use client";
 
-import { type ComponentProps, useMemo, useState } from "react";
+import { type ComponentProps, useEffect, useMemo, useState } from "react";
 import { gooeyToast } from "goey-toast";
+import { AdminActionMenu } from "@/components/admin/admin-action-menu";
+import { AdminImageUpload } from "@/components/admin/admin-image-upload";
 import { AppIcon } from "@/components/ui/icon";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,47 +15,75 @@ import type { AdminField, AdminPageMeta, AdminRecord, AdminStatus } from "@/lib/
 export function SearchInput({ value, onChange, placeholder = "Search..." }: { value: string; onChange: (value: string) => void; placeholder?: string }) {
   return (
     <div className="relative w-full max-w-sm">
-      <AppIcon icon={Search01Icon} size={18} className="absolute left-3 top-3.5 text-slate-400" />
-      <Input value={value} onChange={(event) => onChange(event.target.value)} className="rounded-lg border-slate-200 bg-white pl-10" placeholder={placeholder} />
+      <AppIcon icon={Search01Icon} size={18} className="absolute left-3 top-3.5 text-muted-foreground" />
+      <Input value={value} onChange={(event) => onChange(event.target.value)} className="rounded-lg border-border bg-background pl-10" placeholder={placeholder} />
     </div>
   );
 }
 
-export function FilterDropdown({ label, options = ["All", "Active", "Pending", "Suspended"] }: { label: string; options?: string[] }) {
+export function FilterDropdown({
+  label,
+  options = ["All", "Active", "Pending", "Suspended"],
+  value,
+  onChange
+}: {
+  label: string;
+  options?: string[];
+  value?: string;
+  onChange?: (value: string) => void;
+}) {
   return (
-    <select className="h-10 rounded-lg border border-slate-200 bg-white px-3 text-sm font-medium text-slate-700 shadow-sm">
-      <option>{label}</option>
-      {options.map((option) => <option key={option}>{option}</option>)}
+    <select
+      value={value ?? ""}
+      onChange={(event) => onChange?.(event.target.value)}
+      className="h-10 rounded-lg border border-border bg-card px-3 text-sm font-medium text-foreground shadow-sm"
+    >
+      <option value="">{label}</option>
+      {options.map((option) => (
+        <option key={option} value={option}>
+          {option}
+        </option>
+      ))}
     </select>
   );
 }
 
-export function DateRangeFilter() {
+export function DateRangeFilter({ value, onChange }: { value?: string; onChange?: (value: string) => void }) {
   return (
-    <select className="h-10 rounded-lg border border-slate-200 bg-white px-3 text-sm font-medium text-slate-700 shadow-sm">
-      <option>Last 30 days</option>
-      <option>Last 7 days</option>
-      <option>This quarter</option>
-      <option>This year</option>
+    <select
+      value={value ?? "30"}
+      onChange={(event) => onChange?.(event.target.value)}
+      className="h-10 rounded-lg border border-border bg-card px-3 text-sm font-medium text-foreground shadow-sm"
+    >
+      <option value="7">Last 7 days</option>
+      <option value="30">Last 30 days</option>
+      <option value="90">This quarter</option>
+      <option value="365">This year</option>
+      <option value="all">All time</option>
     </select>
   );
 }
 
 export function StatusBadge({ status }: { status?: string }) {
   const normalized = String(status ?? "active").toLowerCase() as AdminStatus;
-  const className = {
-    active: "bg-emerald-50 text-emerald-700 ring-emerald-200",
-    verified: "bg-blue-50 text-blue-700 ring-blue-200",
-    pending: "bg-amber-50 text-amber-800 ring-amber-200",
-    suspended: "bg-red-50 text-red-700 ring-red-200",
-    draft: "bg-slate-100 text-slate-700 ring-slate-200",
-    archived: "bg-slate-100 text-slate-600 ring-slate-200",
-    hidden: "bg-slate-100 text-slate-600 ring-slate-200",
-    closed: "bg-slate-100 text-slate-600 ring-slate-200",
-    open: "bg-emerald-50 text-emerald-700 ring-emerald-200"
-  }[normalized] ?? "bg-slate-100 text-slate-700 ring-slate-200";
+  const className =
+    {
+      active: "bg-emerald-500/10 text-emerald-700 ring-emerald-500/20 dark:text-emerald-300",
+      verified: "bg-blue-500/10 text-blue-700 ring-blue-500/20 dark:text-blue-300",
+      pending: "bg-amber-500/10 text-amber-800 ring-amber-500/20 dark:text-amber-300",
+      suspended: "bg-destructive/10 text-destructive ring-destructive/20",
+      draft: "bg-muted text-muted-foreground ring-border",
+      archived: "bg-muted text-muted-foreground ring-border",
+      hidden: "bg-muted text-muted-foreground ring-border",
+      closed: "bg-muted text-muted-foreground ring-border",
+      open: "bg-emerald-500/10 text-emerald-700 ring-emerald-500/20 dark:text-emerald-300"
+    }[normalized] ?? "bg-muted text-muted-foreground ring-border";
 
-  return <span className={cn("inline-flex rounded-full px-2.5 py-1 text-xs font-semibold capitalize ring-1", className)}>{status ?? "Active"}</span>;
+  return (
+    <span className={cn("inline-flex rounded-full px-2.5 py-1 text-xs font-semibold capitalize ring-1", className)}>
+      {status ?? "Active"}
+    </span>
+  );
 }
 
 export function RoleBadge({ role }: { role?: string }) {
@@ -62,13 +92,20 @@ export function RoleBadge({ role }: { role?: string }) {
 
 export function StatCard({ label, value, change, period, href }: { label: string; value: string; change: string; period: string; href?: string }) {
   const content = (
-    <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm transition-colors hover:border-primary/40">
-      <p className="text-sm font-medium text-slate-500">{label}</p>
+    <div className="rounded-xl border border-border bg-card p-4 shadow-sm transition-colors hover:border-primary/40">
+      <p className="text-sm font-medium text-muted-foreground">{label}</p>
       <div className="mt-3 flex items-end justify-between gap-3">
-        <p className="text-2xl font-semibold text-slate-950">{value}</p>
-        <span className={cn("rounded-full px-2 py-1 text-xs font-semibold", change.startsWith("-") ? "bg-red-50 text-red-700" : "bg-emerald-50 text-emerald-700")}>{change}</span>
+        <p className="text-2xl font-semibold text-foreground">{value}</p>
+        <span
+          className={cn(
+            "rounded-full px-2 py-1 text-xs font-semibold",
+            change.startsWith("-") ? "bg-destructive/10 text-destructive" : "bg-emerald-500/10 text-emerald-700 dark:text-emerald-300"
+          )}
+        >
+          {change}
+        </span>
       </div>
-      <p className="mt-2 text-xs text-slate-500">{period}</p>
+      <p className="mt-2 text-xs text-muted-foreground">{period}</p>
     </div>
   );
   return href ? <a href={href}>{content}</a> : content;
@@ -76,11 +113,15 @@ export function StatCard({ label, value, change, period, href }: { label: string
 
 export function EmptyState({ title, description, actionLabel, onAction }: { title: string; description: string; actionLabel?: string; onAction?: () => void }) {
   return (
-    <div className="grid min-h-64 place-items-center rounded-lg border border-dashed border-slate-300 bg-white p-8 text-center">
+    <div className="grid min-h-64 place-items-center rounded-xl border border-dashed border-border bg-card p-8 text-center">
       <div>
-        <h3 className="text-base font-semibold text-slate-950">{title}</h3>
-        <p className="mx-auto mt-2 max-w-md text-sm text-slate-500">{description}</p>
-        {actionLabel ? <Button className="mt-4 rounded-lg" onClick={onAction}>{actionLabel}</Button> : null}
+        <h3 className="text-base font-semibold text-foreground">{title}</h3>
+        <p className="mx-auto mt-2 max-w-md text-sm text-muted-foreground">{description}</p>
+        {actionLabel ? (
+          <Button className="mt-4 rounded-lg" onClick={onAction}>
+            {actionLabel}
+          </Button>
+        ) : null}
       </div>
     </div>
   );
@@ -88,9 +129,9 @@ export function EmptyState({ title, description, actionLabel, onAction }: { titl
 
 export function LoadingSkeleton() {
   return (
-    <div className="space-y-3 rounded-lg border bg-white p-4">
+    <div className="space-y-3 rounded-xl border border-border bg-card p-4">
       {Array.from({ length: 8 }).map((_, index) => (
-        <div key={index} className="h-12 animate-pulse rounded-lg bg-slate-100" />
+        <div key={index} className="h-12 animate-pulse rounded-lg bg-muted" />
       ))}
     </div>
   );
@@ -98,33 +139,37 @@ export function LoadingSkeleton() {
 
 export function Pagination({ page, totalPages, onPage }: { page: number; totalPages: number; onPage: (page: number) => void }) {
   return (
-    <div className="flex items-center justify-between border-t border-slate-200 bg-white px-4 py-3">
-      <p className="text-sm text-slate-500">Page {page} of {totalPages}</p>
+    <div className="flex items-center justify-between border-t border-border bg-card px-4 py-3">
+      <p className="text-sm text-muted-foreground">
+        Page {page} of {totalPages}
+      </p>
       <div className="flex gap-2">
-        <Button variant="outline" className="rounded-lg" disabled={page <= 1} onClick={() => onPage(page - 1)}>Previous</Button>
-        <Button variant="outline" className="rounded-lg" disabled={page >= totalPages} onClick={() => onPage(page + 1)}>Next</Button>
+        <Button variant="outline" className="rounded-lg" disabled={page <= 1} onClick={() => onPage(page - 1)}>
+          Previous
+        </Button>
+        <Button variant="outline" className="rounded-lg" disabled={page >= totalPages} onClick={() => onPage(page + 1)}>
+          Next
+        </Button>
       </div>
     </div>
   );
 }
 
 export function ActionMenu({ actions, onAction }: { actions: string[]; onAction: (action: string) => void }) {
-  return (
-    <select
-      className="h-9 rounded-lg border border-slate-200 bg-white px-2 text-sm text-slate-700"
-      defaultValue=""
-      onChange={(event) => {
-        if (event.target.value) onAction(event.target.value);
-        event.currentTarget.value = "";
-      }}
-    >
-      <option value="" disabled>Actions</option>
-      {actions.map((action) => <option key={action}>{action}</option>)}
-    </select>
-  );
+  return <AdminActionMenu actions={actions} onAction={onAction} />;
 }
 
-export function DataTable({ config, records, onAction, onCreate }: { config: AdminPageMeta; records: AdminRecord[]; onAction: (action: string, record: AdminRecord) => void; onCreate?: () => void }) {
+export function DataTable({
+  config,
+  records,
+  onAction,
+  onCreate
+}: {
+  config: AdminPageMeta;
+  records: AdminRecord[];
+  onAction: (action: string, record: AdminRecord) => void;
+  onCreate?: () => void;
+}) {
   const [selected, setSelected] = useState<string[]>([]);
 
   if (!records.length) {
@@ -132,43 +177,54 @@ export function DataTable({ config, records, onAction, onCreate }: { config: Adm
   }
 
   return (
-    <div className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
+    <div className="overflow-hidden rounded-xl border border-border bg-card shadow-sm">
       {selected.length ? (
-        <div className="flex flex-wrap items-center justify-between gap-3 border-b bg-emerald-50 px-4 py-3">
-          <p className="text-sm font-semibold text-emerald-800">{selected.length} selected</p>
+        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border bg-primary/5 px-4 py-3">
+          <p className="text-sm font-semibold text-primary">{selected.length} selected</p>
           <div className="flex flex-wrap gap-2">
             {config.bulkActions?.map((action) => (
-              <Button key={action} variant="outline" size="sm" className="rounded-lg bg-white" onClick={() => gooeyToast.success(action, { description: "Action completed successfully" })}>{action}</Button>
+              <Button key={action} variant="outline" size="sm" className="rounded-lg bg-card" onClick={() => gooeyToast.success(action, { description: "Action completed successfully" })}>
+                {action}
+              </Button>
             ))}
           </div>
         </div>
       ) : null}
       <div className="overflow-x-auto">
-        <table className="min-w-full divide-y divide-slate-200 text-sm">
-          <thead className="bg-slate-50 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
+        <table className="min-w-full divide-y divide-border text-sm">
+          <thead className="bg-muted/50 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground">
             <tr>
               <th className="w-10 px-4 py-3">
-                <input type="checkbox" className="rounded border-slate-300" checked={selected.length === records.length} onChange={(event) => setSelected(event.target.checked ? records.map((item) => item.id) : [])} />
+                <input
+                  type="checkbox"
+                  className="rounded border-border"
+                  checked={selected.length === records.length}
+                  onChange={(event) => setSelected(event.target.checked ? records.map((item) => item.id) : [])}
+                />
               </th>
-              {config.columns.map((column) => <th key={column.key} className="px-4 py-3">{column.label}</th>)}
+              {config.columns.map((column) => (
+                <th key={column.key} className="px-4 py-3">
+                  {column.label}
+                </th>
+              ))}
               <th className="px-4 py-3 text-right">Actions</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-100">
+          <tbody className="divide-y divide-border">
             {records.map((item) => (
-              <tr key={item.id} className="hover:bg-slate-50">
+              <tr key={item.id} className="hover:bg-muted/40">
                 <td className="px-4 py-3">
                   <input
                     type="checkbox"
-                    className="rounded border-slate-300"
+                    className="rounded border-border"
                     checked={selected.includes(item.id)}
-                    onChange={(event) => setSelected((current) => event.target.checked ? [...current, item.id] : current.filter((id) => id !== item.id))}
+                    onChange={(event) => setSelected((current) => (event.target.checked ? [...current, item.id] : current.filter((id) => id !== item.id)))}
                   />
                 </td>
                 {config.columns.map((column) => {
                   const value = item.values[column.key];
                   return (
-                    <td key={column.key} className="max-w-[260px] px-4 py-3 text-slate-700">
+                    <td key={column.key} className="max-w-[260px] px-4 py-3 text-foreground">
                       {column.key === "status" || column.key === "accountStatus" || column.key === "verified" ? (
                         <StatusBadge status={String(value ?? item.status ?? "Active")} />
                       ) : column.key === "role" ? (
@@ -196,21 +252,23 @@ export function DetailsDrawer({ record, open, onClose }: { record: AdminRecord |
 
   return (
     <div className="fixed inset-0 z-50">
-      <button className="absolute inset-0 bg-slate-950/30" aria-label="Close drawer" onClick={onClose} />
-      <aside className="absolute right-0 top-0 h-full w-full max-w-xl overflow-y-auto bg-white p-6 shadow-panel">
+      <button className="absolute inset-0 bg-background/60 backdrop-blur-sm" aria-label="Close drawer" onClick={onClose} />
+      <aside className="absolute right-0 top-0 h-full w-full max-w-xl overflow-y-auto border-l border-border bg-card p-6 shadow-panel">
         <div className="flex items-start justify-between gap-4">
           <div>
-            <p className="text-sm text-slate-500">Details</p>
-            <h2 className="text-xl font-semibold text-slate-950">{record.title}</h2>
-            {record.subtitle ? <p className="mt-1 text-sm text-slate-500">{record.subtitle}</p> : null}
+            <p className="text-sm text-muted-foreground">Details</p>
+            <h2 className="text-xl font-semibold text-foreground">{record.title}</h2>
+            {record.subtitle ? <p className="mt-1 text-sm text-muted-foreground">{record.subtitle}</p> : null}
           </div>
-          <Button variant="ghost" className="rounded-lg" onClick={onClose}>Close</Button>
+          <Button variant="ghost" className="rounded-lg" onClick={onClose}>
+            Close
+          </Button>
         </div>
         <div className="mt-6 grid gap-3">
           {record.details.map((detail) => (
-            <div key={detail.label} className="rounded-lg border border-slate-200 p-3">
-              <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">{detail.label}</p>
-              <p className="mt-1 text-sm text-slate-900">{String(detail.value ?? "-")}</p>
+            <div key={detail.label} className="rounded-xl border border-border p-3">
+              <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{detail.label}</p>
+              <p className="mt-1 text-sm text-foreground">{String(detail.value ?? "-")}</p>
             </div>
           ))}
         </div>
@@ -219,54 +277,118 @@ export function DetailsDrawer({ record, open, onClose }: { record: AdminRecord |
   );
 }
 
-export function ConfirmModal({ open, title, message, destructive, requireReason, requireText, onClose, onConfirm }: { open: boolean; title: string; message: string; destructive?: boolean; requireReason?: boolean; requireText?: string; onClose: () => void; onConfirm: () => void }) {
+export function ConfirmModal({
+  open,
+  title,
+  message,
+  destructive,
+  requireReason,
+  requireText,
+  onClose,
+  onConfirm
+}: {
+  open: boolean;
+  title: string;
+  message: string;
+  destructive?: boolean;
+  requireReason?: boolean;
+  requireText?: string;
+  onClose: () => void;
+  onConfirm: (reason?: string) => void;
+}) {
   const [reason, setReason] = useState("");
   const [typed, setTyped] = useState("");
   if (!open) return null;
   const disabled = Boolean((requireReason && !reason.trim()) || (requireText && typed !== requireText));
 
   return (
-    <div className="fixed inset-0 z-50 grid place-items-center bg-slate-950/40 p-4">
-      <div className="w-full max-w-md rounded-lg bg-white p-5 shadow-panel">
-        <h2 className="text-lg font-semibold text-slate-950">{title}</h2>
-        <p className="mt-2 text-sm text-slate-500">{message}</p>
-        {requireReason ? <textarea className="mt-4 min-h-24 w-full rounded-lg border border-slate-200 p-3 text-sm" placeholder="Reason" value={reason} onChange={(event) => setReason(event.target.value)} /> : null}
+    <div className="fixed inset-0 z-[100] grid place-items-center bg-background/70 p-4 backdrop-blur-sm">
+      <div className="w-full max-w-md rounded-2xl border border-border bg-card p-5 shadow-2xl">
+        <h2 className="text-lg font-semibold text-foreground">{title}</h2>
+        <p className="mt-2 text-sm text-muted-foreground">{message}</p>
+        {requireReason ? (
+          <textarea
+            className="mt-4 min-h-24 w-full rounded-xl border border-input bg-background p-3 text-sm"
+            placeholder="Reason (sent with ToS violation notice when applicable)"
+            value={reason}
+            onChange={(event) => setReason(event.target.value)}
+          />
+        ) : null}
         {requireText ? <Input className="mt-4 rounded-lg" placeholder={`Type ${requireText}`} value={typed} onChange={(event) => setTyped(event.target.value)} /> : null}
         <div className="mt-5 flex justify-end gap-2">
-          <Button variant="outline" className="rounded-lg" onClick={onClose}>Cancel</Button>
-          <Button variant={destructive ? "destructive" : "default"} className="rounded-lg" disabled={disabled} onClick={onConfirm}>{destructive ? "Confirm" : "Continue"}</Button>
+          <Button variant="outline" className="rounded-lg" onClick={onClose}>
+            Cancel
+          </Button>
+          <Button
+            variant={destructive ? "destructive" : "default"}
+            className="rounded-lg"
+            disabled={disabled}
+            onClick={() => onConfirm(reason.trim() || undefined)}
+          >
+            {destructive ? "Confirm" : "Continue"}
+          </Button>
         </div>
       </div>
     </div>
   );
 }
 
+const IMAGE_FIELD_NAMES = new Set(["image", "imageUrl", "optionImage", "profilePic", "logo", "avatar", "coverImage", "banner"]);
+
 function FieldControl({ field, value }: { field: AdminField; value?: string | number | boolean | null }) {
   const stringValue = value === undefined || value === null ? "" : String(value);
-  if (field.type === "textarea") return <textarea name={field.name} defaultValue={stringValue} className="min-h-24 w-full rounded-lg border border-slate-200 p-3 text-sm" placeholder={field.placeholder} />;
+  const isImageField = field.type === "file" || IMAGE_FIELD_NAMES.has(field.name);
+
+  if (field.type === "textarea") {
+    return <textarea name={field.name} defaultValue={stringValue} className="min-h-24 w-full rounded-lg border border-input bg-background p-3 text-sm" placeholder={field.placeholder} />;
+  }
   if (field.type === "select") {
     return (
-      <select name={field.name} defaultValue={stringValue} className="h-10 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm">
+      <select name={field.name} defaultValue={stringValue} className="h-10 w-full rounded-lg border border-input bg-background px-3 text-sm">
         <option value="">Select {field.label.toLowerCase()}</option>
-        {field.options?.map((option) => <option key={option}>{option}</option>)}
+        {field.options?.map((option) => (
+          <option key={option}>{option}</option>
+        ))}
       </select>
     );
   }
-  if (field.type === "checkbox") return <input name={field.name} type="checkbox" defaultChecked={value === true || stringValue.toLowerCase() === "true" || stringValue.toLowerCase() === "verified"} className="h-4 w-4 rounded border-slate-300" />;
-  if (field.type === "file") return <FileUpload />;
+  if (field.type === "checkbox") {
+    return <input name={field.name} type="checkbox" defaultChecked={value === true || stringValue.toLowerCase() === "true" || stringValue.toLowerCase() === "verified"} className="h-4 w-4 rounded border-border" />;
+  }
+  if (isImageField) {
+    return <FileUpload name={field.name} defaultValue={stringValue} label={field.label} />;
+  }
   return <Input name={field.name} type={field.type ?? "text"} defaultValue={stringValue} className="rounded-lg" placeholder={field.placeholder} />;
 }
 
-export function ResourceModal({ open, title, fields, submitLabel, initialValues, onClose, onSubmit }: { open: boolean; title: string; fields: AdminField[]; submitLabel: string; initialValues?: Record<string, string | number | boolean | null | undefined>; onClose: () => void; onSubmit: (payload: Record<string, string | boolean>) => void }) {
+export function ResourceModal({
+  open,
+  title,
+  fields,
+  submitLabel,
+  initialValues,
+  onClose,
+  onSubmit
+}: {
+  open: boolean;
+  title: string;
+  fields: AdminField[];
+  submitLabel: string;
+  initialValues?: Record<string, string | number | boolean | null | undefined>;
+  onClose: () => void;
+  onSubmit: (payload: Record<string, string | boolean>) => void;
+}) {
   const [saving, setSaving] = useState(false);
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-50 grid place-items-center bg-slate-950/40 p-4">
-      <div className="max-h-[90vh] w-full max-w-3xl overflow-y-auto rounded-lg bg-white p-5 shadow-panel">
+    <div className="fixed inset-0 z-[100] grid place-items-center bg-background/70 p-4 backdrop-blur-sm">
+      <div className="max-h-[90vh] w-full max-w-3xl overflow-y-auto rounded-2xl border border-border bg-card p-5 shadow-2xl">
         <div className="flex items-start justify-between gap-4">
-          <h2 className="text-lg font-semibold text-slate-950">{title}</h2>
-          <Button variant="ghost" className="rounded-lg" onClick={onClose}>Close</Button>
+          <h2 className="text-lg font-semibold text-foreground">{title}</h2>
+          <Button variant="ghost" className="rounded-lg" onClick={onClose}>
+            Close
+          </Button>
         </div>
         <form
           className="mt-5 grid gap-4 sm:grid-cols-2"
@@ -286,20 +408,17 @@ export function ResourceModal({ open, title, fields, submitLabel, initialValues,
           }}
         >
           {fields.map((field) => (
-            <label key={field.name} className={cn("block space-y-2 text-sm font-medium text-slate-700", field.type === "textarea" && "sm:col-span-2")}>
+            <label key={field.name} className={cn("block space-y-2 text-sm font-medium text-foreground", (field.type === "textarea" || field.type === "file" || IMAGE_FIELD_NAMES.has(field.name)) && "sm:col-span-2")}>
               <span>{field.label}</span>
               <FieldControl field={field} value={initialValues?.[field.name]} />
             </label>
           ))}
         </form>
         <div className="mt-6 flex justify-end gap-2">
-          <Button variant="outline" className="rounded-lg" onClick={onClose}>Cancel</Button>
-          <Button
-            type="submit"
-            form={`admin-form-${title.replace(/\s+/g, "-").toLowerCase()}`}
-            className="rounded-lg"
-            disabled={saving}
-          >
+          <Button variant="outline" className="rounded-lg" onClick={onClose}>
+            Cancel
+          </Button>
+          <Button type="submit" form={`admin-form-${title.replace(/\s+/g, "-").toLowerCase()}`} className="rounded-lg" disabled={saving}>
             {saving ? "Saving..." : submitLabel}
           </Button>
         </div>
@@ -316,24 +435,26 @@ export function EditModal(props: Omit<ComponentProps<typeof ResourceModal>, "sub
   return <ResourceModal {...props} submitLabel="Save changes" />;
 }
 
-export function FileUpload() {
-  return (
-    <div className="rounded-lg border border-dashed border-slate-300 bg-slate-50 p-4 text-center text-sm text-slate-500">
-      <input type="file" className="mx-auto block max-w-full text-sm" />
-    </div>
-  );
+export function FileUpload({ name = "file", defaultValue = "", label = "Image" }: { name?: string; defaultValue?: string; label?: string }) {
+  const [value, setValue] = useState(defaultValue);
+  useEffect(() => {
+    setValue(defaultValue);
+  }, [defaultValue]);
+  return <AdminImageUpload name={name} value={value} onChange={setValue} label={label} />;
 }
 
 export function Toast({ title = "Action completed successfully" }: { title?: string }) {
-  return <Button type="button" variant="outline" className="rounded-lg" onClick={() => gooeyToast.success(title)}>Show toast</Button>;
+  return (
+    <Button type="button" variant="outline" className="rounded-lg" onClick={() => gooeyToast.success(title)}>
+      Show toast
+    </Button>
+  );
 }
 
 export function useFilteredRecords(records: AdminRecord[], query: string) {
   return useMemo(() => {
     const needle = query.trim().toLowerCase();
     if (!needle) return records;
-    return records.filter((record) =>
-      [record.title, record.subtitle, ...Object.values(record.values).map(String)].join(" ").toLowerCase().includes(needle)
-    );
+    return records.filter((record) => [record.title, record.subtitle, ...Object.values(record.values).map(String)].join(" ").toLowerCase().includes(needle));
   }, [query, records]);
 }

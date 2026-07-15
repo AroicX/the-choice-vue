@@ -7,5 +7,6 @@ export const authService = {
   signup: (payload: Record<string, unknown>) => apiClient.post<{ user: User; token: string }>(endpoints.auth.signup, payload),
   listUsers: () => apiClient.get<User[]>(endpoints.admin.users),
   getUser: (id: string) => apiClient.get<User>(endpoints.admin.user(id)),
+  updateUser: (id: string, payload: Record<string, unknown>) => apiClient.patch<User>(endpoints.admin.updateUser(id), payload),
   suspendUser: (id: string) => apiClient.patch<User>(endpoints.admin.suspendUser(id))
 };

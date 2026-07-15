@@ -18,6 +18,11 @@ export default function ControlNotificationsPage() {
       createFn={(payload) => notificationsService.create(payload)}
       deleteFn={(id) => notificationsService.remove(id)}
       createPayload={notificationPayload}
+      customAction={(action, record) => {
+        if (action.toLowerCase().includes("mark read")) {
+          return notificationsService.markRead(record.id);
+        }
+      }}
     />
   );
 }

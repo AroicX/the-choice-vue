@@ -39,5 +39,5 @@ export const apiClient = {
   get: <T>(url: string, params?: ApiClientParams) => request<T>("get", url, undefined, params),
   post: <T>(url: string, data?: unknown, params?: ApiClientParams) => request<T>("post", url, data, params),
   patch: <T>(url: string, data?: unknown, params?: ApiClientParams) => request<T>("patch", url, data, params),
-  delete: <T>(url: string, params?: ApiClientParams) => request<T>("delete", url, undefined, params)
+  delete: <T>(url: string, data?: unknown, params?: ApiClientParams) => request<T>("delete", url, data, params)
 };
