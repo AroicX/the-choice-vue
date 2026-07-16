@@ -1052,7 +1052,7 @@ export function ControlPoliticiansCardsPage() {
       createFn={(body) => politiciansService.create(body)}
       updateFn={(id, body) => politiciansService.update(id, body)}
       deleteFn={(id) => politiciansService.remove(id)}
-      payload={withNumericPartyId}
+      payload={omitEmpty}
     />
   );
 }

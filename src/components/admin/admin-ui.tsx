@@ -13,12 +13,13 @@ import { Search01Icon } from "@/lib/icons";
 import { cn } from "@/lib/utils";
 import type { AdminField, AdminFieldOption, AdminPageMeta, AdminRecord, AdminStatus } from "@/lib/admin-control-data";
 import { partiesService } from "@/services/parties.service";
+import { politiciansService } from "@/services/politicians.service";
 
 function extractSelectList(payload: unknown): Record<string, unknown>[] {
   if (Array.isArray(payload)) return payload.filter(Boolean) as Record<string, unknown>[];
   if (!payload || typeof payload !== "object") return [];
   const record = payload as Record<string, unknown>;
-  for (const key of ["data", "items", "results", "records", "parties"]) {
+  for (const key of ["data", "items", "results", "records", "parties", "politicians"]) {
     const value = record[key];
     if (Array.isArray(value)) return value.filter(Boolean) as Record<string, unknown>[];
   }
@@ -35,6 +36,20 @@ function partySelectOptions(payload: unknown): AdminFieldOption[] {
       return { value: id, label };
     })
     .filter((party) => party.value);
+}
+
+function politicianSelectOptions(payload: unknown): AdminFieldOption[] {
+  return extractSelectList(payload)
+    .map((politician) => {
+      const id = String(politician.id ?? "");
+      const name = String(politician.name ?? "").trim();
+      const position = String(politician.position ?? "").trim();
+      const state = String(politician.state ?? "").trim();
+      const meta = [position, state].filter(Boolean).join(" · ");
+      const label = meta ? `${name || id} (${meta})` : name || id;
+      return { value: id, label };
+    })
+    .filter((politician) => politician.value);
 }
 
 export function SearchInput({ value, onChange, placeholder = "Search..." }: { value: string; onChange: (value: string) => void; placeholder?: string }) {
@@ -433,22 +448,30 @@ export function ResourceModal({
 }) {
   const [saving, setSaving] = useState(false);
   const needsParties = fields.some((field) => field.optionsSource === "parties");
+  const needsPoliticians = fields.some((field) => field.optionsSource === "politicians");
   const partiesQuery = useQuery({
     queryKey: ["control", "parties", "select-options"],
     queryFn: () => partiesService.list(),
     enabled: open && needsParties
   });
+  const politiciansQuery = useQuery({
+    queryKey: ["control", "politicians", "select-options"],
+    queryFn: () => politiciansService.list(),
+    enabled: open && needsPoliticians
+  });
   const resolvedFields = useMemo(() => {
     const partyItems = partySelectOptions(partiesQuery.data);
+    const politicianItems = politicianSelectOptions(politiciansQuery.data);
     return fields.map((field) => {
-      if (field.optionsSource !== "parties") return field;
-      return {
-        ...field,
-        type: "select" as const,
-        optionItems: partyItems
-      };
+      if (field.optionsSource === "parties") {
+        return { ...field, type: "select" as const, optionItems: partyItems };
+      }
+      if (field.optionsSource === "politicians") {
+        return { ...field, type: "select" as const, optionItems: politicianItems };
+      }
+      return field;
     });
-  }, [fields, partiesQuery.data]);
+  }, [fields, partiesQuery.data, politiciansQuery.data]);
 
   if (!open) return null;
 
@@ -495,7 +518,10 @@ export function ResourceModal({
                 <FieldControl
                   field={field}
                   value={initialValues?.[field.name]}
-                  loadingOptions={field.optionsSource === "parties" && partiesQuery.isLoading}
+                  loadingOptions={
+                    (field.optionsSource === "parties" && partiesQuery.isLoading) ||
+                    (field.optionsSource === "politicians" && politiciansQuery.isLoading)
+                  }
                   hasError={Boolean(error)}
                 />
                 {error ? <p className="text-xs font-normal text-destructive">{error}</p> : null}

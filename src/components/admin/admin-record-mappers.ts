@@ -312,7 +312,7 @@ export const ratingsMeta: AdminPageMeta = {
     { name: "education", label: "Education" },
     { name: "profession", label: "Profession" },
     { name: "image", label: "Candidate image", type: "file" },
-    { name: "state", label: "State", type: "select", options: states }
+    // { name: "state", label: "State", type: "select", options: states }
   ],
   editFields: [
     { name: "candidate_id", label: "Candidate ID" },
@@ -422,8 +422,8 @@ export const politiciansMeta: AdminPageMeta = {
     { name: "biography", label: "Biography", type: "textarea" },
     { name: "imageUrl", label: "Profile image", type: "file" },
     { name: "manifesto", label: "Manifesto", type: "textarea" },
-    { name: "approvalScore", label: "Approval score", type: "number" },
-    { name: "performanceScore", label: "Performance score", type: "number" },
+    // { name: "approvalScore", label: "Approval score", type: "number" },
+    // { name: "performanceScore", label: "Performance score", type: "number" },
     { name: "termStart", label: "Term start", type: "date" },
     { name: "termEnd", label: "Term end", type: "date" },
     { name: "verified", label: "Verified", type: "checkbox" }
@@ -491,22 +491,25 @@ export const issuesMeta: AdminPageMeta = {
     { name: "category", label: "Category" },
     { name: "state", label: "State", type: "select", options: states },
     { name: "lga", label: "LGA" },
-    { name: "priority", label: "Priority", type: "number" },
-    { name: "politicianId", label: "Politician ID" }
+    // { name: "priority", label: "Priority", type: "number", disabled: true },
+    { name: "politicianId", label: "Politician", type: "select", optionsSource: "politicians" }
   ],
   editFields: [
     { name: "title", label: "Title" },
     { name: "description", label: "Description", type: "textarea" },
     { name: "category", label: "Category" },
     { name: "status", label: "Status", type: "select", options: ["OPEN", "UNDER_REVIEW", "IN_PROGRESS", "RESOLVED", "REJECTED", "ARCHIVED"] },
-    { name: "priority", label: "Priority", type: "number" },
-    { name: "politicianId", label: "Politician ID" }
+    // { name: "priority", label: "Priority", type: "number", disabled: true },
+    { name: "politicianId", label: "Politician", type: "select", optionsSource: "politicians" }
   ],
   emptyTitle: "No issues returned",
   emptyDescription: "No civic issues are available right now."
 };
 
 export function mapIssue(raw: Raw): AdminRecord {
+  const politicianId = String(
+    raw.politicianId ?? (raw.politician && typeof raw.politician === "object" ? (raw.politician as Raw).id : "") ?? ""
+  );
   const values = {
     title: String(raw.title ?? "-"),
     category: String(raw.category ?? "-"),
@@ -514,7 +517,8 @@ export function mapIssue(raw: Raw): AdminRecord {
     priority: String(raw.priority ?? 0),
     upvotes: Number(raw.upvoteCount ?? 0),
     location: [raw.ward, raw.lga, raw.state].filter(Boolean).join(", ") || "-",
-    politician: nestedValue(raw, "politician", ["name"], String(raw.politicianId ?? "-"))
+    politician: nestedValue(raw, "politician", ["name"], politicianId || "-"),
+    politicianId
   };
   return recordFrom(raw, String(values.title), values, String(values.status).toLowerCase(), String(values.category));
 }
@@ -738,9 +742,11 @@ export function omitEmpty(payload: Record<string, string | boolean>) {
 }
 
 export function withNumericPartyId(payload: Record<string, string | boolean>) {
+  // Ratings use numeric party ids. Politicians use UUID strings — do not use this helper there.
   const clean: Record<string, unknown> = omitEmpty(payload);
-  if (clean.partyId !== undefined) {
-    clean.partyId = Number(clean.partyId);
+  if (clean.partyId !== undefined && clean.partyId !== null && clean.partyId !== "") {
+    const numeric = Number(clean.partyId);
+    if (!Number.isNaN(numeric)) clean.partyId = numeric;
   }
   return clean;
 }

@@ -31,8 +31,9 @@ export type AdminField = {
   type?: "text" | "email" | "password" | "tel" | "textarea" | "select" | "date" | "file" | "checkbox" | "number";
   options?: string[];
   optionItems?: AdminFieldOption[];
-  optionsSource?: "parties";
+  optionsSource?: "parties" | "politicians";
   placeholder?: string;
+  disabled?: boolean;
 };
 
 export type AdminRecord = {
