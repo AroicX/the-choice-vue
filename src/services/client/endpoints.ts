@@ -42,6 +42,7 @@ export const endpoints = {
   comments: {
     list: "/comments",
     byPost: (postId: string) => `/comments/post/${postId}`,
+    stream: (postId: string) => `/comments/stream/${postId}`,
     create: (postId: string) => `/comments/create/${postId}`,
     detail: (id: string) => `/comments/${id}`,
     update: (id: string) => `/comments/${id}`,

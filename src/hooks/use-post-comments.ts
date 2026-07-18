@@ -1,13 +1,13 @@
 "use client";
 
 import { useInfiniteQuery } from "@tanstack/react-query";
+import { usePostCommentsStream } from "@/hooks/use-post-comments-stream";
 import { api } from "@/services/client/api";
 import { endpoints } from "@/services/client/endpoints";
 import { extractComments } from "@/lib/content-utils";
 import type { ApiRecord } from "@/types";
 
 export const COMMENTS_PAGE_SIZE = 10;
-const COMMENTS_POLL_MS = 4_000;
 
 export type CommentsPage = {
   comments: ApiRecord[];
@@ -26,13 +26,14 @@ async function fetchPostCommentsPage(postId: string, skip: number): Promise<Comm
 }
 
 export function usePostComments(postId: string) {
+  usePostCommentsStream(postId);
+
   return useInfiniteQuery({
     queryKey: ["comments", postId],
     queryFn: ({ pageParam }) => fetchPostCommentsPage(postId, pageParam),
     initialPageParam: 0,
     getNextPageParam: (lastPage) => lastPage.nextOffset,
-    refetchInterval: COMMENTS_POLL_MS,
-    refetchIntervalInBackground: true,
+    staleTime: Infinity,
     retry: false
   });
 }

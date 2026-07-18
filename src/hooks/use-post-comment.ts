@@ -81,7 +81,6 @@ export function usePostComment(postId: string, options?: { onSuccess?: () => voi
       options?.onSuccess?.();
     },
     onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ["comments", postId] });
       queryClient.invalidateQueries({ queryKey: ["post", postId] });
       queryClient.invalidateQueries({ queryKey: ["feed"] });
       queryClient.invalidateQueries({ queryKey: ["home", "feed"] });

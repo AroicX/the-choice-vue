@@ -45,7 +45,6 @@ export function PostCommentSection({ post }: PostCommentSectionProps) {
   }, []);
 
   const isInitialLoading = commentsQuery.isLoading;
-  const isSyncing = commentsQuery.isFetching && !commentsQuery.isLoading && !commentsQuery.isFetchingNextPage;
   const activeComment = comments.find((comment) => String(comment.id) === activeCommentId) ?? null;
 
   function shareComment(comment: ApiRecord) {
@@ -78,10 +77,12 @@ export function PostCommentSection({ post }: PostCommentSectionProps) {
             <h2 className="font-semibold">Comments</h2>
             <p className="mt-1 text-sm text-muted-foreground">
               {comments.length.toLocaleString()} loaded
-              {commentsQuery.hasNextPage ? "+" : ""} {comments.length === 1 ? "reply" : "replies"} · updates live
+              {commentsQuery.hasNextPage ? "+" : ""} {comments.length === 1 ? "reply" : "replies"} · live updates
             </p>
           </div>
-          {isSyncing ? <span className="text-xs font-medium text-primary">Syncing...</span> : null}
+          {commentsQuery.isFetchingNextPage ? (
+            <span className="text-xs font-medium text-muted-foreground">Loading more...</span>
+          ) : null}
         </div>
 
         <PostCommentComposer post={post} showQuote={false} />
