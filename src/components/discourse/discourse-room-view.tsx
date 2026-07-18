@@ -417,16 +417,25 @@ export function DiscourseRoomView({ discussionId }: { discussionId: string }) {
           </Link>
           <h1 className="truncate text-[15px] font-medium text-foreground">{displayName(record)}</h1>
         </div>
-        <div className="ml-7 flex flex-wrap items-center gap-2.5 text-[11px] text-muted-foreground">
-          <span>{category}</span>
-          <span>·</span>
-          <span>{formatMembers(members)}</span>
-          {trending ? (
-            <span className="inline-flex items-center gap-1 rounded-full bg-red-50 px-1.5 py-0.5 text-[10px] font-medium text-red-600 dark:bg-red-900/30 dark:text-red-300">
-              <AppIcon icon={FireIcon} size={10} />
-              Trending
-            </span>
+        <div className="ml-7 space-y-1.5">
+          {record.question ? (
+            <p className="text-[13px] font-medium leading-snug text-foreground">{String(record.question)}</p>
           ) : null}
+          {record.description ? (
+            <p className="line-clamp-2 text-[12px] leading-relaxed text-muted-foreground">{String(record.description)}</p>
+          ) : null}
+          <div className="flex flex-wrap items-center gap-2 text-[11px] text-muted-foreground">
+            <span>{formatMembers(members)}</span>
+            {trending ? (
+              <>
+                <span aria-hidden>·</span>
+                <span className="inline-flex items-center gap-1 rounded-full bg-red-50 px-1.5 py-0.5 text-[10px] font-medium text-red-600 dark:bg-red-900/30 dark:text-red-300">
+                  <AppIcon icon={FireIcon} size={10} />
+                  Trending
+                </span>
+              </>
+            ) : null}
+          </div>
         </div>
       </header>
 

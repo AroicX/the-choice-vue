@@ -97,7 +97,7 @@ export function mapUser(raw: Raw): AdminRecord {
 }
 
 export const discussionsMeta: AdminPageMeta = {
-  title: "Discussions",
+  title: "Discussions Rooms",
   description: "Manage civic discourse topics.",
   primaryAction: "Create Discussion",
   filters: ["Status"],
@@ -125,10 +125,15 @@ export const discussionsMeta: AdminPageMeta = {
 };
 
 export function mapDiscussion(raw: Raw): AdminRecord {
+  const topic = String(raw.topic ?? raw.title ?? "");
+  const question = String(raw.question ?? "");
+  const description = String(raw.description ?? "");
   const values = {
-    title: String(raw.topic ?? raw.title ?? "-"),
+    title: topic || "-",
+    topic,
+    question,
     slug: String(raw.slug ?? "-"),
-    description: String(raw.description ?? raw.question ?? "-"),
+    description,
     posts: Array.isArray(raw.posts) ? raw.posts.length : Number(raw.postsCount ?? 0),
     rooms: Array.isArray(raw.rooms) ? raw.rooms.length : Number(raw.roomsCount ?? 0),
     createdAt: dateOf(raw)
@@ -139,7 +144,7 @@ export function mapDiscussion(raw: Raw): AdminRecord {
 export const postsMeta: AdminPageMeta = {
   title: "Posts",
   description: "Review posts, inspect activity, and remove content when needed.",
-  primaryAction: "Create Post",
+  // primaryAction: "Create Post",
   filters: ["Discussion", "Status"],
   columns: [
     { key: "author", label: "Author" },
