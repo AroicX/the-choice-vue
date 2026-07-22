@@ -46,7 +46,7 @@ export function LoginModal() {
               <AppIcon icon={Cancel01Icon} size={18} />
             </Button>
           </div>
-          <LoginForm onSuccess={close} showLinks />
+          <LoginForm onSuccess={close} onDismiss={close} showLinks />
         </CardContent>
       </Card>
     </div>

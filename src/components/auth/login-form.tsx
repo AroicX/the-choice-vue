@@ -26,10 +26,11 @@ const controlRedirectRoles = new Set(["ADMIN", "SUPER_ADMIN"]);
 
 type LoginFormProps = {
   onSuccess?: () => void;
+  onDismiss?: () => void;
   showLinks?: boolean;
 };
 
-export function LoginForm({ onSuccess, showLinks = true }: LoginFormProps) {
+export function LoginForm({ onSuccess, onDismiss, showLinks = true }: LoginFormProps) {
   const router = useRouter();
   const setSession = useAuthStore((state) => state.setSession);
   const [showPassword, setShowPassword] = useState(false);
@@ -52,6 +53,10 @@ export function LoginForm({ onSuccess, showLinks = true }: LoginFormProps) {
   function onSubmit(values: LoginFormValues) {
     const isEmail = values.identifier.includes("@");
     login.mutate({ password: values.password, ...(isEmail ? { email: values.identifier } : { phoneNo: values.identifier }) });
+  }
+
+  function handleNavigateAway() {
+    onDismiss?.();
   }
 
   return (
@@ -91,8 +96,12 @@ export function LoginForm({ onSuccess, showLinks = true }: LoginFormProps) {
       </form>
       {showLinks ? (
         <div className="mt-5 flex justify-between text-sm">
-          <Link className="text-primary hover:underline" href="/forgot-password">Forgot password?</Link>
-          <Link className="text-primary hover:underline" href="/register">Create account</Link>
+          <Link className="text-primary hover:underline" href="/forgot-password" onClick={handleNavigateAway}>
+            Forgot password?
+          </Link>
+          <Link className="text-primary hover:underline" href="/register" onClick={handleNavigateAway}>
+            Create account
+          </Link>
         </div>
       ) : null}
     </div>

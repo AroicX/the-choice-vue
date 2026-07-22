@@ -41,7 +41,7 @@ export function RegisterForm() {
     onSuccess: ({ token, user }) => {
       setSession({ token, user });
       gooeyToast.success("Account created", { description: "Welcome to TheChoice9ja." });
-      router.replace("/");
+      router.replace("/home");
     },
     onError: (error) => {
       gooeyToast.error("Signup failed", {

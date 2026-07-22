@@ -112,11 +112,11 @@ export function MainShell({ children }: { children: React.ReactNode }) {
   return (
     <div className="min-h-screen bg-background">
       <div className="mx-auto grid max-w-[1440px] grid-cols-1 lg:grid-cols-[270px_minmax(0,1fr)_340px]">
-        <aside className="sticky top-0 hidden h-screen border-r border-white/10 bg-card/70 px-4 py-5 backdrop-blur-xl lg:block">
-          <Link href="/home" className="mb-8 flex items-center gap-3 font-bold">
+        <aside className="sticky top-0 hidden h-screen flex-col border-r border-white/10 bg-card/70 px-4 py-5 backdrop-blur-xl lg:flex">
+          <Link href="/home" className="mb-6 flex shrink-0 items-center gap-3 font-bold">
             <img src="/legacy/logo.png" alt="Choice9ja" className="size-12 rounded-xl object-contain" />
           </Link>
-          <nav className="space-y-1.5 overflow-y-auto pb-36">
+          <nav className="min-h-0 flex-1 space-y-1.5 overflow-y-auto overscroll-contain pr-1">
             {mainNav.map((item) => {
               const active = pathname === item.href || pathname.startsWith(`${item.href}/`);
               const showBadge = item.href === "/notifications" && unreadCount > 0;
@@ -135,7 +135,7 @@ export function MainShell({ children }: { children: React.ReactNode }) {
               );
             })}
           </nav>
-          <div className="absolute bottom-5 left-4 right-4 space-y-3">
+          <div className="mt-4 shrink-0 space-y-3 border-t border-white/10 pt-4">
             <Button
               className="w-full"
               onClick={() => {
