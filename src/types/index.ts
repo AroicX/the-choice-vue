@@ -133,6 +133,10 @@ export type Scorecard = {
   issueResponseRate: number;
   factCheckScore: number;
   transparencyScore: number;
+  /** Total SDG votes behind these numbers; 0 means nobody has rated yet. */
+  totalVotes: number;
+  /** False when there are no votes - show "Not yet rated" rather than 0%. */
+  rated: boolean;
 };
 
 export type FactCheck = {

@@ -220,7 +220,10 @@ export function normalizeScorecard(raw: ApiRecord): Scorecard {
     publicSentiment: Number(raw.publicSentiment ?? 0),
     issueResponseRate: Number(raw.issueResponseRate ?? 0),
     factCheckScore: Number(raw.factCheckScore ?? 0),
-    transparencyScore: Number(raw.transparencyScore ?? 0)
+    transparencyScore: Number(raw.transparencyScore ?? 0),
+    totalVotes: Number(raw.totalVotes ?? 0),
+    // The API sends `rated`; fall back to the vote count for older responses.
+    rated: Boolean(raw.rated ?? Number(raw.totalVotes ?? 0) > 0)
   };
 }
 

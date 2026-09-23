@@ -17,7 +17,16 @@ import { endpoints } from "@/services/client/endpoints";
 import { politiciansService } from "@/services/politicians.service";
 import type { ApiRecord, Politician, Scorecard } from "@/types";
 
-const SCORE_METRICS: Array<{ key: keyof Scorecard; label: string }> = [
+type ScoreMetricKey = Exclude<keyof Scorecard, "rated" | "totalVotes">;
+
+/** Derived from public votes; meaningless (and misleading) with none. */
+const VOTE_BACKED_METRICS: ScoreMetricKey[] = [
+  "approvalRating",
+  "performanceScore",
+  "publicSentiment"
+];
+
+const SCORE_METRICS: Array<{ key: ScoreMetricKey; label: string }> = [
   { key: "approvalRating", label: "Approval" },
   { key: "performanceScore", label: "Performance" },
   { key: "promiseDeliveryRate", label: "Promise delivery" },
@@ -38,6 +47,50 @@ function StatBar({ label, value }: { label: string; value: number }) {
       <div className="h-2.5 overflow-hidden rounded-full bg-muted">
         <div className="h-full rounded-full bg-gradient-to-r from-primary to-emerald-400" style={{ width: `${safe}%` }} />
       </div>
+    </div>
+  );
+}
+
+/**
+ * Biographies arrive with real newlines, but a single <p> collapses them into
+ * one unbroken wall of text. Split them back into paragraphs and collapse long
+ * ones so the profile stays scannable.
+ */
+function Biography({ text }: { text: string }) {
+  const [expanded, setExpanded] = useState(false);
+
+  const paragraphs = useMemo(
+    () =>
+      text
+        .split(/\n+/)
+        .map((part) => part.trim())
+        .filter(Boolean),
+    [text]
+  );
+
+  if (!paragraphs.length) return null;
+
+  const isLong = text.length > 420 || paragraphs.length > 2;
+  const visible = expanded || !isLong ? paragraphs : paragraphs.slice(0, 1);
+
+  return (
+    <div className="space-y-3">
+      <div className="space-y-3 text-sm leading-7 text-muted-foreground">
+        {visible.map((paragraph, index) => (
+          <p key={index} className={!expanded && isLong && index === 0 ? "line-clamp-4" : undefined}>
+            {paragraph}
+          </p>
+        ))}
+      </div>
+      {isLong ? (
+        <button
+          type="button"
+          onClick={() => setExpanded((value) => !value)}
+          className="text-sm font-medium text-primary hover:underline"
+        >
+          {expanded ? "Show less" : "Read more"}
+        </button>
+      ) : null}
     </div>
   );
 }
@@ -135,13 +188,24 @@ export function PoliticianDetailView({ politicianId }: { politicianId: string })
         <>
           <Card className="overflow-hidden">
             <CardContent className="space-y-5 p-0">
-              <div className="grid gap-0 md:grid-cols-[220px_1fr]">
+              {/* items-start: without it the image column stretched to match the
+                  biography's height, producing a 220px-wide strip several
+                  thousand pixels tall with the subject's face cropped out. */}
+              <div className="grid items-start gap-0 md:grid-cols-[220px_1fr]">
                 {politician.imageUrl ? (
-                  <div className="relative min-h-56 bg-muted md:min-h-full">
-                    <Image src={politician.imageUrl} alt={politician.name} fill className="object-cover" sizes="220px" priority />
+                  <div className="relative aspect-[4/5] w-full bg-muted">
+                    <Image
+                      src={politician.imageUrl}
+                      alt={politician.name}
+                      fill
+                      // object-top keeps the face in frame on portrait crops.
+                      className="object-cover object-top"
+                      sizes="(max-width: 768px) 100vw, 220px"
+                      priority
+                    />
                   </div>
                 ) : (
-                  <div className="grid min-h-56 place-items-center bg-primary/10 text-4xl font-bold text-primary md:min-h-full">
+                  <div className="grid aspect-[4/5] w-full place-items-center bg-primary/10 text-4xl font-bold text-primary">
                     {politician.name.slice(0, 2).toUpperCase()}
                   </div>
                 )}
@@ -168,14 +232,14 @@ export function PoliticianDetailView({ politicianId }: { politicianId: string })
                     </Button>
                   </div>
 
-                  {politician.biography ? (
-                    <p className="text-sm leading-7 text-muted-foreground">{politician.biography}</p>
-                  ) : null}
+                  {politician.biography ? <Biography text={politician.biography} /> : null}
 
                   <div className="grid gap-3 sm:grid-cols-3">
                     {[
-                      ["Approval", `${politician.approvalScore}%`],
-                      ["Performance", `${politician.performanceScore}%`],
+                      // A bare "0%" reads as a measured score; withhold it until
+                      // there are votes behind it.
+                      ["Approval", scorecard?.rated ? `${politician.approvalScore}%` : "Not rated"],
+                      ["Performance", scorecard?.rated ? `${politician.performanceScore}%` : "Not rated"],
                       ["Constituency", politician.constituency || politician.lga || politician.state],
                       ["Promises", String(politician.promiseCount ?? promises.length)],
                       ["Issues", String(politician.issueCount ?? issues.length)],
@@ -197,10 +261,24 @@ export function PoliticianDetailView({ politicianId }: { politicianId: string })
               <CardContent className="space-y-4 p-5">
                 <div>
                   <h2 className="font-semibold">Scorecard</h2>
-                  <p className="mt-1 text-sm text-muted-foreground">Live civic performance metrics for this politician.</p>
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    {scorecard.rated
+                      ? `Based on ${scorecard.totalVotes} ${scorecard.totalVotes === 1 ? "rating" : "ratings"} from the public.`
+                      : "Live civic performance metrics for this politician."}
+                  </p>
                 </div>
+                {/* With no votes behind them, approval-style metrics would read as
+                    a measured 0% rather than "no data", so they are withheld. */}
+                {!scorecard.rated ? (
+                  <p className="rounded-xl border border-dashed p-4 text-sm text-muted-foreground">
+                    No public ratings yet — approval and performance scores appear once
+                    people start rating this politician.
+                  </p>
+                ) : null}
                 <div className="grid gap-4 md:grid-cols-2">
-                  {SCORE_METRICS.map((metric) => (
+                  {SCORE_METRICS.filter(
+                    (metric) => scorecard.rated || !VOTE_BACKED_METRICS.includes(metric.key)
+                  ).map((metric) => (
                     <StatBar key={metric.key} label={metric.label} value={scorecard[metric.key]} />
                   ))}
                 </div>
