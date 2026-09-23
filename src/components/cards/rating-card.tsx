@@ -10,9 +10,9 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { useRequireAuth } from "@/hooks/use-require-auth";
 import { normalizeRatingOffice, ratingOfficeLabel } from "@/lib/content-utils";
-import { cn } from "@/lib/utils";
 import { getData } from "@/services/client/api";
 import { endpoints } from "@/services/client/endpoints";
+import { RateCandidateModal } from "@/components/cards/rate-candidate-modal";
 import { voteRatingMutation } from "@/services/mutations/civic.mutations";
 import type { RatingCandidate } from "@/types";
 
@@ -21,10 +21,6 @@ type SdgCriteria = Record<string, SdgLevel[]>;
 
 /** Offices the API will return criteria for; anything else has no template. */
 const RATABLE_OFFICES = ["PRESIDENCY", "HOUSE", "GOVERNOR", "SENATOR"];
-
-function formatCriterion(key: string) {
-  return key.replaceAll("_", " ").replace(/\b\w/g, (char) => char.toUpperCase());
-}
 
 export function RatingCard({ candidate }: { candidate: RatingCandidate }) {
   const queryClient = useQueryClient();
@@ -64,6 +60,7 @@ export function RatingCard({ candidate }: { candidate: RatingCandidate }) {
       }),
     onSuccess: () => {
       setRatedLocally(true);
+      setOpen(false);
       gooeyToast.success("Rating submitted");
       queryClient.invalidateQueries({ queryKey: ["ratings"] });
     },
@@ -75,9 +72,6 @@ export function RatingCard({ candidate }: { candidate: RatingCandidate }) {
       });
     }
   });
-
-  const selectedCount = Object.keys(selected).length;
-  const canSubmit = selectedCount > 0 && !hasRated && !voteMutation.isPending;
 
   return (
     <Card className="overflow-hidden transition-colors">
@@ -140,76 +134,39 @@ export function RatingCard({ candidate }: { candidate: RatingCandidate }) {
             ) : null}
             <Button
               size="sm"
-              variant={open ? "secondary" : "default"}
-              onClick={() => setOpen((value) => !value)}
+              variant="default"
+              onClick={() => setOpen(true)}
               disabled={hasRated}
             >
-              {hasRated ? "Rated" : open ? "Hide" : "Rate"}
+              {hasRated ? "Rated" : "Rate"}
             </Button>
           </div>
         </div>
 
-        {open && !hasRated ? (
-          <div className="space-y-4 border-t border-border/70 pt-4">
-            <p className="text-sm text-muted-foreground">Select a score for each criterion, then submit.</p>
-            {!ownCriteria && criteriaQuery.isLoading ? <p className="text-sm text-muted-foreground">Loading criteria...</p> : null}
-            {!ownCriteria && criteriaQuery.isError ? (
-              <p className="text-sm text-destructive">Could not load rating criteria.</p>
-            ) : null}
-            {!criteria.length && !criteriaQuery.isLoading ? (
-              <p className="text-sm text-muted-foreground">
-                This candidate isn&apos;t set up for rating yet.
-              </p>
-            ) : null}
-            <div className="space-y-4">
-              {criteria.map(([key, levels]) => (
-                <div key={key} className="space-y-2">
-                  <p className="text-sm font-medium">{formatCriterion(key)}</p>
-                  <div className="flex flex-wrap gap-2">
-                    {[...levels].sort((a, b) => b.rank - a.rank).map((level) => {
-                      const active = selected[key] === level.rank;
-                      return (
-                        <button
-                          key={`${key}-${level.rank}`}
-                          type="button"
-                          onClick={() =>
-                            setSelected((current) => {
-                              const next = { ...current };
-                              if (next[key] === level.rank) delete next[key];
-                              else next[key] = level.rank;
-                              return next;
-                            })
-                          }
-                          className={cn(
-                            "rounded-lg border px-2.5 py-1.5 text-xs font-semibold transition",
-                            active ? "border-primary bg-primary text-primary-foreground" : "hover:border-primary/40"
-                          )}
-                          style={!active && level.color ? { borderColor: level.color } : undefined}
-                        >
-                          {level.value}
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-              ))}
-            </div>
-            <div className="flex items-center justify-between gap-3">
-              <p className="text-xs text-muted-foreground">{selectedCount} criteria selected</p>
-              <Button
-                size="sm"
-                disabled={!canSubmit}
-                onClick={() => {
-                  if (!requireAuth("Sign in to rate this candidate.")) return;
-                  voteMutation.mutate();
-                }}
-              >
-                {voteMutation.isPending ? "Submitting..." : "Submit rating"}
-              </Button>
-            </div>
-          </div>
-        ) : null}
       </CardContent>
+
+      <RateCandidateModal
+        open={open && !hasRated}
+        onClose={() => setOpen(false)}
+        candidate={candidate}
+        criteria={criteria}
+        selected={selected}
+        onToggleLevel={(key, rank) =>
+          setSelected((current) => {
+            const next = { ...current };
+            if (next[key] === rank) delete next[key];
+            else next[key] = rank;
+            return next;
+          })
+        }
+        onSubmit={() => {
+          if (!requireAuth("Sign in to rate this candidate.")) return;
+          voteMutation.mutate();
+        }}
+        isSubmitting={voteMutation.isPending}
+        isLoadingCriteria={!ownCriteria && criteriaQuery.isLoading}
+        hasCriteriaError={!ownCriteria && criteriaQuery.isError}
+      />
     </Card>
   );
 }
