@@ -15,7 +15,7 @@ export default function ControlFactChecksPage() {
       updateFn={(id, payload) => factChecksService.update(id, payload)}
       deleteFn={(id) => factChecksService.remove(id)}
       createPayload={(payload) => factCheckPayload(payload)}
-      updatePayload={(payload) => factCheckPayload(payload)}
+      updatePayload={(payload, record) => factCheckPayload(payload, record)}
     />
   );
 }

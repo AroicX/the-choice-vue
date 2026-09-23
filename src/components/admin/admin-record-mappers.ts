@@ -537,6 +537,7 @@ export const factChecksMeta: AdminPageMeta = {
     { key: "claim", label: "Claim" },
     { key: "verdict", label: "Verdict" },
     { key: "sources", label: "Sources" },
+    { key: "tagged", label: "Tagged to" },
     { key: "updatedAt", label: "Updated" }
   ],
   rowActions: ["View", "Edit", "Delete"],
@@ -545,26 +546,40 @@ export const factChecksMeta: AdminPageMeta = {
     { name: "verdict", label: "Verdict", type: "select", options: ["TRUE", "MOSTLY_TRUE", "MIXED", "MOSTLY_FALSE", "FALSE", "UNVERIFIED", "MISLEADING"] },
     { name: "explanation", label: "Explanation", type: "textarea" },
     { name: "sources", label: "Sources JSON", type: "textarea", placeholder: '{"urls":["https://example.com"]}' },
-    { name: "relatedIds", label: "Related IDs JSON", type: "textarea", placeholder: '{"politicians":["uuid"]}' }
+    // A fact check only counts toward a politician's score when it is tagged to
+    // them. This used to be a raw JSON textarea requiring a hand-typed UUID.
+    { name: "politicianId", label: "Politician", type: "select", optionsSource: "politicians" }
   ],
   editFields: [
     { name: "claim", label: "Claim", type: "textarea" },
     { name: "verdict", label: "Verdict", type: "select", options: ["TRUE", "MOSTLY_TRUE", "MIXED", "MOSTLY_FALSE", "FALSE", "UNVERIFIED", "MISLEADING"] },
     { name: "explanation", label: "Explanation", type: "textarea" },
     { name: "sources", label: "Sources JSON", type: "textarea" },
-    { name: "relatedIds", label: "Related IDs JSON", type: "textarea" }
+    { name: "politicianId", label: "Politician", type: "select", optionsSource: "politicians" }
   ],
   emptyTitle: "No fact checks returned",
   emptyDescription: "No fact checks are available right now."
 };
 
+/** Politician ids a fact check is tagged to, from `relatedIds.politicians`. */
+export function factCheckPoliticianIds(relatedIds: unknown): string[] {
+  if (!relatedIds || typeof relatedIds !== "object") return [];
+  const list = (relatedIds as Raw).politicians;
+  return Array.isArray(list) ? list.filter((id): id is string => typeof id === "string") : [];
+}
+
 export function mapFactCheck(raw: Raw): AdminRecord {
   const sources = raw.sources && typeof raw.sources === "object" ? raw.sources as Raw : {};
   const urls = Array.isArray(sources.urls) ? sources.urls.length : 0;
+  const tagged = factCheckPoliticianIds(raw.relatedIds);
   const values = {
     claim: String(raw.claim ?? "-").slice(0, 100),
     verdict: String(raw.verdict ?? "UNVERIFIED"),
     sources: `${urls} source${urls === 1 ? "" : "s"}`,
+    // Untagged fact checks count toward nobody's score, so make that visible.
+    tagged: tagged.length ? `${tagged.length} politician${tagged.length === 1 ? "" : "s"}` : "Not tagged",
+    // Pre-fills the edit form's politician select.
+    politicianId: tagged[0] ?? "",
     updatedAt: dateOf(raw),
     explanation: String(raw.explanation ?? "-")
   };
@@ -616,14 +631,29 @@ export function mapCommunity(raw: Raw): AdminRecord {
   return recordFrom(raw, String(values.name), values, "active", String(values.type));
 }
 
-export function factCheckPayload(payload: Record<string, string | boolean>) {
+export function factCheckPayload(
+  payload: Record<string, string | boolean>,
+  record?: AdminRecord
+) {
   const clean = omitEmpty(payload);
+  const selected = typeof payload.politicianId === "string" ? payload.politicianId.trim() : "";
+
+  // Preserve anything else already in relatedIds (other keys, extra politicians
+  // tagged outside this single-select form) instead of overwriting the object.
+  const rawRecord = (record?.raw ?? {}) as Raw;
+  const existing =
+    rawRecord.relatedIds && typeof rawRecord.relatedIds === "object"
+      ? { ...(rawRecord.relatedIds as Record<string, unknown>) }
+      : {};
+  const others = factCheckPoliticianIds(existing).filter((id) => id !== record?.values?.politicianId);
+  const politicians = selected ? [selected, ...others] : others;
+
   return {
     claim: clean.claim,
     verdict: clean.verdict,
     explanation: clean.explanation,
     sources: parseJsonField(clean.sources ?? ""),
-    relatedIds: parseJsonField(clean.relatedIds ?? "")
+    relatedIds: { ...existing, politicians }
   };
 }
 
