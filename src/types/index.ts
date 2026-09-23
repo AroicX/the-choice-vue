@@ -220,6 +220,10 @@ export type RatingCandidate = {
   partyImage?: string;
   state?: string;
   score: number;
+  /** Total SDG votes cast for this candidate; 0 means nobody has rated yet. */
+  totalVotes: number;
+  /** False when there are no votes - show "Not yet rated" rather than 0%. */
+  rated: boolean;
   politicianId?: string;
   education?: string;
   profession?: string;

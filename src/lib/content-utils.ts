@@ -345,6 +345,42 @@ export function ratingOfficeLabel(office: string) {
   }
 }
 
+/**
+ * Total SDG votes on a candidate. `/ratings/all` returns the raw `sdg` blob,
+ * so the vote count is derived here rather than sent by the API.
+ */
+function sdgVoteTotal(sdg: unknown): number {
+  if (!sdg || typeof sdg !== "object") return 0;
+
+  let total = 0;
+  for (const levels of Object.values(sdg as Record<string, unknown>)) {
+    if (!Array.isArray(levels)) continue;
+    for (const level of levels) {
+      if (!level || typeof level !== "object") continue;
+      const votes = Number((level as { votes?: unknown }).votes);
+      if (Number.isFinite(votes) && votes > 0) total += votes;
+    }
+  }
+  return total;
+}
+
+/**
+ * `/ratings/all` nests the politician, so the score lives at
+ * `politician.approvalScore` - reading only the top level always yielded 0.
+ */
+function ratingScore(raw: ApiRecord): number {
+  const politician = raw.politician as ApiRecord | undefined;
+  const value =
+    raw.score ??
+    raw.performanceScore ??
+    raw.approvalScore ??
+    politician?.approvalScore ??
+    politician?.performanceScore ??
+    0;
+  const score = Number(value);
+  return Number.isFinite(score) ? score : 0;
+}
+
 export function normalizeRatingCandidate(raw: ApiRecord): RatingCandidate {
   const party = raw.party as ApiRecord | string | undefined;
   const partyName = typeof party === "object" && party
@@ -353,6 +389,7 @@ export function normalizeRatingCandidate(raw: ApiRecord): RatingCandidate {
   const partyImage = typeof party === "object" && party ? String(party.image ?? "").trim() : "";
   const image = String(raw.image ?? raw.imageUrl ?? raw.avatar ?? "").trim();
   const office = normalizeRatingOffice(raw.candidate ?? raw.position);
+  const votes = sdgVoteTotal(raw.sdg);
   return {
     id: recordId(raw),
     name: String(raw.name ?? "Unnamed candidate"),
@@ -361,7 +398,9 @@ export function normalizeRatingCandidate(raw: ApiRecord): RatingCandidate {
     party: partyName || undefined,
     partyImage: partyImage || undefined,
     state: raw.state ? String(raw.state) : undefined,
-    score: Number(raw.score ?? raw.performanceScore ?? raw.approvalScore ?? 0),
+    score: ratingScore(raw),
+    totalVotes: votes,
+    rated: votes > 0,
     politicianId: raw.politicianId ? String(raw.politicianId) : undefined,
     education: raw.education ? String(raw.education) : undefined,
     profession: raw.profession ? String(raw.profession) : undefined,

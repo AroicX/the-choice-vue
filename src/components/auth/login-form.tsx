@@ -14,6 +14,7 @@ import { Input } from "@/components/ui/input";
 import { ViewIcon, ViewOffIcon } from "@/lib/icons";
 import { loginMutation } from "@/services/mutations/auth.mutations";
 import { useAuthStore } from "@/stores/auth-store";
+import { AuthError } from "@/components/auth/auth-error";
 
 const schema = z.object({
   identifier: z.string().min(3, "Email or phone number is required"),
@@ -89,7 +90,7 @@ export function LoginForm({ onSuccess, onDismiss, showLinks = true }: LoginFormP
             </button>
           </div>
         </Field>
-        {login.error ? <p className="text-sm text-destructive">{login.error.message}</p> : null}
+        {login.error ? <AuthError error={login.error} /> : null}
         <Button className="w-full" disabled={login.isPending}>
           {login.isPending ? "Logging in..." : "Continue"}
         </Button>

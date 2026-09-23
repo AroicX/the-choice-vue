@@ -101,8 +101,22 @@ export function RatingCard({ candidate }: { candidate: RatingCandidate }) {
 
         <div className="flex items-end justify-between gap-3">
           <div>
-            <p className="text-2xl font-bold">{candidate.score || "—"}{candidate.score ? "%" : ""}</p>
-            <p className="text-sm text-muted-foreground">Public score</p>
+            {candidate.rated ? (
+              <>
+                <p className="text-2xl font-bold">{candidate.score}%</p>
+                <p className="text-sm text-muted-foreground">
+                  Public score · {candidate.totalVotes}{" "}
+                  {candidate.totalVotes === 1 ? "vote" : "votes"}
+                </p>
+              </>
+            ) : (
+              <>
+                <p className="text-2xl font-bold text-muted-foreground">—</p>
+                {/* No votes means no public score; showing 0% would read as an
+                    actual rating of zero. */}
+                <p className="text-sm text-muted-foreground">Not yet rated</p>
+              </>
+            )}
           </div>
           <div className="flex gap-2">
             {candidate.politicianId ? (

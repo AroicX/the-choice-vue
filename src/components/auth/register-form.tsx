@@ -14,6 +14,7 @@ import { Input } from "@/components/ui/input";
 import { ViewIcon, ViewOffIcon } from "@/lib/icons";
 import { signupMutation } from "@/services/mutations/auth.mutations";
 import { useAuthStore } from "@/stores/auth-store";
+import { AuthError } from "@/components/auth/auth-error";
 
 const schema = z.object({
   firstName: z.string().min(1, "First name is required"),
@@ -107,7 +108,7 @@ export function RegisterForm() {
           </div>
         </Field>
 
-        {signup.error ? <p className="text-sm text-destructive">{signup.error.message}</p> : null}
+        {signup.error ? <AuthError error={signup.error} /> : null}
 
         <Button className="mt-2 h-11 w-full text-sm font-semibold" disabled={signup.isPending}>
           {signup.isPending ? "Creating account..." : "Create account"}
