@@ -389,7 +389,52 @@ function ratingCriteria(sdg: unknown): RatingCandidate["criteria"] {
  * `/ratings/all` nests the politician, so the score lives at
  * `politician.approvalScore` - reading only the top level always yielded 0.
  */
+/**
+ * Vote-weighted approval from the candidate's own SDG tallies, mirroring the
+ * backend. Each level carries its own percentage label (rank 5 = "80%"), which
+ * is what the voter saw, so the score has to agree with it.
+ */
+function sdgScore(sdg: unknown): number | null {
+  if (!sdg || typeof sdg !== "object") return null;
+
+  let weighted = 0;
+  let votes = 0;
+
+  for (const levels of Object.values(sdg as Record<string, unknown>)) {
+    if (!Array.isArray(levels)) continue;
+    for (const level of levels) {
+      if (!level || typeof level !== "object") continue;
+      const count = Number((level as { votes?: unknown }).votes);
+      if (!Number.isFinite(count) || count <= 0) continue;
+
+      const rank = Number((level as { rank?: unknown }).rank);
+      const label = (level as { value?: unknown }).value;
+      const parsed = typeof label === "string" ? Number.parseFloat(label.replace("%", "")) : NaN;
+      const percent = Number.isFinite(parsed)
+        ? parsed
+        : Number.isFinite(rank)
+          ? (rank / 5) * 100
+          : null;
+      if (percent === null) continue;
+
+      weighted += percent * count;
+      votes += count;
+    }
+  }
+
+  if (!votes) return null;
+  return Math.round((weighted / votes) * 10) / 10;
+}
+
+/**
+ * Candidates are not always linked to a Politician - in production none are - so
+ * the nested `politician.approvalScore` is usually absent. The candidate's own
+ * SDG tallies are the authoritative source and are always present in the payload.
+ */
 function ratingScore(raw: ApiRecord): number {
+  const fromVotes = sdgScore(raw.sdg);
+  if (fromVotes !== null) return fromVotes;
+
   const politician = raw.politician as ApiRecord | undefined;
   const value =
     raw.score ??
