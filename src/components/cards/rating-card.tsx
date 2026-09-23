@@ -88,10 +88,9 @@ export function RatingCard({ candidate }: { candidate: RatingCandidate }) {
             {ratingOfficeLabel(candidate.position)}
             {candidate.party ? ` · ${candidate.party}` : ""}
           </p>
+          {/* The disabled "Rated" action already signals the rated state, so no
+              badge here competing with the location chips for the same row. */}
           <div className="mt-2 flex flex-wrap items-center gap-2">
-            {/* Visible up front, so nobody fills in the form only to be told
-                they already rated this candidate. */}
-            {hasRated ? <Badge variant="default">You rated this</Badge> : null}
             {candidate.state ? <Badge variant="secondary">{candidate.state}</Badge> : null}
             {candidate.constituency ? <Badge variant="outline">{candidate.constituency}</Badge> : null}
             {candidate.partyImage ? (
@@ -107,34 +106,41 @@ export function RatingCard({ candidate }: { candidate: RatingCandidate }) {
           ) : null}
         </div>
 
-        <div className="flex items-end justify-between gap-3">
-          <div>
+        {/* Score and actions each get their own row. Sharing one row squeezed
+            "Public score · 3 votes" into three wrapped lines. */}
+        <div className="space-y-3 border-t border-border/60 pt-4">
+          <div className="flex items-baseline justify-between gap-3">
             {candidate.rated ? (
               <>
-                <p className="text-2xl font-bold">{candidate.score}%</p>
-                <p className="text-sm text-muted-foreground">
-                  Public score · {candidate.totalVotes}{" "}
-                  {candidate.totalVotes === 1 ? "vote" : "votes"}
-                </p>
+                <div className="flex items-baseline gap-2">
+                  <span className="text-2xl font-bold tabular-nums leading-none">
+                    {candidate.score}%
+                  </span>
+                  <span className="text-xs uppercase tracking-wide text-muted-foreground">
+                    Public score
+                  </span>
+                </div>
+                <span className="shrink-0 whitespace-nowrap text-xs text-muted-foreground">
+                  {candidate.totalVotes} {candidate.totalVotes === 1 ? "vote" : "votes"}
+                </span>
               </>
             ) : (
-              <>
-                <p className="text-2xl font-bold text-muted-foreground">—</p>
-                {/* No votes means no public score; showing 0% would read as an
-                    actual rating of zero. */}
-                <p className="text-sm text-muted-foreground">Not yet rated</p>
-              </>
+              // No votes means no public score; a big "0%" would read as an
+              // actual rating of zero.
+              <span className="text-sm text-muted-foreground">Not yet rated</span>
             )}
           </div>
+
           <div className="flex gap-2">
             {candidate.politicianId ? (
-              <Button variant="outline" size="sm" asChild>
+              <Button variant="outline" size="sm" className="flex-1" asChild>
                 <Link href={`/politicians/${candidate.politicianId}`}>Profile</Link>
               </Button>
             ) : null}
             <Button
               size="sm"
-              variant="default"
+              variant={hasRated ? "secondary" : "default"}
+              className="flex-1"
               onClick={() => setOpen(true)}
               disabled={hasRated}
             >
