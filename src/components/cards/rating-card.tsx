@@ -141,7 +141,12 @@ export function RatingCard({ candidate }: { candidate: RatingCandidate }) {
               size="sm"
               variant={hasRated ? "secondary" : "default"}
               className="flex-1"
-              onClick={() => setOpen(true)}
+              // Gate before opening: asking for sign-in only at submit meant
+              // filling in every criterion first, then losing it to a login prompt.
+              onClick={() => {
+                if (!requireAuth("Sign in to rate this candidate.")) return;
+                setOpen(true);
+              }}
               disabled={hasRated}
             >
               {hasRated ? "Rated" : "Rate"}
@@ -166,7 +171,11 @@ export function RatingCard({ candidate }: { candidate: RatingCandidate }) {
           })
         }
         onSubmit={() => {
-          if (!requireAuth("Sign in to rate this candidate.")) return;
+          // Still guarded: the session can expire while the modal is open.
+          if (!requireAuth("Sign in to rate this candidate.")) {
+            setOpen(false);
+            return;
+          }
           voteMutation.mutate();
         }}
         isSubmitting={voteMutation.isPending}
