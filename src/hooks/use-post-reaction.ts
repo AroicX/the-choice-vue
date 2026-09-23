@@ -34,25 +34,29 @@ export function usePostReaction(post: Post) {
       const snapshot = { likes, dislikes, userReaction };
       let nextLikes = likes;
       let nextDislikes = dislikes;
+      // Clicking the active reaction withdraws it, so the next state is "none".
+      const nextReaction: UserReaction | null = userReaction === type ? null : type;
 
       if (type === "like") {
+        if (userReaction === "like") {
+          nextLikes = Math.max(0, likes - 1);
+        } else {
+          nextLikes = likes + 1;
+          if (userReaction === "dislike") nextDislikes = Math.max(0, dislikes - 1);
+        }
+      } else {
         if (userReaction === "dislike") {
           nextDislikes = Math.max(0, dislikes - 1);
-          nextLikes = likes + 1;
-        } else if (userReaction !== "like") {
-          nextLikes = likes + 1;
+        } else {
+          nextDislikes = dislikes + 1;
+          if (userReaction === "like") nextLikes = Math.max(0, likes - 1);
         }
-      } else if (userReaction === "like") {
-        nextLikes = Math.max(0, likes - 1);
-        nextDislikes = dislikes + 1;
-      } else if (userReaction !== "dislike") {
-        nextDislikes = dislikes + 1;
       }
 
       setLikes(nextLikes);
       setDislikes(nextDislikes);
-      setUserReaction(type);
-      setStoredReaction(userId, post.id, type);
+      setUserReaction(nextReaction);
+      setStoredReaction(userId, post.id, nextReaction);
 
       return snapshot;
     },
@@ -72,7 +76,8 @@ export function usePostReaction(post: Post) {
   });
 
   function react(type: UserReaction) {
-    if (userReaction === type || mutation.isPending) return;
+    // Re-clicking the active reaction is allowed: it toggles it off.
+    if (mutation.isPending) return;
     mutation.mutate(type);
   }
 
