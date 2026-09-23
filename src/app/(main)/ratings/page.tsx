@@ -18,6 +18,7 @@ import { cn } from "@/lib/utils";
 import { getData } from "@/services/client/api";
 import { endpoints } from "@/services/client/endpoints";
 import type { ApiRecord, RatingCandidate } from "@/types";
+import { useAuthStore } from "@/stores/auth-store";
 
 const OFFICE_TABS = [
   { id: "ALL", label: "All" },
@@ -54,13 +55,16 @@ function groupByOffice(candidates: RatingCandidate[]) {
 }
 
 export default function RatingsPage() {
+  const viewerId = useAuthStore((state) => state.user?.id ?? "anon");
   const [office, setOffice] = useState<OfficeTab>("ALL");
   const [search, setSearch] = useState("");
   const [party, setParty] = useState("ALL");
   const [state, setState] = useState("ALL");
 
+  // Scoped by viewer: the response carries per-user `hasRated`, so an unscoped
+  // key would show one account's rated state to the next person on this browser.
   const query = useQuery({
-    queryKey: ["ratings", "candidates"],
+    queryKey: ["ratings", "candidates", viewerId],
     queryFn: () => getData<ApiRecord[]>(endpoints.ratings.list, { take: 100 })
   });
 

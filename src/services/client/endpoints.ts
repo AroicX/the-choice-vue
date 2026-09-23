@@ -119,7 +119,7 @@ export const endpoints = {
     categories: "/ratings/all",
     bulk: "/ratings/bulk",
     parties: "/ratings/parties",
-    sdgCriteria: "/ratings/sdg",
+    sdgCriteria: (candidate: string) => `/ratings/sdg?candidate=${encodeURIComponent(candidate)}`,
     create: "/ratings/create",
     vote: (id: string) => `/ratings/vote/${id}`,
     delete: (id: string) => `/ratings/delete/${id}`,

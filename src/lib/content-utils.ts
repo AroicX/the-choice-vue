@@ -364,6 +364,27 @@ function sdgVoteTotal(sdg: unknown): number {
   return total;
 }
 
+/** Keeps only categories shaped as real vote levels (`{ rank, value }`). */
+function ratingCriteria(sdg: unknown): RatingCandidate["criteria"] {
+  if (!sdg || typeof sdg !== "object") return undefined;
+
+  const entries = Object.entries(sdg as Record<string, unknown>).filter(
+    ([, levels]) =>
+      Array.isArray(levels) &&
+      levels.length > 0 &&
+      levels.every(
+        (level) =>
+          level !== null &&
+          typeof level === "object" &&
+          (level as { rank?: unknown }).rank !== undefined
+      )
+  );
+
+  return entries.length
+    ? (Object.fromEntries(entries) as RatingCandidate["criteria"])
+    : undefined;
+}
+
 /**
  * `/ratings/all` nests the politician, so the score lives at
  * `politician.approvalScore` - reading only the top level always yielded 0.
@@ -401,6 +422,7 @@ export function normalizeRatingCandidate(raw: ApiRecord): RatingCandidate {
     score: ratingScore(raw),
     totalVotes: votes,
     rated: votes > 0,
+    criteria: ratingCriteria(raw.sdg),
     politicianId: raw.politicianId ? String(raw.politicianId) : undefined,
     education: raw.education ? String(raw.education) : undefined,
     profession: raw.profession ? String(raw.profession) : undefined,

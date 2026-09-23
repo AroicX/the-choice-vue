@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { useRequireAuth } from "@/hooks/use-require-auth";
-import { ratingOfficeLabel } from "@/lib/content-utils";
+import { normalizeRatingOffice, ratingOfficeLabel } from "@/lib/content-utils";
 import { cn } from "@/lib/utils";
 import { getData } from "@/services/client/api";
 import { endpoints } from "@/services/client/endpoints";
@@ -18,6 +18,9 @@ import type { RatingCandidate } from "@/types";
 
 type SdgLevel = { rank: number; value: string; color?: string; votes?: number };
 type SdgCriteria = Record<string, SdgLevel[]>;
+
+/** Offices the API will return criteria for; anything else has no template. */
+const RATABLE_OFFICES = ["PRESIDENCY", "HOUSE", "GOVERNOR", "SENATOR"];
 
 function formatCriterion(key: string) {
   return key.replaceAll("_", " ").replace(/\b\w/g, (char) => char.toUpperCase());
@@ -31,19 +34,27 @@ export function RatingCard({ candidate }: { candidate: RatingCandidate }) {
   const [ratedLocally, setRatedLocally] = useState(false);
   const hasRated = Boolean(candidate.hasRated || ratedLocally);
 
+  // A candidate's own `sdg` is the authoritative copy of its criteria, and the
+  // only one whose categories the vote endpoint will accept. The shared
+  // /ratings/sdg template is a per-office fallback for candidates that predate
+  // the backfill; asking for the wrong office yields a form that cannot submit.
+  const ownCriteria = candidate.criteria;
+  const office = normalizeRatingOffice(candidate.position);
+  const fallbackAvailable = RATABLE_OFFICES.includes(office);
+
   const criteriaQuery = useQuery({
-    queryKey: ["ratings", "sdg-criteria"],
-    queryFn: () => getData<SdgCriteria>(endpoints.ratings.sdgCriteria),
-    enabled: open,
+    queryKey: ["ratings", "sdg-criteria", office],
+    queryFn: () => getData<SdgCriteria>(endpoints.ratings.sdgCriteria(office)),
+    enabled: open && !ownCriteria && fallbackAvailable,
     staleTime: 60_000,
     retry: false
   });
 
   const criteria = useMemo(() => {
-    const payload = criteriaQuery.data;
+    const payload = (ownCriteria ?? criteriaQuery.data) as SdgCriteria | undefined;
     if (!payload || typeof payload !== "object") return [] as Array<[string, SdgLevel[]]>;
     return Object.entries(payload).filter(([, levels]) => Array.isArray(levels));
-  }, [criteriaQuery.data]);
+  }, [ownCriteria, criteriaQuery.data]);
 
   const voteMutation = useMutation({
     mutationFn: () =>
@@ -84,6 +95,9 @@ export function RatingCard({ candidate }: { candidate: RatingCandidate }) {
             {candidate.party ? ` · ${candidate.party}` : ""}
           </p>
           <div className="mt-2 flex flex-wrap items-center gap-2">
+            {/* Visible up front, so nobody fills in the form only to be told
+                they already rated this candidate. */}
+            {hasRated ? <Badge variant="default">You rated this</Badge> : null}
             {candidate.state ? <Badge variant="secondary">{candidate.state}</Badge> : null}
             {candidate.constituency ? <Badge variant="outline">{candidate.constituency}</Badge> : null}
             {candidate.partyImage ? (
@@ -138,9 +152,14 @@ export function RatingCard({ candidate }: { candidate: RatingCandidate }) {
         {open && !hasRated ? (
           <div className="space-y-4 border-t border-border/70 pt-4">
             <p className="text-sm text-muted-foreground">Select a score for each criterion, then submit.</p>
-            {criteriaQuery.isLoading ? <p className="text-sm text-muted-foreground">Loading criteria...</p> : null}
-            {criteriaQuery.isError ? (
+            {!ownCriteria && criteriaQuery.isLoading ? <p className="text-sm text-muted-foreground">Loading criteria...</p> : null}
+            {!ownCriteria && criteriaQuery.isError ? (
               <p className="text-sm text-destructive">Could not load rating criteria.</p>
+            ) : null}
+            {!criteria.length && !criteriaQuery.isLoading ? (
+              <p className="text-sm text-muted-foreground">
+                This candidate isn&apos;t set up for rating yet.
+              </p>
             ) : null}
             <div className="space-y-4">
               {criteria.map(([key, levels]) => (

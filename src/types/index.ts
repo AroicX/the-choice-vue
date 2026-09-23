@@ -224,6 +224,12 @@ export type RatingCandidate = {
   totalVotes: number;
   /** False when there are no votes - show "Not yet rated" rather than 0%. */
   rated: boolean;
+  /**
+   * This candidate's own SDG categories. Presidential and other offices use
+   * different category sets, so the rating form must use these rather than a
+   * single global list.
+   */
+  criteria?: Record<string, Array<{ rank: number; value: string; color?: string; votes?: number }>>;
   politicianId?: string;
   education?: string;
   profession?: string;
