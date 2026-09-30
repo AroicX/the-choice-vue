@@ -1,9 +1,14 @@
 """
-Turns the home-carousel photos into Choice9ja halftone art.
+Turns photos into Choice9ja halftone art: the home carousel slides and the
+topic library used for discussion-room covers.
 
 Each photo is cropped to the banner shape, contrast-boosted, and redrawn as a
 rotated grid of dots (brighter areas -> bigger dots) in the slide's accent
 colour on the slide's background colour. Output: public/carousel/<slide>.webp
+
+Room covers are drawn the same way but as a transparent mask (white dots, no
+background), so the app can colour one image with any palette at runtime.
+Output: public/covers/<topic>.webp
 
     python3 scripts/make-carousel-art.py
 
@@ -64,7 +69,8 @@ def halftone(path, background, dots, focus_y, invert):
         photo = ImageOps.invert(photo)
 
     scale = SUPERSAMPLE
-    canvas = Image.new("RGB", (OUT_W * scale, OUT_H * scale), background)
+    mode = "RGBA" if isinstance(background, tuple) and len(background) == 4 else "RGB"
+    canvas = Image.new(mode, (OUT_W * scale, OUT_H * scale), background)
     draw = ImageDraw.Draw(canvas)
     pixels = photo.load()
 
@@ -88,8 +94,31 @@ def halftone(path, background, dots, focus_y, invert):
     return canvas.resize((OUT_W, OUT_H), Image.LANCZOS)
 
 
+# Room-cover topics: id, unsplash id, vertical focus, invert. Photos whose
+# subject is darker than a bright sky are inverted so the subject gets the dots.
+COVERS = [
+    ("power", "igTOxfI7I08", 0.5, True),
+    ("economy", "ZP7cq__1kAc", 0.5, False),
+    ("education", "JwdHpCUmpg8", 0.5, False),
+    ("health", "sA679DVxlSg", 0.7, False),
+    ("infrastructure", "kF0-RhpHhRA", 0.55, True),
+    ("environment", "h-4U0rQX7gk", 0.6, False),
+    ("government", "MxDF3-ysw_g", 0.45, True),
+    ("local", "cFT_Xq4XyA0", 0.5, False),
+    ("elections", "nmLJAvTfanU", 0.7, True),
+    ("general", "Ciba8rvHYng", 0.5, False),
+]
+COVERS_DIR = os.path.join(ROOT, "public", "covers")
+
+
 def main():
     os.makedirs(OUT_DIR, exist_ok=True)
+    os.makedirs(COVERS_DIR, exist_ok=True)
+    for topic, unsplash_id, focus_y, invert in COVERS:
+        art = halftone(source(unsplash_id), (0, 0, 0, 0), (255, 255, 255, 255), focus_y, invert)
+        out = os.path.join(COVERS_DIR, f"{topic}.webp")
+        art.save(out, "WEBP", quality=80, method=6)
+        print(f"{out}  {os.path.getsize(out) // 1024} KB")
     for slide_id, unsplash_id, background, dots, focus_y, invert in SLIDES:
         art = halftone(source(unsplash_id), background, dots, focus_y, invert)
         out = os.path.join(OUT_DIR, f"{slide_id}.webp")

@@ -248,7 +248,7 @@ export function DiscourseRoomView({ discussionId }: { discussionId: string }) {
       </div>
 
       <div className="relative">
-        <RoomCover seed={id} src={coverImage} className="aspect-[3/1] w-full" />
+        <RoomCover seed={id} text={`${title} ${question}`} src={coverImage} className="aspect-[3/1] w-full" />
         {canEditCover ? <RoomCoverEditor discussionId={id} hasCover={Boolean(coverImage)} detailQueryKey={detailKey} /> : null}
       </div>
 

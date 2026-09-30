@@ -41,7 +41,12 @@ function RoomRow({ room, joined }: { room: ApiRecord; joined: boolean }) {
       href={`/discussions/${recordId(room)}`}
       className="flex gap-3 border-b px-4 py-3.5 transition-colors hover:bg-foreground/[0.03] focus-visible:bg-foreground/[0.06] focus-visible:outline-none"
     >
-      <RoomCover seed={recordId(room)} src={room.coverImage ? String(room.coverImage) : null} className="h-14 w-20 shrink-0 rounded-lg" />
+      <RoomCover
+        seed={recordId(room)}
+        text={`${title} ${question}`}
+        src={room.coverImage ? String(room.coverImage) : null}
+        className="h-14 w-20 shrink-0 rounded-lg"
+      />
       <span className="min-w-0 flex-1">
         <span className="flex items-start justify-between gap-3">
           <span className="line-clamp-2 text-[15px] font-bold leading-5">{title}</span>
