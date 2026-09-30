@@ -124,31 +124,6 @@ function waves(rand: Rand, p: Palette) {
 
 const STYLES = [contours, truchet, dotField, bands, waves];
 
-const STYLE_BY_NAME = { contours, truchet, dots: dotField, bands, waves };
-export type PatternStyle = keyof typeof STYLE_BY_NAME;
-
-/**
- * A single pattern style drawn in white on a transparent background, for
- * laying over a solid colour (e.g. the home carousel). Tune its strength with
- * opacity on the parent.
- */
-export function PatternLayer({ style, seed, className }: { style: PatternStyle; seed: string; className?: string }) {
-  const shapes = useMemo(
-    () => STYLE_BY_NAME[style](prng(hashSeed(seed)), { bg: "none", ink: "#ffffff", soft: "#ffffff" }),
-    [seed, style]
-  );
-  return (
-    <svg
-      viewBox={`0 0 ${W} ${H}`}
-      preserveAspectRatio="xMidYMid slice"
-      className={cn("block size-full", className)}
-      aria-hidden
-      focusable="false"
-    >
-      {shapes}
-    </svg>
-  );
-}
 
 export function RoomPattern({ seed, className }: { seed: string; className?: string }) {
   const art = useMemo(() => {

@@ -43,3 +43,6 @@ lerna-debug.log*
 !.vscode/extensions.json
 node_modules
 node_modules
+
+# Source photos for scripts/make-carousel-art.py
+scripts/.carousel-src/

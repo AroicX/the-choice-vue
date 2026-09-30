@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { PatternLayer, type PatternStyle } from "@/components/discourse/room-cover";
+import Image from "next/image";
 import { useRequireAuth } from "@/hooks/use-require-auth";
 import { useLoginModalStore } from "@/stores/login-modal-store";
 import { cn } from "@/lib/utils";
@@ -18,7 +18,10 @@ type Slide = {
   /** Slide colours are fixed artwork, the same in light and dark mode. */
   background: string;
   accent: string;
-  pattern: PatternStyle;
+  /** Halftone art from scripts/make-carousel-art.py (public/carousel). */
+  art: string;
+  /** Photographer of the source photo (Unsplash; credit is optional but kind). */
+  credit: string;
   primary: Action;
   secondary?: Action;
 };
@@ -87,7 +90,8 @@ export function CivicCarousel({ dateLabel }: { dateLabel: string }) {
       body: "Know your leaders. Track their performance. Hold power to account.",
       background: "#0B2E22",
       accent: "#6EE7A0",
-      pattern: "contours",
+      art: "/carousel/pulse.webp",
+      credit: "Salem Ochidi",
       primary: isAuthenticated ? { label: "Rate a leader", href: "/ratings" } : { label: "Create account", href: "/register" },
       secondary: isAuthenticated
         ? { label: "Report an issue", onClick: reportIssue }
@@ -100,7 +104,8 @@ export function CivicCarousel({ dateLabel }: { dateLabel: string }) {
       body: "Score leaders on jobs, security, power and more — it takes about a minute.",
       background: "#141A2B",
       accent: "#93A8D8",
-      pattern: "dots",
+      art: "/carousel/rate.webp",
+      credit: "Olumide Bamgbelu",
       primary: { label: "Start rating", href: "/ratings" },
       secondary: { label: "Browse leaders", href: "/politicians" }
     },
@@ -111,7 +116,8 @@ export function CivicCarousel({ dateLabel }: { dateLabel: string }) {
       body: "Report broken roads, blackouts or vote buying, and follow it until it’s resolved.",
       background: "#4A2419",
       accent: "#F0A585",
-      pattern: "waves",
+      art: "/carousel/report.webp",
+      credit: "Opeyemi Adisa",
       primary: { label: "Report an issue", onClick: reportIssue },
       secondary: { label: "See issues", href: "/issues" }
     }
@@ -163,12 +169,17 @@ export function CivicCarousel({ dateLabel }: { dateLabel: string }) {
             className="relative w-full shrink-0 snap-start overflow-hidden"
             style={{ backgroundColor: slide.background }}
           >
-            {/* Pattern fades in from the right so the text side stays calm. */}
-            <PatternLayer
-              style={slide.pattern}
-              seed={slide.id}
-              className="absolute inset-0 opacity-[0.14] [mask-image:linear-gradient(to_left,black_20%,transparent_75%)]"
+            {/* Halftone art fades in from the right so the text side stays calm.
+                Its background colour matches the slide, so the fade is seamless. */}
+            <Image
+              src={slide.art}
+              alt=""
+              fill
+              sizes="(max-width: 768px) 100vw, 660px"
+              priority={index === 0}
+              className="object-cover opacity-60 [mask-image:linear-gradient(to_left,black_25%,transparent_80%)]"
             />
+            <p className="absolute bottom-2 right-3 text-[11px] text-white/60">Photo: {slide.credit}</p>
             <div className="relative flex min-h-[236px] flex-col justify-between p-6 sm:p-7">
               <div>
                 <p className="text-[13px] font-medium" style={{ color: slide.accent }} suppressHydrationWarning>
