@@ -12,6 +12,7 @@ import { CheckmarkCircle02Icon } from "@/lib/icons";
 import { useRequireAuth } from "@/hooks/use-require-auth";
 import { normalizeRatingOffice } from "@/lib/content-utils";
 import { ScoreRing } from "@/components/ui/score-ring";
+import { RoomCover } from "@/components/discourse/room-cover";
 import { getData } from "@/services/client/api";
 import { endpoints } from "@/services/client/endpoints";
 import { RateCandidateModal } from "@/components/cards/rate-candidate-modal";
@@ -78,71 +79,84 @@ export function RatingCard({ candidate }: { candidate: RatingCandidate }) {
   const place = [candidate.constituency, candidate.state].filter(Boolean).join(", ");
 
   return (
-    <article className="flex flex-col rounded-2xl border bg-card p-4">
-      <div className="flex items-start gap-3.5">
-        <span className="relative size-14 shrink-0 overflow-hidden rounded-full bg-secondary">
-          {candidate.image ? (
-            <Image src={candidate.image} alt="" fill className="object-cover object-top" sizes="56px" />
-          ) : (
-            <span className="absolute inset-0 grid place-items-center text-lg font-bold text-muted-foreground" aria-hidden>
-              {candidate.name.charAt(0)}
-            </span>
-          )}
-        </span>
+    <article className="flex flex-col overflow-hidden rounded-xl border bg-card">
+      {/* Same halftone band as politician cards; the crowd art marks candidates. */}
+      <RoomCover seed={candidate.id} text="elections" className="h-16" />
 
-        <div className="min-w-0 flex-1 pt-0.5">
-          <h2 className="truncate text-[16px] font-bold leading-5">{candidate.name}</h2>
-          <p className="truncate text-[14px] text-muted-foreground">
-            {officeTitle(candidate.position)}
-            {place ? ` · ${place}` : ""}
-          </p>
-          {candidate.party ? (
-            <p className="mt-1 flex items-center gap-1.5 text-[13px] text-muted-foreground">
-              {candidate.partyImage ? (
-                <Image src={candidate.partyImage} alt="" width={16} height={16} className="size-4 rounded-full object-cover" />
-              ) : null}
-              <span className="truncate">{candidate.party}</span>
-            </p>
+      <div className="flex flex-1 flex-col px-4 pb-4">
+        <div className="flex items-end justify-between gap-3">
+          <span className="relative -mt-8 size-16 shrink-0 overflow-hidden rounded-full bg-secondary ring-4 ring-card">
+            {candidate.image ? (
+              <Image src={candidate.image} alt="" fill className="object-cover object-top" sizes="64px" />
+            ) : (
+              <span className="absolute inset-0 grid place-items-center text-xl font-bold text-muted-foreground" aria-hidden>
+                {candidate.name.charAt(0)}
+              </span>
+            )}
+          </span>
+          {candidate.politicianId ? (
+            <Link href={`/politicians/${candidate.politicianId}`} className="pt-2 text-[14px] font-medium hover:underline">
+              Profile
+            </Link>
           ) : null}
         </div>
 
-        <ScoreRing score={candidate.rated ? candidate.score : null} />
-      </div>
-
-      <div className="mt-4 flex items-center justify-between gap-3 border-t pt-3">
-        <p className="min-w-0 truncate text-[13px] text-muted-foreground">
-          {/* No votes means no public score; "0%" would read as a real rating. */}
-          {candidate.rated
-            ? `${candidate.totalVotes.toLocaleString()} ${candidate.totalVotes === 1 ? "rating" : "ratings"}`
-            : "No ratings yet"}
-          {candidate.politicianId ? (
-            <>
-              {" · "}
-              <Link href={`/politicians/${candidate.politicianId}`} className="text-foreground hover:underline">
-                Profile
-              </Link>
-            </>
-          ) : null}
+        <h2 className="mt-2 truncate text-[16px] font-bold leading-5">{candidate.name}</h2>
+        <p className="truncate text-[14px] text-muted-foreground">
+          {officeTitle(candidate.position)}
+          {place ? ` · ${place}` : ""}
         </p>
-        {hasRated ? (
-          <span className="inline-flex h-9 shrink-0 items-center gap-1.5 rounded-[10px] bg-secondary px-4 text-sm font-medium text-muted-foreground">
-            <AppIcon icon={CheckmarkCircle02Icon} size={16} />
-            Rated
+        {candidate.party ? (
+          <p className="mt-1 flex min-w-0 items-center gap-1.5 text-[13px] text-muted-foreground">
+            {candidate.partyImage ? (
+              <Image src={candidate.partyImage} alt="" width={16} height={16} className="size-4 shrink-0 rounded-full object-cover" />
+            ) : null}
+            <span className="truncate">{candidate.party}</span>
+          </p>
+        ) : null}
+
+        {/* Spacer keeps footers aligned across cards with more or less detail. */}
+        <div className="min-h-4 flex-1" aria-hidden />
+        <div className="flex items-center justify-between gap-3 border-t pt-3">
+          <span className="flex items-center gap-2.5">
+            <ScoreRing score={candidate.rated ? candidate.score : null} />
+            <span className="text-[13px] leading-4 text-muted-foreground">
+              {/* No votes means no public score; "0%" would read as a real rating. */}
+              {candidate.rated ? (
+                <>
+                  {candidate.totalVotes.toLocaleString()}
+                  <br />
+                  {candidate.totalVotes === 1 ? "rating" : "ratings"}
+                </>
+              ) : (
+                <>
+                  Not yet
+                  <br />
+                  rated
+                </>
+              )}
+            </span>
           </span>
-        ) : (
-          <Button
-            size="sm"
-            className="shrink-0"
-            // Gate before opening: asking for sign-in only at submit meant
-            // filling in every criterion first, then losing it to a login prompt.
-            onClick={() => {
-              if (!requireAuth("Sign in to rate this candidate.")) return;
-              setOpen(true);
-            }}
-          >
-            Rate
-          </Button>
-        )}
+          {hasRated ? (
+            <span className="inline-flex h-9 shrink-0 items-center gap-1.5 rounded-[10px] bg-secondary px-4 text-sm font-medium text-muted-foreground">
+              <AppIcon icon={CheckmarkCircle02Icon} size={16} />
+              Rated
+            </span>
+          ) : (
+            <Button
+              size="sm"
+              className="shrink-0"
+              // Gate before opening: asking for sign-in only at submit meant
+              // filling in every criterion first, then losing it to a login prompt.
+              onClick={() => {
+                if (!requireAuth("Sign in to rate this candidate.")) return;
+                setOpen(true);
+              }}
+            >
+              Rate
+            </Button>
+          )}
+        </div>
       </div>
 
       <RateCandidateModal

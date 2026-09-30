@@ -250,22 +250,7 @@ export function PostRowSkeleton() {
   );
 }
 
-/** Matches the compact RatingCard: avatar, text lines, score ring, footer. */
+/** Matches RatingCard: same cover-band layout as PoliticianCard, Rate button footer. */
 export function RatingCardSkeleton() {
-  return (
-    <div className="rounded-2xl border p-4" aria-hidden>
-      <div className="flex items-start gap-3.5">
-        <Skeleton className="size-14 shrink-0 rounded-full" />
-        <div className="flex-1 space-y-2 pt-1">
-          <Skeleton className="h-4 w-2/3" />
-          <Skeleton className="h-3.5 w-1/2" />
-        </div>
-        <Skeleton className="size-[52px] shrink-0 rounded-full" />
-      </div>
-      <div className="mt-4 flex items-center justify-between border-t pt-3">
-        <Skeleton className="h-3.5 w-24" />
-        <Skeleton className="h-9 w-16 rounded-full" />
-      </div>
-    </div>
-  );
+  return <PoliticianCardSkeleton />;
 }
