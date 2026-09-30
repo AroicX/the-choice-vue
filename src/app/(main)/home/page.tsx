@@ -8,6 +8,7 @@ import { PostCard } from "@/components/cards/post-card";
 import { PostRowSkeleton } from "@/components/skeletons/card-skeletons";
 import { TimelineEmpty, TimelineError, TimelineHeader } from "@/components/timeline/timeline";
 import { Skeleton } from "@/components/ui/skeleton";
+import { CivicCarousel } from "@/components/home/civic-carousel";
 import { civicQueries } from "@/services/queries/civic.queries";
 import { asArray, normalizePost } from "@/lib/content-utils";
 import type { ApiRecord } from "@/types";
@@ -109,51 +110,11 @@ export default function HomePage() {
 
   return (
     <>
-      <section className="px-4 pt-4">
-        <div className="relative overflow-hidden rounded-3xl border p-5 sm:p-7">
-          {/* Brand mark as a quiet watermark; decorative only. */}
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src="/icon-192x192.png"
-            alt=""
-            aria-hidden
-            className="pointer-events-none absolute -bottom-10 -right-8 size-48 rotate-[-8deg] opacity-[0.06] dark:opacity-[0.08]"
-          />
-          {/* The server renders in UTC, so the date may differ by a day from the viewer's. */}
-          <p suppressHydrationWarning className="relative flex items-center gap-2 text-[13px] font-medium text-muted-foreground">
-            Civic pulse · {today}
-          </p>
-          <h1 className="relative mt-3 max-w-[460px] text-[28px] font-extrabold leading-[1.1] tracking-[-0.02em] sm:text-[34px]">
-            The future of democracy in <span className="text-primary">Nigeria.</span>
-          </h1>
-          <p className="relative mt-3 max-w-[440px] text-[15px] leading-5 text-muted-foreground">
-            Know your leaders. Track their performance. Hold power to account.
-          </p>
-          <div className="relative mt-5 flex flex-wrap gap-2">
-            {isAuthenticated ? (
-              <>
-                <Button asChild>
-                  <Link href="/politicians">Rate a leader</Link>
-                </Button>
-                <Button asChild variant="outline">
-                  <Link href="/issues/create">Report an issue</Link>
-                </Button>
-              </>
-            ) : (
-              <>
-                <Button asChild variant="inverted">
-                  <Link href="/register">Create account</Link>
-                </Button>
-                <Button variant="outline" onClick={() => openLoginModal("Sign in to continue.")}>
-                  Sign in
-                </Button>
-              </>
-            )}
-          </div>
-        </div>
-      </section>
+      <div className="px-4 pt-4">
+        <CivicCarousel dateLabel={today} />
+      </div>
 
-      <section aria-labelledby="brief-heading" className="px-4 pb-4 pt-5">
+      <section aria-labelledby="brief-heading" className="px-4 pb-4 pt-3">
         <h2 id="brief-heading" className="mb-2 text-[15px] font-bold">
           Daily civic brief
         </h2>

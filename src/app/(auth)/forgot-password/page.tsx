@@ -10,7 +10,7 @@ export default function ForgotPasswordPage() {
       <AuthHeading title="Reset your password" subtitle="Enter your email or phone number and we’ll send you a code." />
       <form className="space-y-4">
         <AuthField name="identifier" label="Email or phone number" autoComplete="username" autoCapitalize="none" />
-        <Button className="!mt-6 h-11 w-full rounded-[10px]">
+        <Button className="!mt-6 h-11 w-full">
           Send code
         </Button>
       </form>

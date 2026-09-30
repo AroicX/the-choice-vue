@@ -99,7 +99,7 @@ export function LoginForm({ onSuccess, onDismiss, showLinks = true, subtitle }: 
 
         {login.error ? <AuthError error={login.error} /> : null}
 
-        <Button className="!mt-6 h-11 w-full rounded-[10px]" disabled={login.isPending}>
+        <Button className="!mt-6 h-11 w-full" disabled={login.isPending}>
           {login.isPending ? "Logging in…" : "Log in"}
         </Button>
       </form>

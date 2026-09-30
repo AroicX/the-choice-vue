@@ -11,7 +11,7 @@ export default function ResetPasswordPage() {
         <AuthField name="email" label="Email" type="email" autoComplete="email" />
         <AuthField name="password" label="New password" type="password" autoComplete="new-password" />
         <AuthField name="confirmPassword" label="Confirm new password" type="password" autoComplete="new-password" />
-        <Button className="!mt-6 h-11 w-full rounded-[10px]">
+        <Button className="!mt-6 h-11 w-full">
           Update password
         </Button>
       </form>

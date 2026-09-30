@@ -17,7 +17,7 @@ export default function VerifyOtpPage() {
           maxLength={6}
           className="[&_input]:tracking-[0.3em]"
         />
-        <Button className="!mt-6 h-11 w-full rounded-[10px]">
+        <Button className="!mt-6 h-11 w-full">
           Verify
         </Button>
       </form>

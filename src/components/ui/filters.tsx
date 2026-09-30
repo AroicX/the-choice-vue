@@ -29,7 +29,7 @@ export function SearchField({
         onChange={(event) => onChange(event.target.value)}
         placeholder={placeholder}
         aria-label={placeholder}
-        className="h-10 w-full rounded-full border border-transparent bg-secondary pl-11 pr-4 text-[15px] placeholder:text-muted-foreground focus:border-primary focus:bg-background focus:outline-none"
+        className="h-10 w-full rounded-[10px] border border-transparent bg-secondary pl-11 pr-4 text-[15px] placeholder:text-muted-foreground focus:border-primary focus:bg-background focus:outline-none"
       />
     </div>
   );
@@ -57,7 +57,7 @@ export function FilterSelect({
         onChange={(event) => onChange(event.target.value)}
         aria-label={label}
         className={cn(
-          "h-10 appearance-none rounded-full border pl-4 pr-9 text-sm font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+          "h-10 appearance-none rounded-[10px] border pl-4 pr-9 text-sm font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-ring",
           active ? "border-foreground bg-foreground text-background" : "border-input bg-transparent text-foreground hover:bg-accent"
         )}
       >
