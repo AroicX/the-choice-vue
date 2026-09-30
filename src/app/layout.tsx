@@ -7,7 +7,6 @@ import { QueryProvider } from "@/components/providers/query-provider";
 import { ConnectionSnackbar } from "@/components/providers/connection-snackbar";
 import { ToastProvider } from "@/components/providers/toast-provider";
 import { LoginModal } from "@/components/auth/login-modal";
-import { CommentModal } from "@/components/comments/comment-modal";
 import { ShareModal } from "@/components/share/share-modal";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-sans", display: "swap" });
@@ -37,7 +36,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <QueryProvider>
             {children}
             <LoginModal />
-            <CommentModal />
             <ShareModal />
             <ConnectionSnackbar />
           </QueryProvider>

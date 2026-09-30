@@ -8,7 +8,6 @@ import { useRequireAuth } from "@/hooks/use-require-auth";
 import { formatRelativeTime, profilePath } from "@/lib/content-utils";
 import { AiMagicIcon, Bookmark02Icon, Comment01Icon, FavouriteIcon, Message01Icon, Share08Icon, ThumbsDownIcon } from "@/lib/icons";
 import { cn } from "@/lib/utils";
-import { useCommentModalStore } from "@/stores/comment-modal-store";
 import { useShareModalStore } from "@/stores/share-modal-store";
 import type { Post } from "@/types";
 import type { IconSvgElement } from "@hugeicons/react";
@@ -49,7 +48,7 @@ const ACTION_BG = {
 } as const;
 
 /** Icon-in-a-circle action, matching ReactionButton so the bar reads as one set. */
-function PostAction({
+export function PostAction({
   icon,
   label,
   count,
@@ -101,7 +100,6 @@ export function PostCard({
 }: PostCardProps) {
   const router = useRouter();
   const { requireAuth } = useRequireAuth();
-  const openCommentModal = useCommentModalStore((state) => state.open);
   const openShareModal = useShareModalStore((state) => state.open);
   const { likes, dislikes, react, isPending, isLiked, isDisliked } = usePostReaction(post);
   const profilePic = post.user?.profilePic;
@@ -129,11 +127,12 @@ export function PostCard({
     });
   }
 
+  // Like X: replies live on the post's own page. Reading is open to everyone;
+  // the reply box there asks for sign-in. ?reply focuses it on arrival.
   function openComments(event: React.MouseEvent) {
     stop(event);
-    if (!requireAuth("Sign in to comment on this post.")) return;
     if (guard && !guard()) return;
-    openCommentModal(post);
+    router.push(`${postHref}?reply=1`);
   }
 
   // Mouse users can click anywhere on the row; keyboard users open the post

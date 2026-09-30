@@ -1,62 +1,69 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
-import { AppIcon } from "@/components/ui/icon";
-import { Button } from "@/components/ui/button";
-import { MediaAttachmentGrid } from "@/components/media/media-attachment-grid";
-import { PostCommentComposer } from "@/components/comments/post-comment-composer";
-import { CommentSkeleton } from "@/components/skeletons/card-skeletons";
-import { useInfiniteScroll } from "@/hooks/use-infinite-scroll";
-import { flattenComments, usePostComments } from "@/hooks/use-post-comments";
-import { commentAuthor, commentAuthorProfilePic, profilePath } from "@/lib/content-utils";
-import { normalizeMediaAttachments } from "@/lib/media-utils";
-import { Comment01Icon, Share08Icon } from "@/lib/icons";
-import { useShareModalStore } from "@/stores/share-modal-store";
-import type { ApiRecord, Post } from "@/types";
-import { Card, CardContent } from "@/components/ui/card";
-import { cn } from "@/lib/utils";
 import Image from "next/image";
 import Link from "next/link";
+import { useCallback } from "react";
+import { PostAction } from "@/components/cards/post-card";
+import { MediaAttachmentGrid } from "@/components/media/media-attachment-grid";
+import { Skeleton } from "@/components/ui/skeleton";
+import { useInfiniteScroll } from "@/hooks/use-infinite-scroll";
+import { flattenComments, usePostComments } from "@/hooks/use-post-comments";
+import { commentAuthor, commentAuthorProfilePic, formatRelativeTime, profilePath } from "@/lib/content-utils";
+import { normalizeMediaAttachments } from "@/lib/media-utils";
+import { Share08Icon } from "@/lib/icons";
+import { cn } from "@/lib/utils";
+import { useShareModalStore } from "@/stores/share-modal-store";
+import type { ApiRecord, Post } from "@/types";
 
-type PostCommentSectionProps = {
-  post: Post;
-};
+function commentUser(comment: ApiRecord) {
+  const user = (comment.user ?? comment.createdBy) as ApiRecord | undefined;
+  if (!user || typeof user !== "object") return undefined;
+  return {
+    id: user.id ? String(user.id) : undefined,
+    username: user.username ? String(user.username) : undefined
+  };
+}
 
-export function PostCommentSection({ post }: PostCommentSectionProps) {
+function ReplySkeleton() {
+  return (
+    <div className="flex gap-3 border-b px-4 py-3" aria-hidden>
+      <Skeleton className="size-10 shrink-0 rounded-full" />
+      <div className="flex-1 space-y-2 pt-1">
+        <Skeleton className="h-3.5 w-1/3" />
+        <Skeleton className="h-3.5 w-full" />
+        <Skeleton className="h-3.5 w-2/3" />
+      </div>
+    </div>
+  );
+}
+
+/**
+ * Replies to a post as timeline rows, newest updates streamed in live, more
+ * loaded on scroll. The reply box lives above this, on the post page.
+ */
+export function PostCommentSection({ post }: { post: Post }) {
   const openShareModal = useShareModalStore((state) => state.open);
   const commentsQuery = usePostComments(post.id);
   const comments = flattenComments(commentsQuery.data?.pages);
-  const [activeCommentId, setActiveCommentId] = useState<string | null>(null);
+  const handle = post.handle.startsWith("@") ? post.handle : `@${post.handle}`;
 
   const loadMore = useCallback(() => {
     if (commentsQuery.hasNextPage && !commentsQuery.isFetchingNextPage) {
       void commentsQuery.fetchNextPage();
     }
   }, [commentsQuery]);
-
   const sentinelRef = useInfiniteScroll(loadMore, Boolean(commentsQuery.hasNextPage));
 
-  useEffect(() => {
-    if (window.location.hash !== "#comments") return;
-    const frame = window.requestAnimationFrame(() => {
-      document.getElementById("comments")?.scrollIntoView({ behavior: "smooth", block: "start" });
-    });
-    return () => window.cancelAnimationFrame(frame);
-  }, []);
-
-  const isInitialLoading = commentsQuery.isLoading;
-  const activeComment = comments.find((comment) => String(comment.id) === activeCommentId) ?? null;
-
   function shareComment(comment: ApiRecord) {
-    const message = String(comment.message ?? comment.content ?? "");
     const author = commentAuthor(comment);
+    const user = commentUser(comment);
     openShareModal({
       type: "comment",
       url: `${window.location.origin}/threads/post/${post.id}#comments`,
       author,
-      handle: `@${author.replace(/\s+/g, "").toLowerCase()}`,
+      handle: user?.username ? `@${user.username}` : undefined,
       authorAvatar: commentAuthorProfilePic(comment),
-      message,
+      message: String(comment.message ?? comment.content ?? ""),
       topic: post.topic,
       attachments: normalizeMediaAttachments(comment.attachments),
       quotedPost: {
@@ -69,159 +76,78 @@ export function PostCommentSection({ post }: PostCommentSectionProps) {
     });
   }
 
+  if (commentsQuery.isLoading) {
+    return (
+      <div id="comments" aria-busy>
+        {Array.from({ length: 3 }).map((_, index) => (
+          <ReplySkeleton key={index} />
+        ))}
+      </div>
+    );
+  }
+
   return (
-    <Card id="comments" className="glass-panel scroll-mt-24">
-      <CardContent className="space-y-5 p-4">
-        <div className="flex items-center justify-between gap-3">
-          <div>
-            <h2 className="font-semibold">Comments</h2>
-            <p className="mt-1 text-sm text-muted-foreground">
-              {comments.length.toLocaleString()} loaded
-              {commentsQuery.hasNextPage ? "+" : ""} {comments.length === 1 ? "reply" : "replies"} · live updates
-            </p>
-          </div>
-          {commentsQuery.isFetchingNextPage ? (
-            <span className="text-xs font-medium text-muted-foreground">Loading more...</span>
-          ) : null}
-        </div>
+    <section id="comments" aria-label="Replies" className="scroll-mt-28">
+      {comments.map((comment) => {
+        const id = String(comment.id ?? "");
+        const isOptimistic = id.startsWith("optimistic-");
+        const author = commentAuthor(comment);
+        const avatar = commentAuthorProfilePic(comment);
+        const user = commentUser(comment);
+        const href = profilePath(user, author);
+        const attachments = normalizeMediaAttachments(comment.attachments);
+        const time = formatRelativeTime(comment.createdAt);
+        const text = String(comment.message ?? comment.content ?? "");
 
-        <PostCommentComposer post={post} showQuote={false} />
-
-        {activeComment ? (
-          <div className="space-y-3 rounded-2xl border border-primary/20 bg-primary/5 p-4">
-            <div className="flex items-center justify-between gap-3">
-              <div>
-                <p className="text-sm font-semibold">Comment thread</p>
-                <p className="text-xs text-muted-foreground">{commentAuthor(activeComment)}</p>
+        return (
+          <article key={id} className={cn("flex gap-3 border-b px-4 py-3", isOptimistic && "opacity-60")}>
+            <Link href={href} className="shrink-0 self-start rounded-full" aria-label={`${author}'s profile`}>
+              {avatar ? (
+                <Image src={avatar} alt="" width={40} height={40} className="size-10 rounded-full object-cover" />
+              ) : (
+                <span className="grid size-10 place-items-center rounded-full bg-secondary text-sm font-bold" aria-hidden>
+                  {author.charAt(0).toUpperCase()}
+                </span>
+              )}
+            </Link>
+            <div className="min-w-0 flex-1">
+              <div className="flex min-w-0 items-baseline gap-1 text-[15px] leading-5">
+                <Link href={href} className="truncate font-bold hover:underline">
+                  {author}
+                </Link>
+                {user?.username ? <span className="truncate text-muted-foreground">@{user.username}</span> : null}
+                {isOptimistic ? (
+                  <span className="shrink-0 text-muted-foreground">· Sending…</span>
+                ) : time ? (
+                  <span className="shrink-0 text-muted-foreground">
+                    · <time dateTime={String(comment.createdAt)}>{time}</time>
+                  </span>
+                ) : null}
               </div>
-              <Button variant="ghost" size="sm" onClick={() => setActiveCommentId(null)}>
-                Close
-              </Button>
-            </div>
-            <p className="text-sm leading-6">{String(activeComment.message ?? activeComment.content ?? "")}</p>
-            <MediaAttachmentGrid items={normalizeMediaAttachments(activeComment.attachments)} />
-            <div className="rounded-xl border border-border/70 bg-background/70 p-3">
-              <p className="mb-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">Original post</p>
-              <p className="text-sm font-semibold">{post.author}</p>
-              <p className="mt-1 text-sm text-muted-foreground line-clamp-3">{post.message}</p>
-              {post.attachments?.length ? <MediaAttachmentGrid items={post.attachments} className="mt-3" /> : null}
-            </div>
-          </div>
-        ) : null}
-
-        <div className="space-y-3 border-t border-primary/10 pt-4">
-          {isInitialLoading ? (
-            <>
-              <CommentSkeleton />
-              <CommentSkeleton />
-              <CommentSkeleton />
-            </>
-          ) : (
-            <>
-              {comments.map((comment) => {
-                const isOptimistic = String(comment.id ?? "").startsWith("optimistic-");
-                const attachments = normalizeMediaAttachments(comment.attachments);
-                const isActive = String(comment.id) === activeCommentId;
-                const author = commentAuthor(comment);
-                const profilePic = commentAuthorProfilePic(comment);
-
-                return (
-                  <div
-                    key={String(comment.id)}
-                    role="button"
-                    tabIndex={0}
-                    onClick={() => {
-                      if (isOptimistic) return;
-                      setActiveCommentId(String(comment.id));
-                    }}
-                    onKeyDown={(event) => {
-                      if (event.key === "Enter" || event.key === " ") {
-                        event.preventDefault();
-                        if (!isOptimistic) setActiveCommentId(String(comment.id));
-                      }
-                    }}
-                    className={cn(
-                      "rounded-xl border bg-background/60 p-3 text-left transition-colors",
-                      isOptimistic ? "border-primary/30 opacity-80" : "border-primary/10 hover:border-primary/25 hover:bg-accent/30",
-                      isActive && "border-primary/40 bg-primary/5"
-                    )}
-                  >
-                    <div className="mb-2 flex items-center gap-2">
-                      <Link
-                        href={profilePath(
-                          (() => {
-                            const user = (comment.user ?? comment.createdBy) as ApiRecord | undefined;
-                            if (!user || typeof user !== "object") return undefined;
-                            return {
-                              id: user.id ? String(user.id) : undefined,
-                              username: user.username ? String(user.username) : undefined
-                            };
-                          })(),
-                          author
-                        )}
-                        onClick={(event) => event.stopPropagation()}
-                        className="flex min-w-0 items-center gap-2 hover:opacity-90"
-                      >
-                        {profilePic ? (
-                          <Image src={profilePic} alt={author} width={24} height={24} className="rounded-full object-cover" />
-                        ) : (
-                          <span className="grid h-6 w-6 place-items-center rounded-full bg-primary/15 text-[10px] font-semibold text-primary">
-                            {author.slice(0, 2).toUpperCase()}
-                          </span>
-                        )}
-                        <p className="truncate text-sm font-semibold hover:underline">{author}</p>
-                      </Link>
-                    </div>
-                    {attachments.length ? (
-                      <div onClick={(event) => event.stopPropagation()}>
-                        <MediaAttachmentGrid items={attachments} />
-                      </div>
-                    ) : null}
-                    <p className="text-sm leading-6">{String(comment.message ?? comment.content ?? "")}</p>
-
-                    <div className="mt-2 flex items-center justify-between gap-3">
-                      {/* <p className="text-xs text-muted-foreground">
-                        {commentAuthor(comment)}
-                        {isOptimistic ? " · Sending..." : ""}
-                      </p> */}
-                      {!isOptimistic ? (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="h-7 px-2 text-xs text-muted-foreground"
-                          onClick={(event) => {
-                            event.stopPropagation();
-                            shareComment(comment);
-                          }}
-                        >
-                          <AppIcon icon={Share08Icon} size={14} className="mr-1.5" />
-                          Share
-                        </Button>
-                      ) : null}
-                    </div>
-                  </div>
-                );
-              })}
-
-              {commentsQuery.isFetchingNextPage ? (
-                <>
-                  <CommentSkeleton />
-                  <CommentSkeleton />
-                </>
+              <p className="text-[13px] text-muted-foreground">
+                Replying to <span className="text-primary">{handle}</span>
+              </p>
+              {text.trim() ? <p className="mt-1 whitespace-pre-wrap break-words text-[15px] leading-5">{text}</p> : null}
+              {attachments.length ? <MediaAttachmentGrid items={attachments} className="rounded-2xl border" /> : null}
+              {!isOptimistic ? (
+                <div className="-ml-2 mt-1 flex">
+                  <PostAction icon={Share08Icon} label="Share reply" tone="sky" onClick={() => shareComment(comment)} />
+                </div>
               ) : null}
+            </div>
+          </article>
+        );
+      })}
 
-              <div ref={sentinelRef} className="h-1" aria-hidden />
+      {commentsQuery.isFetchingNextPage ? <ReplySkeleton /> : null}
+      <div ref={sentinelRef} className="h-1" aria-hidden />
 
-              {comments.length === 0 ? (
-                <p className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <AppIcon icon={Comment01Icon} size={16} />
-                  No comments yet. Start the conversation.
-                </p>
-              ) : null}
-            </>
-          )}
+      {comments.length === 0 ? (
+        <div className="px-8 py-12 text-center">
+          <p className="text-[17px] font-bold">No replies yet</p>
+          <p className="mt-1 text-[15px] text-muted-foreground">Be the first to add your voice.</p>
         </div>
-      </CardContent>
-    </Card>
+      ) : null}
+    </section>
   );
 }

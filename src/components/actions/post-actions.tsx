@@ -1,6 +1,7 @@
 "use client";
 
 import { ReactionButton } from "@/components/animations/reaction-button";
+import { PostCommentComposer } from "@/components/comments/post-comment-composer";
 import { PostCommentSection } from "@/components/comments/post-comment-section";
 import { usePostReaction } from "@/hooks/use-post-reaction";
 import { FavouriteIcon, ThumbsDownIcon } from "@/lib/icons";
@@ -40,7 +41,11 @@ export function PostActions({ post }: { post: Post }) {
         />
       </div>
 
-      <PostCommentSection post={post} />
+      {/* The section is just the replies now; the reply box sits above it. */}
+      <div className="overflow-hidden rounded-2xl border">
+        <PostCommentComposer post={post} />
+        <PostCommentSection post={post} />
+      </div>
     </div>
   );
 }
