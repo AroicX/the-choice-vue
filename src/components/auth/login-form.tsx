@@ -8,16 +8,15 @@ import { useMutation } from "@tanstack/react-query";
 import { gooeyToast } from "goey-toast";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
-import { AppIcon } from "@/components/ui/icon";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { ViewIcon, ViewOffIcon } from "@/lib/icons";
+import { AuthDivider, AuthField, GoogleButton, PasswordToggle } from "@/components/auth/auth-field";
+import { AuthHeading } from "@/components/auth/auth-shell";
 import { loginMutation } from "@/services/mutations/auth.mutations";
 import { useAuthStore } from "@/stores/auth-store";
 import { AuthError } from "@/components/auth/auth-error";
 
 const schema = z.object({
-  identifier: z.string().min(3, "Email or phone number is required"),
+  identifier: z.string().trim().min(3, "Enter your email or phone number"),
   password: z.string().min(6, "Password must be at least 6 characters")
 });
 
@@ -29,26 +28,30 @@ type LoginFormProps = {
   onSuccess?: () => void;
   onDismiss?: () => void;
   showLinks?: boolean;
+  /** Replaces the default subtitle, e.g. with why sign-in is needed. */
+  subtitle?: React.ReactNode;
 };
 
-export function LoginForm({ onSuccess, onDismiss, showLinks = true }: LoginFormProps) {
+export function LoginForm({ onSuccess, onDismiss, showLinks = true, subtitle }: LoginFormProps) {
   const router = useRouter();
   const setSession = useAuthStore((state) => state.setSession);
   const [showPassword, setShowPassword] = useState(false);
-  const { register, handleSubmit, formState: { errors } } = useForm<LoginFormValues>({ resolver: zodResolver(schema) });
+  const {
+    register,
+    handleSubmit,
+    formState: { errors }
+  } = useForm<LoginFormValues>({ resolver: zodResolver(schema) });
   const login = useMutation({
     mutationFn: loginMutation,
     onSuccess: ({ token, user }) => {
       setSession({ token, user });
-      gooeyToast.success("Welcome back", { description: "You are signed in to Choice9ja." });
+      gooeyToast.success("Welcome back");
       onSuccess?.();
       if (controlRedirectRoles.has(user.role)) {
         router.replace("/control");
       }
-    },
-    onError: (error) => {
-      gooeyToast.error("Login failed", { description: error instanceof Error ? error.message : "Check your details and try again." });
     }
+    // Failures render inline next to the button; a toast as well was noise.
   });
 
   function onSubmit(values: LoginFormValues) {
@@ -56,65 +59,59 @@ export function LoginForm({ onSuccess, onDismiss, showLinks = true }: LoginFormP
     login.mutate({ password: values.password, ...(isEmail ? { email: values.identifier } : { phoneNo: values.identifier }) });
   }
 
-  function handleNavigateAway() {
-    onDismiss?.();
-  }
-
   return (
     <div>
-      <div className="mb-6">
-        <img src="/legacy/logo.png" alt="Choice9ja" className="size-16 rounded-xl object-contain" />
-        <h2 className="mt-5 text-2xl font-bold">Log in to TheChoice9ja</h2>
-        <p className="mt-2 text-sm text-muted-foreground">Use email or phone number to continue.</p>
-      </div>
-      <form className="space-y-4" onSubmit={handleSubmit(onSubmit)}>
-        <Field label="Email or phone" error={errors.identifier?.message}>
-          <Input {...register("identifier")} placeholder="you@example.com" autoComplete="username" />
-        </Field>
-        <Field label="Password" error={errors.password?.message}>
-          <div className="relative">
-            <Input
-              {...register("password")}
-              type={showPassword ? "text" : "password"}
-              placeholder="••••••••"
-              autoComplete="current-password"
-              className="pr-11"
-            />
-            <button
-              type="button"
-              className="absolute right-2 top-1/2 grid size-8 -translate-y-1/2 place-items-center rounded-md text-muted-foreground transition hover:bg-accent hover:text-foreground"
-              aria-label={showPassword ? "Hide password" : "Show password"}
-              onClick={() => setShowPassword((open) => !open)}
+      <AuthHeading title="Welcome back" subtitle={subtitle ?? "Log in to rate, vote and join the conversation."} />
+
+      <GoogleButton />
+      <AuthDivider />
+
+      <form className="space-y-4" onSubmit={handleSubmit(onSubmit)} noValidate>
+        <AuthField
+          {...register("identifier")}
+          label="Email or phone number"
+          autoComplete="username"
+          inputMode="email"
+          autoCapitalize="none"
+          spellCheck={false}
+          error={errors.identifier?.message}
+        />
+        <AuthField
+          {...register("password")}
+          label="Password"
+          type={showPassword ? "text" : "password"}
+          autoComplete="current-password"
+          error={errors.password?.message}
+          trailing={<PasswordToggle visible={showPassword} onToggle={() => setShowPassword((open) => !open)} />}
+        />
+
+        {showLinks ? (
+          <div className="-mt-1 flex justify-end">
+            <Link
+              href="/forgot-password"
+              onClick={onDismiss}
+              className="rounded text-[13px] font-medium text-muted-foreground hover:text-foreground hover:underline"
             >
-              <AppIcon icon={showPassword ? ViewOffIcon : ViewIcon} size={18} />
-            </button>
+              Forgot password?
+            </Link>
           </div>
-        </Field>
+        ) : null}
+
         {login.error ? <AuthError error={login.error} /> : null}
-        <Button className="w-full" disabled={login.isPending}>
-          {login.isPending ? "Logging in..." : "Continue"}
+
+        <Button className="!mt-6 h-11 w-full rounded-[10px]" disabled={login.isPending}>
+          {login.isPending ? "Logging in…" : "Log in"}
         </Button>
       </form>
+
       {showLinks ? (
-        <div className="mt-5 flex justify-between text-sm">
-          <Link className="text-primary hover:underline" href="/forgot-password" onClick={handleNavigateAway}>
-            Forgot password?
+        <p className="mt-8 text-sm text-muted-foreground">
+          New to Choice9ja?{" "}
+          <Link href="/register" onClick={onDismiss} className="font-medium text-foreground underline-offset-4 hover:underline">
+            Create an account
           </Link>
-          <Link className="text-primary hover:underline" href="/register" onClick={handleNavigateAway}>
-            Create account
-          </Link>
-        </div>
+        </p>
       ) : null}
     </div>
-  );
-}
-
-function Field({ label, error, children }: { label: string; error?: string; children: React.ReactNode }) {
-  return (
-    <label className="block space-y-2 text-sm font-medium">
-      <span>{label}</span>
-      {children}
-      {error ? <p className="text-xs text-destructive">{error}</p> : null}
-    </label>
   );
 }

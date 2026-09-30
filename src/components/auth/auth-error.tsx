@@ -1,6 +1,7 @@
 "use client";
 
 import { ApiClientError } from "@/lib/api-validation";
+import { AuthAlert } from "@/components/auth/auth-field";
 
 /**
  * Renders an auth failure with the detail the API already sent.
@@ -23,15 +24,15 @@ export function AuthError({ error }: { error: unknown }) {
       : [];
 
   return (
-    <div className="space-y-1 text-sm text-destructive" role="alert">
-      <p>{message}</p>
+    <AuthAlert>
+      <p className="font-medium">{message}</p>
       {details.length ? (
-        <ul className="list-disc space-y-0.5 pl-5">
+        <ul className="mt-1 list-disc space-y-0.5 pl-4">
           {details.map((detail) => (
             <li key={detail}>{detail}</li>
           ))}
         </ul>
       ) : null}
-    </div>
+    </AuthAlert>
   );
 }

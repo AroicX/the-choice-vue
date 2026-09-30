@@ -1,19 +1,20 @@
+import { AuthField } from "@/components/auth/auth-field";
+import { AuthHeading, AuthShell } from "@/components/auth/auth-shell";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
 
+// TODO: not wired to the API yet (POST /auth/reset-password); submitting does nothing.
 export default function ResetPasswordPage() {
   return (
-    <main className="grid min-h-screen place-items-center bg-background px-4">
-      <Card className="w-full max-w-md">
-        <CardContent className="space-y-4 p-6">
-          <h1 className="text-2xl font-bold">Choose new password</h1>
-          <Input placeholder="Email" />
-          <Input type="password" placeholder="New password" />
-          <Input type="password" placeholder="Confirm password" />
-          <Button className="w-full">Update password</Button>
-        </CardContent>
-      </Card>
-    </main>
+    <AuthShell>
+      <AuthHeading title="Choose a new password" subtitle="Make it at least 8 characters, and don’t reuse an old one." />
+      <form className="space-y-4">
+        <AuthField name="email" label="Email" type="email" autoComplete="email" />
+        <AuthField name="password" label="New password" type="password" autoComplete="new-password" />
+        <AuthField name="confirmPassword" label="Confirm new password" type="password" autoComplete="new-password" />
+        <Button className="!mt-6 h-11 w-full rounded-[10px]">
+          Update password
+        </Button>
+      </form>
+    </AuthShell>
   );
 }

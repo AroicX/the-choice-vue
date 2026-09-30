@@ -1,18 +1,26 @@
+import { AuthField } from "@/components/auth/auth-field";
+import { AuthHeading, AuthShell } from "@/components/auth/auth-shell";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
 
+// TODO: not wired to the API yet (PATCH /auth/validate-otp); submitting does nothing.
 export default function VerifyOtpPage() {
   return (
-    <main className="grid min-h-screen place-items-center bg-background px-4">
-      <Card className="w-full max-w-md">
-        <CardContent className="space-y-4 p-6">
-          <h1 className="text-2xl font-bold">Verify OTP</h1>
-          <Input placeholder="Reference ID" />
-          <Input placeholder="123456" />
-          <Button className="w-full">Verify</Button>
-        </CardContent>
-      </Card>
-    </main>
+    <AuthShell>
+      <AuthHeading title="Enter your code" subtitle="We sent a 6-digit code to your phone." />
+      <form className="space-y-4">
+        <AuthField name="reference" label="Reference ID" autoCapitalize="none" spellCheck={false} />
+        <AuthField
+          name="otp"
+          label="6-digit code"
+          inputMode="numeric"
+          autoComplete="one-time-code"
+          maxLength={6}
+          className="[&_input]:tracking-[0.3em]"
+        />
+        <Button className="!mt-6 h-11 w-full rounded-[10px]">
+          Verify
+        </Button>
+      </form>
+    </AuthShell>
   );
 }

@@ -8,21 +8,21 @@ import { useMutation } from "@tanstack/react-query";
 import { gooeyToast } from "goey-toast";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
-import { AppIcon } from "@/components/ui/icon";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { ViewIcon, ViewOffIcon } from "@/lib/icons";
+import { AuthDivider, AuthField, FieldSpinner, GoogleButton, PasswordStrength, PasswordToggle } from "@/components/auth/auth-field";
+import { useUsernameAvailability } from "@/hooks/use-username-availability";
+import { AuthHeading } from "@/components/auth/auth-shell";
 import { signupMutation } from "@/services/mutations/auth.mutations";
 import { useAuthStore } from "@/stores/auth-store";
 import { AuthError } from "@/components/auth/auth-error";
 
 const schema = z.object({
-  firstName: z.string().min(1, "First name is required"),
-  lastName: z.string().min(1, "Last name is required"),
-  username: z.string().min(3, "Username must be at least 3 characters"),
-  phoneNo: z.string().min(7, "Enter a valid phone number"),
-  email: z.string().email("Enter a valid email"),
-  password: z.string().min(6, "Password must be at least 6 characters")
+  firstName: z.string().trim().min(1, "Enter your first name"),
+  lastName: z.string().trim().min(1, "Enter your last name"),
+  username: z.string().trim().min(3, "At least 3 characters"),
+  phoneNo: z.string().trim().min(7, "Enter a valid phone number"),
+  email: z.string().trim().email("Enter a valid email"),
+  password: z.string().min(6, "At least 6 characters")
 });
 
 type RegisterFormValues = z.infer<typeof schema>;
@@ -34,103 +34,89 @@ export function RegisterForm() {
   const {
     register,
     handleSubmit,
+    watch,
     formState: { errors }
   } = useForm<RegisterFormValues>({ resolver: zodResolver(schema) });
+  const password = watch("password") ?? "";
+  const username = (watch("username") ?? "").trim().replace(/^@+/, "");
+  const usernameStatus = useUsernameAvailability(username);
+  const usernameTaken = usernameStatus === "taken";
 
   const signup = useMutation({
     mutationFn: signupMutation,
     onSuccess: ({ token, user }) => {
       setSession({ token, user });
-      gooeyToast.success("Account created", { description: "Welcome to TheChoice9ja." });
+      gooeyToast.success("Welcome to Choice9ja");
       router.replace("/home");
-    },
-    onError: (error) => {
-      gooeyToast.error("Signup failed", {
-        description: error instanceof Error ? error.message : "Check your details and try again."
-      });
     }
+    // Failures render inline next to the button.
   });
-
-  function onSubmit(values: RegisterFormValues) {
-    signup.mutate(values);
-  }
 
   return (
     <div>
-      <div className="mb-8">
-        <img src="/legacy/logo.png" alt="Choice9ja" className="size-14 rounded-xl object-contain sm:size-16" />
-        <h1 className="mt-5 text-2xl font-bold tracking-tight text-foreground sm:text-3xl">Create account</h1>
-        <p className="mt-2 max-w-md text-sm leading-relaxed text-muted-foreground">
-          Sign up to report issues, vote in polls, and follow civic performance.
-        </p>
-      </div>
+      <AuthHeading title="Create your account" subtitle="Rate leaders, report issues and vote in polls." />
 
-      <form className="space-y-5" onSubmit={handleSubmit(onSubmit)}>
-        <div className="grid gap-5 sm:grid-cols-2">
-          <Field label="First name" error={errors.firstName?.message}>
-            <Input {...register("firstName")} placeholder="Ada" autoComplete="given-name" />
-          </Field>
-          <Field label="Last name" error={errors.lastName?.message}>
-            <Input {...register("lastName")} placeholder="Okafor" autoComplete="family-name" />
-          </Field>
+      <GoogleButton />
+      <AuthDivider />
+
+      <form
+        className="space-y-4"
+        onSubmit={handleSubmit((values) => {
+          // The API would reject it anyway; the message is already on screen.
+          if (usernameTaken) return;
+          signup.mutate(values);
+        })}
+        noValidate
+      >
+        <div className="grid gap-4 sm:grid-cols-2">
+          <AuthField {...register("firstName")} label="First name" autoComplete="given-name" error={errors.firstName?.message} />
+          <AuthField {...register("lastName")} label="Last name" autoComplete="family-name" error={errors.lastName?.message} />
         </div>
-
-        <Field label="Username" error={errors.username?.message}>
-          <Input {...register("username")} placeholder="adaokafor" autoComplete="username" />
-        </Field>
-
-        <div className="grid gap-5 sm:grid-cols-2">
-          <Field label="Phone number" error={errors.phoneNo?.message}>
-            <Input {...register("phoneNo")} type="tel" placeholder="+234 800 000 0000" autoComplete="tel" />
-          </Field>
-          <Field label="Email" error={errors.email?.message}>
-            <Input {...register("email")} type="email" placeholder="you@example.com" autoComplete="email" />
-          </Field>
+        <AuthField
+          {...register("username")}
+          label="Username"
+          autoComplete="username"
+          autoCapitalize="none"
+          spellCheck={false}
+          hint="Your public @handle."
+          error={errors.username?.message ?? (usernameTaken ? `@${username} is taken` : undefined)}
+          success={usernameStatus === "available" ? `@${username} is available` : undefined}
+          trailing={usernameStatus === "checking" ? <FieldSpinner label="Checking username" /> : undefined}
+        />
+        <AuthField {...register("email")} label="Email" type="email" autoComplete="email" error={errors.email?.message} />
+        <AuthField
+          {...register("phoneNo")}
+          label="Phone number"
+          type="tel"
+          autoComplete="tel"
+          inputMode="tel"
+          error={errors.phoneNo?.message}
+        />
+        <div>
+          <AuthField
+            {...register("password")}
+            label="Password"
+            type={showPassword ? "text" : "password"}
+            autoComplete="new-password"
+            error={errors.password?.message}
+            trailing={<PasswordToggle visible={showPassword} onToggle={() => setShowPassword((open) => !open)} />}
+          />
+          <PasswordStrength value={password} />
         </div>
-
-        <Field label="Password" error={errors.password?.message}>
-          <div className="relative">
-            <Input
-              {...register("password")}
-              type={showPassword ? "text" : "password"}
-              placeholder="••••••••"
-              autoComplete="new-password"
-              className="pr-11"
-            />
-            <button
-              type="button"
-              className="absolute right-2 top-1/2 grid size-8 -translate-y-1/2 place-items-center rounded-md text-muted-foreground transition hover:bg-accent hover:text-foreground"
-              aria-label={showPassword ? "Hide password" : "Show password"}
-              onClick={() => setShowPassword((open) => !open)}
-            >
-              <AppIcon icon={showPassword ? ViewOffIcon : ViewIcon} size={18} />
-            </button>
-          </div>
-        </Field>
 
         {signup.error ? <AuthError error={signup.error} /> : null}
 
-        <Button className="mt-2 h-11 w-full text-sm font-semibold" disabled={signup.isPending}>
-          {signup.isPending ? "Creating account..." : "Create account"}
+        <Button className="!mt-6 h-11 w-full rounded-[10px]" disabled={signup.isPending}>
+          {signup.isPending ? "Creating account…" : "Create account"}
         </Button>
       </form>
 
-      <p className="mt-8 border-t border-border pt-6 text-center text-sm text-muted-foreground">
+      <p className="mt-8 text-sm text-muted-foreground">
         Already have an account?{" "}
-        <Link className="font-medium text-primary hover:underline" href="/login">
+        <Link href="/login" className="font-medium text-foreground underline-offset-4 hover:underline">
           Log in
         </Link>
       </p>
     </div>
-  );
-}
-
-function Field({ label, error, children }: { label: string; error?: string; children: React.ReactNode }) {
-  return (
-    <label className="block space-y-2 text-sm font-medium text-foreground">
-      <span>{label}</span>
-      {children}
-      {error ? <p className="text-xs text-destructive">{error}</p> : null}
-    </label>
   );
 }
