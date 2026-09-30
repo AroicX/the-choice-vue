@@ -1,4 +1,4 @@
-import { crudService } from "@/services/admin-service-utils";
+import { crudService, listAllPages } from "@/services/admin-service-utils";
 import { apiClient } from "@/lib/api-client";
 import { endpoints } from "@/services/client/endpoints";
 
@@ -6,7 +6,17 @@ export const factChecksService = {
   ...crudService("/fact-checks"),
   list: <T = unknown>(params?: Record<string, string | number | boolean | undefined | null>) =>
     apiClient.get<T[]>(endpoints.factChecks.list, params),
-  detail: <T = unknown>(id: string) => apiClient.get<T>(endpoints.factChecks.detail(id))
+  detail: <T = unknown>(id: string) => apiClient.get<T>(endpoints.factChecks.detail(id)),
+  /** Every fact check, fetched page by page, for the admin screen. */
+  listAll: <T = unknown>() => listAllPages<T>((params) => apiClient.get<T[]>(endpoints.factChecks.list, params))
+};
+
+const promises = crudService("/promises");
+
+export const promisesService = {
+  ...promises,
+  /** Every campaign promise, fetched page by page, for the admin screen. */
+  listAll: <T = unknown>() => listAllPages<T>((params) => promises.list(params))
 };
 
 export const communitiesService = {

@@ -49,7 +49,8 @@ function politicianSelectOptions(payload: unknown): AdminFieldOption[] {
       const label = meta ? `${name || id} (${meta})` : name || id;
       return { value: id, label };
     })
-    .filter((politician) => politician.value);
+    .filter((politician) => politician.value)
+    .sort((a, b) => a.label.localeCompare(b.label));
 }
 
 export function SearchInput({ value, onChange, placeholder = "Search..." }: { value: string; onChange: (value: string) => void; placeholder?: string }) {
@@ -456,7 +457,7 @@ export function ResourceModal({
   });
   const politiciansQuery = useQuery({
     queryKey: ["control", "politicians", "select-options"],
-    queryFn: () => politiciansService.list(),
+    queryFn: () => politiciansService.listAll(),
     enabled: open && needsPoliticians
   });
   const resolvedFields = useMemo(() => {

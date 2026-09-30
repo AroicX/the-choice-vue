@@ -137,6 +137,18 @@ export type Scorecard = {
   totalVotes: number;
   /** False when there are no votes - show "Not yet rated" rather than 0%. */
   rated: boolean;
+  /**
+   * How many inputs sit behind each metric. 0 means nothing has been entered:
+   * the metric's value is a placeholder and must read "No data", not 0%.
+   */
+  coverage: ScorecardCoverage;
+};
+
+export type ScorecardCoverage = {
+  votes: number;
+  promises: number;
+  issues: number;
+  factChecks: number;
 };
 
 export type FactCheck = {

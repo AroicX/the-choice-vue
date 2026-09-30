@@ -261,6 +261,7 @@ export function DetailView({ title, endpoint, action = "none" }: { title: string
                 <h2 className="font-semibold">Cast your vote</h2>
                 <p className="text-sm text-muted-foreground">Select an option, then confirm with Vote.</p>
                 <OptionVotePanel
+                  onBeforeSelect={() => requireAuth("Sign in to cast your vote.")}
                   options={voteOptions}
                   totalVotes={poll?.votes ?? election?.votes}
                   hasVoted={hasVoted}

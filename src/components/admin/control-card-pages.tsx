@@ -28,6 +28,7 @@ import {
   postsMeta,
   ratingsMeta,
   withNumericPartyId,
+  ratingUpdatePayload,
   type OptionPayload
 } from "@/components/admin/admin-record-mappers";
 import type { AdminField, AdminPageMeta, AdminRecord } from "@/lib/admin-control-data";
@@ -782,6 +783,7 @@ function CardGridResourcePage({
   updateFn,
   deleteFn,
   payload = omitEmpty,
+  updatePayload,
   optionVariant
 }: {
   meta: AdminPageMeta;
@@ -794,6 +796,8 @@ function CardGridResourcePage({
   updateFn?: (id: string, payload: Raw) => Promise<unknown>;
   deleteFn?: (id: string) => Promise<unknown>;
   payload?: (payload: Record<string, string | boolean>) => Raw;
+  /** Edit-only transform, for when an emptied field must be sent (e.g. to unlink). Defaults to `payload`. */
+  updatePayload?: (payload: Record<string, string | boolean>, record: AdminRecord) => Raw;
   optionVariant?: "poll" | "election";
 }) {
   const queryClient = useQueryClient();
@@ -972,7 +976,10 @@ function CardGridResourcePage({
               clearEditErrors();
               setEditingRecord(null);
             }}
-            onSubmit={(formPayload) => editingRecord ? updateMutation.mutate({ id: editingRecord.id, body: payload(formPayload) }) : undefined}
+            onSubmit={(formPayload) => editingRecord ? updateMutation.mutate({
+                    id: editingRecord.id,
+                    body: updatePayload ? updatePayload(formPayload, editingRecord) : payload(formPayload)
+                  }) : undefined}
           />
         </>
       )}
@@ -1018,12 +1025,13 @@ export function ControlRatingsCardsPage() {
     <CardGridResourcePage
       meta={ratingsMeta}
       queryKey={["control", "ratings"]}
-      queryFn={() => ratingsService.list<Raw>({ take: 50 })}
+      queryFn={() => ratingsService.listAll<Raw>()}
       mapRecord={mapRating}
       createFn={(body) => ratingsService.create(body)}
       updateFn={(_, body) => ratingsService.update(body)}
       deleteFn={(id) => ratingsService.remove(id)}
       payload={withNumericPartyId}
+      updatePayload={(formPayload, record) => ratingUpdatePayload(formPayload, record.id)}
     />
   );
 }
@@ -1047,7 +1055,7 @@ export function ControlPoliticiansCardsPage() {
     <CardGridResourcePage
       meta={politiciansMeta}
       queryKey={["control", "politicians"]}
-      queryFn={() => politiciansService.list<Raw>()}
+      queryFn={() => politiciansService.listAll<Raw>()}
       mapRecord={mapPolitician}
       createFn={(body) => politiciansService.create(body)}
       updateFn={(id, body) => politiciansService.update(id, body)}

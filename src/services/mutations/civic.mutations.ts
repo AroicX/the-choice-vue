@@ -24,7 +24,3 @@ export async function voteRatingMutation(input: {
   return response.data;
 }
 
-export async function upvoteIssueMutation(issueId: string) {
-  const response = await api.post(endpoints.issues.upvote(issueId));
-  return response.data;
-}

@@ -2,6 +2,7 @@ export const endpoints = {
   auth: {
     login: "/auth/login",
     signup: "/auth/signup",
+    usernameAvailable: "/auth/username-available",
     forgotPassword: "/auth/forgot-password",
     validateOtp: "/auth/validate-otp",
     resetPassword: "/auth/reset-password"
@@ -50,7 +51,6 @@ export const endpoints = {
   },
   discussions: {
     list: "/discussions",
-    trending: "/discussions/trending",
     detail: (id: string) => `/discussions/${id}`,
     create: "/discussions/create",
     update: (id: string) => `/discussions/update/${id}`,
@@ -209,9 +209,9 @@ export const endpoints = {
     summarize: "/ai/summarize",
     sentiment: "/ai/sentiment",
     moderate: "/ai/moderate",
-    promises: "/ai/extract-promises",
+    promises: "/ai/promises/extract",
     translate: "/ai/translate",
-    explain: "/ai/explain"
+    explain: "/ai/explain-simple"
   },
   countries: {
     list: "/countries",
@@ -222,8 +222,6 @@ export const endpoints = {
     user: (id: string) => `/auth/users/${id}`,
     updateUser: (id: string) => `/auth/users/${id}`,
     suspendUser: (id: string) => `/auth/users/suspend/${id}`,
-    reports: "/reports",
-    moderation: "/moderation",
     analytics: "/analytics"
   }
 } as const;

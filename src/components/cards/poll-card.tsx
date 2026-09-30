@@ -44,6 +44,7 @@ export function PollCard({ poll }: { poll: Poll }) {
       </CardHeader>
       <CardContent>
         <OptionVotePanel
+          onBeforeSelect={() => requireAuth("Sign in to cast your vote.")}
           options={poll.options}
           totalVotes={poll.votes}
           hasVoted={hasVoted}

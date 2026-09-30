@@ -86,6 +86,7 @@ export function ElectionCard({ election, compact = false }: { election: Election
 
         {expanded ? (
           <OptionVotePanel
+            onBeforeSelect={() => requireAuth("Sign in to cast your vote.")}
             options={election.options}
             totalVotes={election.votes}
             hasVoted={hasVoted || !isLive}

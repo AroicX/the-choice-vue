@@ -104,7 +104,9 @@ export function AdminApiResourcePage({
   const [query, setQuery] = useState("");
   const [page, setPage] = useState(1);
   const [statusFilter, setStatusFilter] = useState("");
-  const [dateRange, setDateRange] = useState("30");
+  // "all" by default: pages without a visible date filter were silently hiding
+  // every record older than 30 days.
+  const [dateRange, setDateRange] = useState("all");
   const [drawerRecord, setDrawerRecord] = useState<AdminRecord | null>(null);
   const [activeRecord, setActiveRecord] = useState<AdminRecord | null>(null);
   const [createOpen, setCreateOpen] = useState(false);

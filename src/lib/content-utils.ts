@@ -98,9 +98,14 @@ export function formatRelativeTime(value: unknown) {
   if (hours < 24) return `${hours}h`;
   const days = Math.round(hours / 24);
   if (days < 7) return `${days}d`;
-  const weeks = Math.round(days / 7);
-  if (weeks < 5) return `${weeks}w`;
-  return formatDate(value);
+  // Older than a week reads as a date, X-style: "Aug 25", or "Aug 25, 2025"
+  // outside the current year.
+  const sameYear = date.getFullYear() === new Date().getFullYear();
+  return date.toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    ...(sameYear ? {} : { year: "numeric" })
+  });
 }
 
 export function resolveUserReaction(raw: ApiRecord, userId?: string): Post["userReaction"] {
@@ -223,7 +228,18 @@ export function normalizeScorecard(raw: ApiRecord): Scorecard {
     transparencyScore: Number(raw.transparencyScore ?? 0),
     totalVotes: Number(raw.totalVotes ?? 0),
     // The API sends `rated`; fall back to the vote count for older responses.
-    rated: Boolean(raw.rated ?? Number(raw.totalVotes ?? 0) > 0)
+    rated: Boolean(raw.rated ?? Number(raw.totalVotes ?? 0) > 0),
+    coverage: normalizeCoverage(raw)
+  };
+}
+
+function normalizeCoverage(raw: ApiRecord): Scorecard["coverage"] {
+  const coverage = (raw.coverage && typeof raw.coverage === "object" ? raw.coverage : {}) as ApiRecord;
+  return {
+    votes: Number(coverage.votes ?? raw.totalVotes ?? 0),
+    promises: Number(coverage.promises ?? 0),
+    issues: Number(coverage.issues ?? 0),
+    factChecks: Number(coverage.factChecks ?? 0)
   };
 }
 

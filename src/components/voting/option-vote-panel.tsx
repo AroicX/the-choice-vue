@@ -15,6 +15,11 @@ type OptionVotePanelProps = {
   hasVoted?: boolean;
   initialSelectedKey?: string | null;
   onVote: (optionKey: string) => void;
+  /**
+   * Runs before an option is selected; return false to block the selection.
+   * Used to ask for sign-in up front instead of after the user has chosen.
+   */
+  onBeforeSelect?: () => boolean;
   emptyMessage?: string;
 };
 
@@ -27,6 +32,7 @@ export function OptionVotePanel({
   hasVoted = false,
   initialSelectedKey = null,
   onVote,
+  onBeforeSelect,
   emptyMessage = "No options available."
 }: OptionVotePanelProps) {
   const [selectedKey, setSelectedKey] = useState<string | null>(initialSelectedKey);
@@ -50,6 +56,7 @@ export function OptionVotePanel({
               disabled={!canVote}
               onClick={() => {
                 if (!canVote) return;
+                if (onBeforeSelect && !onBeforeSelect()) return;
                 setSelectedKey((current) => (current === option.key ? null : option.key));
               }}
               className={cn(

@@ -9,7 +9,7 @@ export default function ControlFactChecksPage() {
     <AdminApiResourcePage
       meta={factChecksMeta}
       queryKey={["control", "fact-checks"]}
-      queryFn={() => factChecksService.list()}
+      queryFn={() => factChecksService.listAll()}
       mapRecord={mapFactCheck}
       createFn={(payload) => factChecksService.create(payload)}
       updateFn={(id, payload) => factChecksService.update(id, payload)}

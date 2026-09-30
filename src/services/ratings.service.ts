@@ -1,9 +1,11 @@
 import { apiClient } from "@/lib/api-client";
 import { endpoints } from "@/services/client/endpoints";
-import type { AdminListParams } from "@/services/admin-service-utils";
+import { listAllPages, type AdminListParams } from "@/services/admin-service-utils";
 
 export const ratingsService = {
   list: <T = unknown>(params?: AdminListParams) => apiClient.get<T[]>(endpoints.ratings.list, params),
+  /** Every candidate, fetched page by page, for the admin screen. */
+  listAll: <T = unknown>() => listAllPages<T>((params) => apiClient.get<T[]>(endpoints.ratings.list, params)),
   categories: <T = unknown>() => apiClient.get<T[]>(endpoints.ratings.categories),
   sdgCriteria: <T = unknown>(candidate: string) => apiClient.get<T[]>(endpoints.ratings.sdgCriteria(candidate)),
   create: <T = unknown>(payload: unknown) => apiClient.post<T>(endpoints.ratings.create, payload),

@@ -129,6 +129,7 @@ export function ElectionDetailView({ electionId }: { electionId: string }) {
               </div>
 
               <OptionVotePanel
+                onBeforeSelect={() => requireAuth("Sign in to cast your vote.")}
                 options={election.options}
                 totalVotes={election.votes}
                 hasVoted={hasVoted || !isLive}

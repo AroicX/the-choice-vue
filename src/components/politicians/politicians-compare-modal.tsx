@@ -24,13 +24,16 @@ type CompareMetric = {
   b: number;
   delta: number;
   leader: string;
+  // False when nothing has been entered for this side: its 0 is a placeholder.
+  aHasData?: boolean;
+  bHasData?: boolean;
 };
 
 type CompareResult = {
   politicianA: { politician: ApiRecord; scorecard: ApiRecord };
   politicianB: { politician: ApiRecord; scorecard: ApiRecord };
   metrics: CompareMetric[];
-  summary: { aWins: number; bWins: number; ties: number };
+  summary: { aWins: number; bWins: number; ties: number; noData?: number };
 };
 
 type PoliticiansCompareModalProps = {
@@ -206,7 +209,7 @@ function CompareResults({
   left: Politician;
   right: Politician;
   metrics: CompareMetric[];
-  summary: { aWins: number; bWins: number; ties: number };
+  summary: { aWins: number; bWins: number; ties: number; noData?: number };
   cardRef: React.Ref<HTMLDivElement>;
 }) {
   return (
@@ -252,6 +255,7 @@ function CompareResults({
 
       <p className="mt-4 text-sm text-slate-600">
         {left.name} leads in {summary.aWins} · {right.name} leads in {summary.bWins} · {summary.ties} ties
+        {summary.noData ? ` · ${summary.noData} not yet measurable` : ""}
       </p>
 
       <div className="mt-4 space-y-3">
@@ -260,20 +264,21 @@ function CompareResults({
             <div className="mb-2 flex items-center justify-between gap-3 text-sm">
               <span className="font-medium">{metric.label}</span>
               <span className="text-slate-500">
-                {metric.a.toFixed(1)}% vs {metric.b.toFixed(1)}%
+                {metric.aHasData === false ? "No data" : `${metric.a.toFixed(1)}%`} vs{" "}
+                {metric.bHasData === false ? "No data" : `${metric.b.toFixed(1)}%`}
               </span>
             </div>
             <div className="grid grid-cols-2 gap-2">
               <div className="h-2.5 overflow-hidden rounded-full bg-slate-100">
                 <div
                   className={cn("h-full rounded-full", metric.leader === "a" ? "bg-emerald-600" : "bg-emerald-600/40")}
-                  style={{ width: `${Math.max(0, Math.min(100, metric.a))}%` }}
+                  style={{ width: `${metric.aHasData === false ? 0 : Math.max(0, Math.min(100, metric.a))}%` }}
                 />
               </div>
               <div className="h-2.5 overflow-hidden rounded-full bg-slate-100">
                 <div
                   className={cn("h-full rounded-full", metric.leader === "b" ? "bg-sky-500" : "bg-sky-500/40")}
-                  style={{ width: `${Math.max(0, Math.min(100, metric.b))}%` }}
+                  style={{ width: `${metric.bHasData === false ? 0 : Math.max(0, Math.min(100, metric.b))}%` }}
                 />
               </div>
             </div>

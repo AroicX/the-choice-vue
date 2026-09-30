@@ -15,9 +15,9 @@ import { cn } from "@/lib/utils";
 import { api } from "@/services/client/api";
 import { endpoints } from "@/services/client/endpoints";
 import { politiciansService } from "@/services/politicians.service";
-import type { ApiRecord, Politician, Scorecard } from "@/types";
+import type { ApiRecord, Politician, Scorecard, ScorecardCoverage } from "@/types";
 
-type ScoreMetricKey = Exclude<keyof Scorecard, "rated" | "totalVotes">;
+type ScoreMetricKey = Exclude<keyof Scorecard, "rated" | "totalVotes" | "coverage">;
 
 /** Derived from public votes; meaningless (and misleading) with none. */
 const VOTE_BACKED_METRICS: ScoreMetricKey[] = [
@@ -26,23 +26,29 @@ const VOTE_BACKED_METRICS: ScoreMetricKey[] = [
   "publicSentiment"
 ];
 
-const SCORE_METRICS: Array<{ key: ScoreMetricKey; label: string }> = [
-  { key: "approvalRating", label: "Approval" },
-  { key: "performanceScore", label: "Performance" },
-  { key: "promiseDeliveryRate", label: "Promise delivery" },
-  { key: "publicSentiment", label: "Public sentiment" },
-  { key: "issueResponseRate", label: "Issue response" },
-  { key: "factCheckScore", label: "Fact-check" },
-  { key: "transparencyScore", label: "Transparency" }
+// `source` is the coverage count behind the metric; with 0 inputs its value
+// is a placeholder, so it reads "No data" instead of a confident 0%.
+const SCORE_METRICS: Array<{ key: ScoreMetricKey; label: string; source: keyof ScorecardCoverage | null }> = [
+  { key: "approvalRating", label: "Approval", source: "votes" },
+  { key: "performanceScore", label: "Performance", source: "votes" },
+  { key: "promiseDeliveryRate", label: "Promise delivery", source: "promises" },
+  { key: "publicSentiment", label: "Public sentiment", source: "votes" },
+  { key: "issueResponseRate", label: "Issue response", source: "issues" },
+  { key: "factCheckScore", label: "Fact-check", source: "factChecks" },
+  { key: "transparencyScore", label: "Transparency", source: null }
 ];
 
-function StatBar({ label, value }: { label: string; value: number }) {
-  const safe = Math.max(0, Math.min(100, Number(value) || 0));
+function StatBar({ label, value, noData = false }: { label: string; value: number; noData?: boolean }) {
+  const safe = noData ? 0 : Math.max(0, Math.min(100, Number(value) || 0));
   return (
     <div>
       <div className="mb-1.5 flex items-center justify-between gap-3 text-sm">
         <span className="text-muted-foreground">{label}</span>
-        <span className="font-semibold">{safe.toFixed(safe % 1 ? 1 : 0)}%</span>
+        {noData ? (
+          <span className="font-medium text-muted-foreground">No data</span>
+        ) : (
+          <span className="font-semibold">{safe.toFixed(safe % 1 ? 1 : 0)}%</span>
+        )}
       </div>
       <div className="h-2.5 overflow-hidden rounded-full bg-muted">
         <div className="h-full rounded-full bg-gradient-to-r from-primary to-emerald-400" style={{ width: `${safe}%` }} />
@@ -279,7 +285,12 @@ export function PoliticianDetailView({ politicianId }: { politicianId: string })
                   {SCORE_METRICS.filter(
                     (metric) => scorecard.rated || !VOTE_BACKED_METRICS.includes(metric.key)
                   ).map((metric) => (
-                    <StatBar key={metric.key} label={metric.label} value={scorecard[metric.key]} />
+                    <StatBar
+                      key={metric.key}
+                      label={metric.label}
+                      value={scorecard[metric.key]}
+                      noData={metric.source ? scorecard.coverage[metric.source] === 0 : false}
+                    />
                   ))}
                 </div>
               </CardContent>
@@ -383,8 +394,17 @@ function ComparePanel({
 }: {
   left: Politician;
   right: Politician;
-  metrics: Array<{ key: string; label: string; a: number; b: number; delta: number; leader: string }>;
-  summary: { aWins: number; bWins: number; ties: number };
+  metrics: Array<{
+    key: string;
+    label: string;
+    a: number;
+    b: number;
+    delta: number;
+    leader: string;
+    aHasData?: boolean;
+    bHasData?: boolean;
+  }>;
+  summary: { aWins: number; bWins: number; ties: number; noData?: number };
 }) {
   return (
     <div className="space-y-4">
@@ -400,6 +420,7 @@ function ComparePanel({
 
       <p className="text-sm text-muted-foreground">
         {left.name} leads in {summary.aWins} metrics · {right.name} leads in {summary.bWins} · {summary.ties} ties
+        {summary.noData ? ` · ${summary.noData} not yet measurable` : ""}
       </p>
 
       <div className="space-y-3">
@@ -408,20 +429,21 @@ function ComparePanel({
             <div className="mb-2 flex items-center justify-between gap-3 text-sm">
               <span className="font-medium">{metric.label}</span>
               <span className="text-muted-foreground">
-                {metric.a.toFixed(1)}% vs {metric.b.toFixed(1)}%
+                {metric.aHasData === false ? "No data" : `${metric.a.toFixed(1)}%`} vs{" "}
+                {metric.bHasData === false ? "No data" : `${metric.b.toFixed(1)}%`}
               </span>
             </div>
             <div className="grid grid-cols-2 gap-2">
               <div className="h-2.5 overflow-hidden rounded-full bg-muted">
                 <div
                   className={cn("h-full rounded-full", metric.leader === "a" ? "bg-primary" : "bg-primary/50")}
-                  style={{ width: `${Math.max(0, Math.min(100, metric.a))}%` }}
+                  style={{ width: `${metric.aHasData === false ? 0 : Math.max(0, Math.min(100, metric.a))}%` }}
                 />
               </div>
               <div className="h-2.5 overflow-hidden rounded-full bg-muted">
                 <div
                   className={cn("h-full rounded-full", metric.leader === "b" ? "bg-emerald-500" : "bg-emerald-500/50")}
-                  style={{ width: `${Math.max(0, Math.min(100, metric.b))}%` }}
+                  style={{ width: `${metric.bHasData === false ? 0 : Math.max(0, Math.min(100, metric.b))}%` }}
                 />
               </div>
             </div>

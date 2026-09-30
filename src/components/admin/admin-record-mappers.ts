@@ -304,13 +304,15 @@ export const ratingsMeta: AdminPageMeta = {
     { key: "position", label: "Position" },
     { key: "constituency", label: "Constituency" },
     { key: "state", label: "State" },
-    { key: "education", label: "Education" }
+    // Votes only reach a politician's scorecard through this link.
+    { key: "linkedPolitician", label: "Linked politician" }
   ],
   rowActions: ["View Summary", "Edit", "Delete"],
   createFields: [
     { name: "name", label: "Name" },
     { name: "candidate", label: "Candidate type", type: "select", options: ["PRESIDENCY", "GOVERNOR", "SENATOR", "HOUSE"] },
     { name: "partyId", label: "Party", type: "select", optionsSource: "parties" },
+    { name: "politicianId", label: "Linked politician", type: "select", optionsSource: "politicians" },
     { name: "position", label: "Position" },
     { name: "constituency", label: "Constituency" },
     { name: "age", label: "Age" },
@@ -319,9 +321,13 @@ export const ratingsMeta: AdminPageMeta = {
     { name: "image", label: "Candidate image", type: "file" },
     // { name: "state", label: "State", type: "select", options: states }
   ],
+  // The candidate being edited is identified by the record itself; this used
+  // to be a blank "Candidate ID" text box, and leaving it blank edited the
+  // wrong candidate.
   editFields: [
-    { name: "candidate_id", label: "Candidate ID" },
     { name: "name", label: "Name" },
+    { name: "partyId", label: "Party", type: "select", optionsSource: "parties" },
+    { name: "politicianId", label: "Linked politician", type: "select", optionsSource: "politicians" },
     { name: "position", label: "Position" },
     { name: "constituency", label: "Constituency" },
     { name: "age", label: "Age" },
@@ -343,7 +349,11 @@ export function mapRating(raw: Raw): AdminRecord {
     education: String(raw.education ?? "-"),
     profession: String(raw.profession ?? "-"),
     image: String(raw.image ?? ""),
-    partyId
+    partyId,
+    // Pre-fills the edit form's politician select.
+    politicianId: String(raw.politicianId ?? ""),
+    // Unlinked candidates collect votes that count toward nobody's score.
+    linkedPolitician: nestedValue(raw, "politician", ["name"], raw.politicianId ? String(raw.politicianId) : "Not linked")
   };
   return recordFrom(raw, String(values.name), values, "active", String(values.position));
 }
@@ -586,6 +596,83 @@ export function mapFactCheck(raw: Raw): AdminRecord {
   return recordFrom(raw, String(values.claim), values, String(values.verdict).toLowerCase());
 }
 
+const promiseStatuses = ["NOT_STARTED", "IN_PROGRESS", "COMPLETED", "BROKEN", "NO_EVIDENCE"];
+
+const promiseFields: AdminPageMeta["createFields"] = [
+  { name: "politicianId", label: "Politician", type: "select", optionsSource: "politicians" },
+  { name: "title", label: "Promise" },
+  { name: "description", label: "Description", type: "textarea" },
+  { name: "category", label: "Category", placeholder: "e.g. Infrastructure" },
+  { name: "status", label: "Status", type: "select", options: promiseStatuses },
+  { name: "evidenceUrls", label: "Evidence links (one per line)", type: "textarea", placeholder: "https://example.com/report" },
+  { name: "evidenceNotes", label: "Evidence notes", type: "textarea" }
+];
+
+export const promisesMeta: AdminPageMeta = {
+  title: "Campaign Promises",
+  description: "Record what politicians promised and track delivery. Status drives Promise Delivery; evidence counts toward Transparency.",
+  primaryAction: "Add Promise",
+  filters: ["Status"],
+  columns: [
+    { key: "title", label: "Promise" },
+    { key: "politician", label: "Politician" },
+    { key: "category", label: "Category" },
+    { key: "status", label: "Status" },
+    { key: "evidence", label: "Evidence" },
+    { key: "updatedAt", label: "Updated" }
+  ],
+  rowActions: ["View", "Edit", "Delete"],
+  createFields: promiseFields,
+  editFields: promiseFields,
+  emptyTitle: "No promises yet",
+  emptyDescription: "Add a politician's campaign promises to start tracking delivery."
+};
+
+function promiseEvidence(raw: Raw) {
+  const evidence = raw.evidence && typeof raw.evidence === "object" ? raw.evidence as Raw : {};
+  const urls = Array.isArray(evidence.urls) ? evidence.urls.filter((url): url is string => typeof url === "string") : [];
+  const notes = typeof evidence.notes === "string" ? evidence.notes : "";
+  return { urls, notes };
+}
+
+export function mapPromise(raw: Raw): AdminRecord {
+  const { urls, notes } = promiseEvidence(raw);
+  const values = {
+    title: String(raw.title ?? "-"),
+    politician: nestedValue(raw, "politician", ["name"], String(raw.politicianId ?? "-")),
+    category: String(raw.category ?? "-"),
+    status: String(raw.status ?? "NOT_STARTED"),
+    evidence: urls.length ? `${urls.length} link${urls.length === 1 ? "" : "s"}` : notes ? "Notes only" : "None",
+    updatedAt: dateOf({ createdAt: raw.updatedAt ?? raw.createdAt }),
+    // Pre-fill the edit form.
+    politicianId: String(raw.politicianId ?? ""),
+    description: String(raw.description ?? ""),
+    evidenceUrls: urls.join("\n"),
+    evidenceNotes: notes
+  };
+  return recordFrom(raw, String(values.title), values, String(values.status).toLowerCase(), String(values.politician));
+}
+
+/**
+ * Builds the promise body. Evidence is sent as `{ urls, notes }`; on edit an
+ * emptied evidence section is sent as null so it is actually cleared.
+ */
+export function promisePayload(payload: Record<string, string | boolean>, record?: AdminRecord) {
+  const text = (key: string) => (typeof payload[key] === "string" ? String(payload[key]).trim() : "");
+  const urls = text("evidenceUrls").split(/\s+/).filter(Boolean);
+  const notes = text("evidenceNotes");
+  const evidence = urls.length || notes ? { urls, ...(notes ? { notes } : {}) } : record ? null : undefined;
+
+  return {
+    politicianId: text("politicianId") || undefined,
+    title: text("title") || undefined,
+    description: text("description") || undefined,
+    category: text("category") || undefined,
+    status: text("status") || undefined,
+    evidence
+  };
+}
+
 export const communitiesMeta: AdminPageMeta = {
   title: "Communities",
   description: "Manage civic communities by state, LGA, and topic.",
@@ -788,6 +875,18 @@ export function withNumericPartyId(payload: Record<string, string | boolean>) {
 
 export function ratingPayload(payload: Record<string, string | boolean>) {
   return withNumericPartyId(payload);
+}
+
+/**
+ * Edit payload for a rating candidate. An empty politician select means
+ * "unlink", which omitEmpty would otherwise drop, leaving the old link in place.
+ */
+export function ratingUpdatePayload(payload: Record<string, string | boolean>, candidateId: string) {
+  return {
+    ...withNumericPartyId(payload),
+    candidate_id: candidateId,
+    politicianId: typeof payload.politicianId === "string" && payload.politicianId ? payload.politicianId : null
+  };
 }
 
 export function userPayload(payload: Record<string, string | boolean>) {
