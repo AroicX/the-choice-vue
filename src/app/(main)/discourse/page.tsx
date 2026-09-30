@@ -5,6 +5,7 @@ import { Suspense, useMemo, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import { PollCard } from "@/components/cards/poll-card";
+import { RoomTile } from "@/components/discourse/room-tile";
 import { AppIcon } from "@/components/ui/icon";
 import { Skeleton } from "@/components/ui/skeleton";
 import { TimelineEmpty, TimelineError, TimelineHeader, type TimelineTab } from "@/components/timeline/timeline";
@@ -12,7 +13,6 @@ import { civicQueries } from "@/services/queries/civic.queries";
 import { userQueries } from "@/services/queries/user.queries";
 import { asArray, isRoomMember, normalizePoll, recordId } from "@/lib/content-utils";
 import { Search01Icon } from "@/lib/icons";
-import { cn } from "@/lib/utils";
 import { useAuthStore } from "@/stores/auth-store";
 import type { ApiRecord, RoomRecord } from "@/types";
 
@@ -23,22 +23,6 @@ const ALL_TABS: Array<TimelineTab<TabId> & { requiresAuth?: boolean }> = [
   { id: "joined", label: "Your rooms", requiresAuth: true },
   { id: "polls", label: "Polls" }
 ];
-
-// Each room gets a stable tint from its title, so the list scans by colour
-// without anyone having to upload a room image.
-const TILE_TONES = [
-  "bg-primary/15 text-primary",
-  "bg-sky-500/15 text-sky-600 dark:text-sky-400",
-  "bg-amber-500/15 text-amber-700 dark:text-amber-400",
-  "bg-violet-500/15 text-violet-600 dark:text-violet-400",
-  "bg-rose-500/15 text-rose-600 dark:text-rose-400"
-];
-
-function toneFor(text: string) {
-  let hash = 0;
-  for (let index = 0; index < text.length; index += 1) hash = (hash * 31 + text.charCodeAt(index)) | 0;
-  return TILE_TONES[Math.abs(hash) % TILE_TONES.length];
-}
 
 function plural(count: number, word: string) {
   return `${count.toLocaleString()} ${word}${count === 1 ? "" : "s"}`;
@@ -57,9 +41,7 @@ function RoomRow({ room, joined }: { room: ApiRecord; joined: boolean }) {
       href={`/discussions/${recordId(room)}`}
       className="flex gap-3 border-b px-4 py-3.5 transition-colors hover:bg-foreground/[0.03] focus-visible:bg-foreground/[0.06] focus-visible:outline-none"
     >
-      <span className={cn("grid size-12 shrink-0 place-items-center rounded-xl text-lg font-bold", toneFor(title))} aria-hidden>
-        {title.trim().charAt(0).toUpperCase() || "#"}
-      </span>
+      <RoomTile title={title} />
       <span className="min-w-0 flex-1">
         <span className="flex items-start justify-between gap-3">
           <span className="line-clamp-2 text-[15px] font-bold leading-5">{title}</span>

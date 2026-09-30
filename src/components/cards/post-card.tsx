@@ -6,7 +6,7 @@ import { AppIcon } from "@/components/ui/icon";
 import { usePostReaction } from "@/hooks/use-post-reaction";
 import { useRequireAuth } from "@/hooks/use-require-auth";
 import { formatRelativeTime, profilePath } from "@/lib/content-utils";
-import { Bookmark02Icon, Comment01Icon, FavouriteIcon, Message01Icon, Share08Icon, ThumbsDownIcon } from "@/lib/icons";
+import { AiMagicIcon, Bookmark02Icon, Comment01Icon, FavouriteIcon, Message01Icon, Share08Icon, ThumbsDownIcon } from "@/lib/icons";
 import { cn } from "@/lib/utils";
 import { useCommentModalStore } from "@/stores/comment-modal-store";
 import { useShareModalStore } from "@/stores/share-modal-store";
@@ -27,6 +27,15 @@ type PostCardProps = {
    * between other content.
    */
   variant?: "timeline" | "card";
+  /**
+   * Extra check before like/dislike/comment, after sign-in; return false to
+   * block. Discussion rooms use it to require membership. Sharing is never gated.
+   */
+  guard?: () => boolean;
+  /** AI summary shown under the post body. */
+  summary?: string | null;
+  /** Drop the "in <topic>" context line, e.g. inside that topic's own room. */
+  hideTopic?: boolean;
 };
 
 const ACTION_TONE = {
@@ -81,7 +90,15 @@ function PostAction({
   );
 }
 
-export function PostCard({ post, interactive = true, showActions = true, variant = "card" }: PostCardProps) {
+export function PostCard({
+  post,
+  interactive = true,
+  showActions = true,
+  variant = "card",
+  guard,
+  summary,
+  hideTopic = false
+}: PostCardProps) {
   const router = useRouter();
   const { requireAuth } = useRequireAuth();
   const openCommentModal = useCommentModalStore((state) => state.open);
@@ -115,6 +132,7 @@ export function PostCard({ post, interactive = true, showActions = true, variant
   function openComments(event: React.MouseEvent) {
     stop(event);
     if (!requireAuth("Sign in to comment on this post.")) return;
+    if (guard && !guard()) return;
     openCommentModal(post);
   }
 
@@ -146,7 +164,7 @@ export function PostCard({ post, interactive = true, showActions = true, variant
       </Link>
 
       <div className="min-w-0 flex-1">
-        {post.topic ? (
+        {post.topic && !hideTopic ? (
           <p className="mb-0.5 flex items-center gap-1 text-[13px] text-muted-foreground">
             <AppIcon icon={Message01Icon} size={14} />
             <span className="truncate">{post.topic}</span>
@@ -178,6 +196,16 @@ export function PostCard({ post, interactive = true, showActions = true, variant
           <p className="mt-0.5 whitespace-pre-wrap break-words text-[15px] leading-5">{post.message}</p>
         ) : null}
 
+        {summary ? (
+          <div className="mt-2 rounded-xl bg-secondary px-3 py-2">
+            <p className="flex items-center gap-1 text-[12px] font-semibold text-muted-foreground">
+              <AppIcon icon={AiMagicIcon} size={13} />
+              AI summary
+            </p>
+            <p className="mt-0.5 text-[14px] leading-5">{summary}</p>
+          </div>
+        ) : null}
+
         {post.attachments?.length ? (
           <div onClick={stop}>
             <MediaAttachmentGrid items={post.attachments} className="rounded-2xl border" />
@@ -203,6 +231,7 @@ export function PostCard({ post, interactive = true, showActions = true, variant
               disabled={isPending}
               onAction={() => {
                 if (!requireAuth("Sign in to react to posts.")) return;
+                if (guard && !guard()) return;
                 react("like");
               }}
             />
@@ -215,6 +244,7 @@ export function PostCard({ post, interactive = true, showActions = true, variant
               disabled={isPending}
               onAction={() => {
                 if (!requireAuth("Sign in to react to posts.")) return;
+                if (guard && !guard()) return;
                 react("dislike");
               }}
             />

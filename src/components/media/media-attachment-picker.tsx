@@ -27,9 +27,11 @@ type MediaAttachmentPickerProps = {
   onChange: (items: PendingMedia[]) => void;
   disabled?: boolean;
   className?: string;
+  /** Icon-only trigger for inline composers; limits move into the tooltip. */
+  compact?: boolean;
 };
 
-export function MediaAttachmentPicker({ items, onChange, disabled, className }: MediaAttachmentPickerProps) {
+export function MediaAttachmentPicker({ items, onChange, disabled, className, compact = false }: MediaAttachmentPickerProps) {
   const inputRef = useRef<HTMLInputElement>(null);
 
   async function handleFiles(fileList: FileList | null) {
@@ -120,20 +122,35 @@ export function MediaAttachmentPicker({ items, onChange, disabled, className }: 
           disabled={disabled || items.length >= MAX_MEDIA_ITEMS}
           onChange={(event) => void handleFiles(event.target.files)}
         />
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          disabled={disabled || items.length >= MAX_MEDIA_ITEMS}
-          onClick={() => inputRef.current?.click()}
-          className="gap-1.5"
-        >
-          <AppIcon icon={ImageAdd01Icon} size={16} />
-          Add media
-        </Button>
-        <p className="text-xs text-muted-foreground">
-          Images ≤ 3MB · Videos ≤ 10MB · up to {MAX_MEDIA_ITEMS} files
-        </p>
+        {compact ? (
+          <button
+            type="button"
+            disabled={disabled || items.length >= MAX_MEDIA_ITEMS}
+            onClick={() => inputRef.current?.click()}
+            aria-label="Add photos or video"
+            title={`Images ≤ 3MB · Videos ≤ 10MB · up to ${MAX_MEDIA_ITEMS} files`}
+            className="grid size-9 place-items-center rounded-full text-primary transition-colors hover:bg-primary/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50"
+          >
+            <AppIcon icon={ImageAdd01Icon} size={20} />
+          </button>
+        ) : (
+          <>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              disabled={disabled || items.length >= MAX_MEDIA_ITEMS}
+              onClick={() => inputRef.current?.click()}
+              className="gap-1.5"
+            >
+              <AppIcon icon={ImageAdd01Icon} size={16} />
+              Add media
+            </Button>
+            <p className="text-xs text-muted-foreground">
+              Images ≤ 3MB · Videos ≤ 10MB · up to {MAX_MEDIA_ITEMS} files
+            </p>
+          </>
+        )}
       </div>
 
       {items.length ? (

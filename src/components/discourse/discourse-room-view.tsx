@@ -5,83 +5,36 @@ import Link from "next/link";
 import { FormEvent, useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { gooeyToast } from "goey-toast";
-import { IssueCard } from "@/components/cards/issue-card";
 import { PollCard } from "@/components/cards/poll-card";
-import { MediaAttachmentGrid } from "@/components/media/media-attachment-grid";
+import { PostCard } from "@/components/cards/post-card";
+import { RoomTile } from "@/components/discourse/room-tile";
 import { MediaAttachmentPicker, readyMediaAttachments, type PendingMedia } from "@/components/media/media-attachment-picker";
-import { DetailSkeleton, IssueCardSkeleton, PollCardSkeleton, PostCardSkeleton } from "@/components/skeletons/card-skeletons";
+import { PostRowSkeleton } from "@/components/skeletons/card-skeletons";
+import { TimelineEmpty, TimelineError, TimelineHeader, type TimelineTab } from "@/components/timeline/timeline";
 import { AppIcon } from "@/components/ui/icon";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { usePostReaction } from "@/hooks/use-post-reaction";
+import { Skeleton } from "@/components/ui/skeleton";
 import { useRequireAuth } from "@/hooks/use-require-auth";
-import {
-  Add01Icon,
-  AiMagicIcon,
-  ArrowLeft01Icon,
-  CheckmarkBadge01Icon,
-  Comment01Icon,
-  FavouriteIcon,
-  FireIcon,
-  SecurityCheckIcon,
-  SentIcon,
-  Share08Icon
-} from "@/lib/icons";
-import {
-  asArray,
-  displayName,
-  formatRelativeTime,
-  isRoomMember,
-  normalizeIssue,
-  normalizePoll,
-  normalizePost,
-  profilePath,
-  recordId,
-  userDisplayName,
-  userInitials
-} from "@/lib/content-utils";
+import { ArrowLeft01Icon } from "@/lib/icons";
+import { asArray, displayName, isRoomMember, normalizePoll, normalizePost, recordId, userDisplayName, userInitials } from "@/lib/content-utils";
 import { toAttachmentsPayload } from "@/lib/media-utils";
-import { cn } from "@/lib/utils";
 import { api, getData } from "@/services/client/api";
 import { endpoints } from "@/services/client/endpoints";
 import { postsService } from "@/services/posts.service";
-import { civicQueries } from "@/services/queries/civic.queries";
 import { userQueries } from "@/services/queries/user.queries";
 import { useAuthStore } from "@/stores/auth-store";
-import { useCommentModalStore } from "@/stores/comment-modal-store";
-import { useShareModalStore } from "@/stores/share-modal-store";
 import type { ApiRecord, MediaAttachment, Post, RoomRecord } from "@/types";
 
-type RoomTab = "Posts" | "Polls" | "Issues" | "Top voices";
+type RoomTab = "posts" | "polls" | "voices";
 
-const tabs: RoomTab[] = ["Posts", "Polls", "Issues", "Top voices"];
+const TABS: TimelineTab<RoomTab>[] = [
+  { id: "posts", label: "Posts" },
+  { id: "polls", label: "Polls" },
+  { id: "voices", label: "Top voices" }
+];
 
-function memberCount(record: ApiRecord) {
-  return Number(record.memberCount ?? record.members ?? record.roomsCount ?? asArray(record.rooms).length ?? 0);
-}
-
-function formatMembers(count: number) {
-  if (count >= 1000) return `${(count / 1000).toFixed(count >= 10000 ? 0 : 1).replace(/\.0$/, "")}k members`;
-  return `${count.toLocaleString()} members`;
-}
-
-function postInitials(post: Post) {
-  if (post.user) return userInitials(post.user);
-  return post.author.slice(0, 2).toUpperCase();
-}
-
-function postAuthorName(post: Post) {
-  if (post.user) return userDisplayName(post.user);
-  return post.author;
-}
-
-function isVerified(post: Post) {
-  return Boolean(post.user?.verified || post.user?.verifiedPhone || /verified/i.test(post.badge ?? ""));
-}
-
-function isFactChecked(post: Post) {
-  return /fact.?check/i.test(post.badge ?? "");
+function plural(count: number, word: string) {
+  return `${count.toLocaleString()} ${word}${count === 1 ? "" : "s"}`;
 }
 
 function aiSummary(raw: ApiRecord) {
@@ -89,159 +42,22 @@ function aiSummary(raw: ApiRecord) {
   return summary ? String(summary) : null;
 }
 
-function RoomPostCard({
-  post,
-  raw,
-  isMember,
-  onRequireJoin
-}: {
-  post: Post;
-  raw: ApiRecord;
-  isMember: boolean;
-  onRequireJoin: () => void;
-}) {
-  const { requireAuth } = useRequireAuth();
-  const openCommentModal = useCommentModalStore((state) => state.open);
-  const openShareModal = useShareModalStore((state) => state.open);
-  const { likes, react, isPending, isLiked } = usePostReaction(post);
-  const commentCount = post._count?.comments ?? post.comments;
-  const summary = aiSummary(raw);
-  const verified = isVerified(post);
-  const factChecked = isFactChecked(post);
-
-  function guardMemberAction(message: string, action: () => void) {
-    if (!requireAuth(message)) return;
-    if (!isMember) {
-      onRequireJoin();
-      return;
-    }
-    action();
-  }
-
-  function sharePost() {
-    openShareModal({
-      type: "post",
-      url: `${window.location.origin}/threads/post/${post.id}`,
-      author: postAuthorName(post),
-      handle: post.handle,
-      authorAvatar: post.user?.profilePic,
-      message: post.message,
-      topic: post.topic,
-      attachments: post.attachments
-    });
-  }
-
-  return (
-    <article className="rounded-xl border border-border/80 bg-card p-3.5 shadow-sm">
-      <div className="mb-2 flex items-center gap-2">
-        <Link href={profilePath(post.user, post.handle)} className="shrink-0">
-          {post.user?.profilePic ? (
-            <Image src={post.user.profilePic} alt={postAuthorName(post)} width={28} height={28} className="h-7 w-7 rounded-full object-cover" />
-          ) : (
-            <div className="grid h-7 w-7 place-items-center rounded-full bg-emerald-100 text-[11px] font-medium text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-200">
-              {postInitials(post)}
-            </div>
-          )}
-        </Link>
-        <div className="min-w-0 flex-1">
-          <p className="truncate text-xs font-medium text-foreground">
-            <Link href={profilePath(post.user, post.handle)} className="hover:underline">
-              {postAuthorName(post)}
-            </Link>
-            {post.createdAt ? <span className="font-normal text-muted-foreground"> · {formatRelativeTime(post.createdAt)}</span> : null}
-          </p>
-        </div>
-        {factChecked ? (
-          <span className="inline-flex items-center gap-1 rounded-full bg-blue-100 px-1.5 py-0.5 text-[9px] font-medium text-blue-700 dark:bg-blue-900/40 dark:text-blue-200">
-            <AppIcon icon={SecurityCheckIcon} size={10} />
-            Fact-checked
-          </span>
-        ) : verified ? (
-          <span className="rounded-full bg-emerald-100 px-1.5 py-0.5 text-[9px] font-medium text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-200">
-            Verified
-          </span>
-        ) : null}
-      </div>
-
-      <p className="text-[13px] leading-relaxed text-foreground">{post.message}</p>
-      {post.attachments?.length ? <MediaAttachmentGrid items={post.attachments} /> : null}
-
-      {summary ? (
-        <div className="mt-2 rounded-r-lg border-l-2 border-lime-400 bg-slate-50 px-2.5 py-1.5 dark:bg-slate-900/50">
-          <p className="mb-0.5 flex items-center gap-1 text-[10px] font-medium text-lime-800 dark:text-lime-300">
-            <AppIcon icon={AiMagicIcon} size={11} />
-            AI summary
-          </p>
-          <p className="text-[11px] text-lime-700 dark:text-lime-400">{summary}</p>
-        </div>
-      ) : null}
-
-      {isMember ? (
-        <div className="mt-2 flex items-center gap-3.5 text-[11px] text-muted-foreground">
-          <button
-            type="button"
-            className={cn("inline-flex items-center gap-1 transition-colors hover:text-primary", isLiked && "text-primary")}
-            disabled={isPending}
-            onClick={() => guardMemberAction("Sign in to react to posts.", () => react("like"))}
-          >
-            <AppIcon icon={FavouriteIcon} size={13} />
-            {likes}
-          </button>
-          <button
-            type="button"
-            className="inline-flex items-center gap-1 transition-colors hover:text-primary"
-            onClick={() => guardMemberAction("Sign in to comment on this post.", () => openCommentModal(post))}
-          >
-            <AppIcon icon={Comment01Icon} size={13} />
-            {commentCount}
-          </button>
-          <button
-            type="button"
-            className="inline-flex items-center gap-1 transition-colors hover:text-primary"
-            onClick={() => guardMemberAction("Sign in to share this post.", sharePost)}
-          >
-            <AppIcon icon={Share08Icon} size={13} />
-          </button>
-        </div>
-      ) : (
-        <div className="mt-2 flex items-center gap-3.5 text-[11px] text-muted-foreground">
-          <span className="inline-flex items-center gap-1">
-            <AppIcon icon={FavouriteIcon} size={13} />
-            {likes}
-          </span>
-          <span className="inline-flex items-center gap-1">
-            <AppIcon icon={Comment01Icon} size={13} />
-            {commentCount}
-          </span>
-        </div>
-      )}
-    </article>
-  );
+function postAuthorName(post: Post) {
+  return post.user ? userDisplayName(post.user) : post.author;
 }
 
-function TopVoiceCard({
-  author,
-  posts,
-  likes
-}: {
-  author: string;
-  posts: number;
-  likes: number;
-}) {
+function TopVoiceRow({ rank, author, posts, likes }: { rank: number; author: string; posts: number; likes: number }) {
   return (
-    <div className="flex items-center gap-3 rounded-xl border border-border/80 bg-card p-3.5">
-      <div className="grid h-10 w-10 place-items-center rounded-full bg-primary/10 text-sm font-semibold text-primary">
-        {author.slice(0, 2).toUpperCase()}
-      </div>
-      <div className="min-w-0 flex-1">
-        <p className="truncate text-sm font-medium">{author}</p>
-        <p className="text-xs text-muted-foreground">
-          {posts} post{posts === 1 ? "" : "s"} · {likes.toLocaleString()} likes
-        </p>
-      </div>
-      <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-2 py-0.5 text-[10px] font-medium text-amber-700 dark:bg-amber-900/30 dark:text-amber-200">
-        <AppIcon icon={CheckmarkBadge01Icon} size={12} />
-        Top voice
+    <div className="flex items-center gap-3 border-b px-4 py-3">
+      <span className="w-5 text-center text-[15px] font-bold tabular-nums text-muted-foreground">{rank}</span>
+      <span className="grid size-10 shrink-0 place-items-center rounded-full bg-secondary text-sm font-bold" aria-hidden>
+        {author.slice(0, 1).toUpperCase()}
+      </span>
+      <span className="min-w-0 flex-1">
+        <span className="block truncate text-[15px] font-bold">{author}</span>
+        <span className="block text-[13px] text-muted-foreground">
+          {plural(posts, "post")} · {plural(likes, "like")}
+        </span>
       </span>
     </div>
   );
@@ -251,7 +67,7 @@ export function DiscourseRoomView({ discussionId }: { discussionId: string }) {
   const queryClient = useQueryClient();
   const user = useAuthStore((state) => state.user);
   const { requireAuth, isAuthenticated } = useRequireAuth();
-  const [tab, setTab] = useState<RoomTab>("Posts");
+  const [tab, setTab] = useState<RoomTab>("posts");
   const [optimisticJoined, setOptimisticJoined] = useState(false);
   const [draft, setDraft] = useState("");
   const [media, setMedia] = useState<PendingMedia[]>([]);
@@ -286,13 +102,6 @@ export function DiscourseRoomView({ discussionId }: { discussionId: string }) {
     retry: false
   });
 
-  const issuesQuery = useQuery({
-    queryKey: ["discussion-issues", id],
-    queryFn: civicQueries.issues,
-    enabled: tab === "Issues",
-    retry: false
-  });
-
   const rooms = asArray<RoomRecord>(roomsQuery.data);
   const isMember = optimisticJoined || isRoomMember(rooms, id);
 
@@ -300,16 +109,8 @@ export function DiscourseRoomView({ discussionId }: { discussionId: string }) {
   const posts = rawPosts.map((raw) => ({ raw, post: normalizePost(raw, user?.id) }));
   const polls = asArray<ApiRecord>(pollsQuery.data).map(normalizePoll);
 
-  const category = String(record?.category ?? record?.topic ?? record?.type ?? "Discussion");
-  const members = record ? memberCount(record) : 0;
-  const trending = Boolean(record?.trending) || members >= 100 || posts.length >= 5;
-
-  const issues = useMemo(() => {
-    const all = asArray<ApiRecord>(issuesQuery.data).map(normalizeIssue);
-    const term = category.toLowerCase();
-    const matched = all.filter((issue) => issue.category.toLowerCase().includes(term) || issue.title.toLowerCase().includes(term));
-    return (matched.length ? matched : all).slice(0, 8);
-  }, [category, issuesQuery.data]);
+  const counts = ((record?._count ?? {}) as { rooms?: number; posts?: number; polls?: number });
+  const members = Number(counts.rooms ?? 0) + (optimisticJoined && !isRoomMember(rooms, id) ? 1 : 0);
 
   const topVoices = useMemo(() => {
     const map = new Map<string, { author: string; posts: number; likes: number }>();
@@ -392,175 +193,185 @@ export function DiscourseRoomView({ discussionId }: { discussionId: string }) {
 
   if (query.isLoading) {
     return (
-      <div className="space-y-4">
-        <DetailSkeleton />
-        <PostCardSkeleton />
-        <PostCardSkeleton />
+      <div aria-busy>
+        <div className="flex h-[53px] items-center gap-4 border-b px-4">
+          <Skeleton className="size-5 rounded-full" />
+          <Skeleton className="h-4 w-40" />
+        </div>
+        <div className="space-y-3 border-b p-4">
+          <Skeleton className="size-14 rounded-2xl" />
+          <Skeleton className="h-5 w-3/4" />
+          <Skeleton className="h-4 w-full" />
+        </div>
+        {Array.from({ length: 3 }).map((_, index) => (
+          <PostRowSkeleton key={index} />
+        ))}
       </div>
     );
   }
 
   if (query.error || !record) {
     return (
-      <Card>
-        <CardContent className="p-5 text-destructive">{query.error?.message ?? "Discussion not found."}</CardContent>
-      </Card>
+      <TimelineEmpty
+        title="Room not found"
+        body="It may have been removed, or the link is wrong."
+        href="/discourse"
+        action="Back to Discourse"
+      />
     );
   }
 
-  return (
-    <div className="-mx-4 flex min-h-[calc(100vh-8rem)] flex-col overflow-hidden rounded-none border-y border-border/80 bg-slate-50 dark:bg-background sm:-mx-6 sm:rounded-2xl sm:border lg:-mx-8">
-      <header className="border-b border-border/80 bg-card px-4 py-3">
-        <div className="mb-0.5 flex items-center gap-2.5">
-          <Link href="/discourse" className="text-foreground transition-colors hover:text-primary" aria-label="Back to discourse">
-            <AppIcon icon={ArrowLeft01Icon} size={18} />
-          </Link>
-          <h1 className="truncate text-[15px] font-medium text-foreground">{displayName(record)}</h1>
-        </div>
-        <div className="ml-7 space-y-1.5">
-          {record.question ? (
-            <p className="text-[13px] font-medium leading-snug text-foreground">{String(record.question)}</p>
-          ) : null}
-          {record.description ? (
-            <p className="line-clamp-2 text-[12px] leading-relaxed text-muted-foreground">{String(record.description)}</p>
-          ) : null}
-          <div className="flex flex-wrap items-center gap-2 text-[11px] text-muted-foreground">
-            <span>{formatMembers(members)}</span>
-            {trending ? (
-              <>
-                <span aria-hidden>·</span>
-                <span className="inline-flex items-center gap-1 rounded-full bg-red-50 px-1.5 py-0.5 text-[10px] font-medium text-red-600 dark:bg-red-900/30 dark:text-red-300">
-                  <AppIcon icon={FireIcon} size={10} />
-                  Trending
-                </span>
-              </>
-            ) : null}
-          </div>
-        </div>
-      </header>
+  const title = displayName(record);
+  const question = record.question ? String(record.question) : "";
+  const description = record.description ? String(record.description) : "";
 
-      <div className="flex items-center justify-between border-b border-border/80 bg-card px-4 pt-2.5">
-        <div className="flex gap-4 overflow-x-auto">
-          {tabs.map((item) => (
-            <button
-              key={item}
-              type="button"
-              onClick={() => setTab(item)}
-              className={cn(
-                "whitespace-nowrap pb-2 text-xs transition-colors",
-                tab === item
-                  ? "border-b-2 border-primary font-medium text-primary"
-                  : "border-b-2 border-transparent text-muted-foreground hover:text-foreground"
-              )}
-            >
-              {item}
-            </button>
-          ))}
+  return (
+    <>
+      <div className="sticky top-[53px] z-30 flex h-[53px] items-center gap-6 bg-background/85 px-2 backdrop-blur-md lg:top-0">
+        <Link
+          href="/discourse"
+          aria-label="Back to Discourse"
+          className="grid size-9 place-items-center rounded-full transition-colors hover:bg-accent"
+        >
+          <AppIcon icon={ArrowLeft01Icon} size={20} />
+        </Link>
+        <div className="min-w-0">
+          <p className="truncate text-[17px] font-bold leading-5">{title}</p>
+          <p className="text-[13px] text-muted-foreground">{plural(members, "member")}</p>
         </div>
       </div>
 
-      <div className="flex-1 space-y-3 overflow-y-auto px-4 py-3.5">
-        {!isMember ? (
-          <Button className="w-full gap-1.5" onClick={handleJoin} disabled={joinMutation.isPending}>
-            <AppIcon icon={Add01Icon} size={15} />
-            {joinMutation.isPending ? "Joining..." : "Join the discussion"}
-          </Button>
-        ) : null}
-
-        {tab === "Posts" ? (
-          postsQuery.isLoading ? (
-            <>
-              <PostCardSkeleton />
-              <PostCardSkeleton />
-            </>
-          ) : posts.length === 0 ? (
-            <p className="py-8 text-center text-sm text-muted-foreground">No posts in this discussion yet.</p>
+      <section className="px-4 pb-4 pt-2">
+        <div className="flex items-start justify-between gap-4">
+          <RoomTile title={title} className="size-16 rounded-2xl text-2xl" />
+          {isMember ? (
+            <span className="inline-flex h-10 items-center rounded-full border px-5 text-sm font-bold">Joined</span>
           ) : (
+            <Button variant="inverted" onClick={handleJoin} disabled={joinMutation.isPending}>
+              {joinMutation.isPending ? "Joining…" : "Join"}
+            </Button>
+          )}
+        </div>
+        <h1 className="mt-3 text-xl font-bold leading-6 tracking-tight">{title}</h1>
+        {question && question !== title ? <p className="mt-2 text-[15px] font-medium leading-5">{question}</p> : null}
+        {description ? <p className="mt-1.5 line-clamp-3 text-[15px] leading-5 text-muted-foreground">{description}</p> : null}
+        <p className="mt-3 flex flex-wrap gap-x-4 text-[13px] text-muted-foreground">
+          <span>
+            <strong className="font-bold text-foreground">{members.toLocaleString()}</strong> {members === 1 ? "member" : "members"}
+          </span>
+          <span>
+            <strong className="font-bold text-foreground">{Number(counts.posts ?? posts.length).toLocaleString()}</strong>{" "}
+            {Number(counts.posts ?? posts.length) === 1 ? "post" : "posts"}
+          </span>
+          <span>
+            <strong className="font-bold text-foreground">{Number(counts.polls ?? polls.length).toLocaleString()}</strong>{" "}
+            {Number(counts.polls ?? polls.length) === 1 ? "poll" : "polls"}
+          </span>
+        </p>
+      </section>
+
+      <TimelineHeader tabs={TABS} active={tab} onSelect={setTab} className="static border-t" />
+
+      {tab === "posts" ? (
+        isMember ? (
+          <form onSubmit={handleCompose} className="flex gap-3 border-b px-4 py-3">
+            {user?.profilePic ? (
+              <Image src={user.profilePic} alt="" width={40} height={40} className="size-10 shrink-0 rounded-full object-cover" />
+            ) : (
+              <span className="grid size-10 shrink-0 place-items-center rounded-full bg-secondary text-sm font-bold" aria-hidden>
+                {user ? userInitials(user) : "?"}
+              </span>
+            )}
+            <div className="min-w-0 flex-1">
+              <label htmlFor="room-composer" className="sr-only">
+                Add to the discussion
+              </label>
+              <textarea
+                id="room-composer"
+                value={draft}
+                onChange={(event) => setDraft(event.target.value)}
+                placeholder="Add to the discussion"
+                rows={2}
+                disabled={createPostMutation.isPending}
+                className="block w-full resize-none bg-transparent py-2 text-[17px] leading-6 placeholder:text-muted-foreground focus:outline-none"
+              />
+              <div className="flex items-start justify-between gap-3 border-t pt-2">
+                <MediaAttachmentPicker items={media} onChange={setMedia} disabled={createPostMutation.isPending} compact className="flex-1" />
+                <Button
+                  type="submit"
+                  size="sm"
+                  disabled={
+                    createPostMutation.isPending ||
+                    media.some((item) => item.uploading) ||
+                    (!draft.trim() && !readyMediaAttachments(media).length)
+                  }
+                >
+                  {createPostMutation.isPending ? "Posting…" : "Post"}
+                </Button>
+              </div>
+            </div>
+          </form>
+        ) : (
+          <div className="flex items-center justify-between gap-4 border-b px-4 py-3">
+            <p className="text-[15px] text-muted-foreground">Join this room to post, like and comment.</p>
+            <Button size="sm" variant="outline" onClick={handleJoin} disabled={joinMutation.isPending}>
+              Join
+            </Button>
+          </div>
+        )
+      ) : null}
+
+      <div role="tabpanel">
+        {tab === "posts" ? (
+          postsQuery.isLoading ? (
+            Array.from({ length: 3 }).map((_, index) => <PostRowSkeleton key={index} />)
+          ) : postsQuery.isError ? (
+            <TimelineError onRetry={() => postsQuery.refetch()} />
+          ) : posts.length ? (
             posts.map(({ raw, post }) => (
-              <RoomPostCard key={post.id} post={post} raw={raw} isMember={isMember} onRequireJoin={requireJoin} />
+              <PostCard
+                key={post.id}
+                post={post}
+                variant="timeline"
+                hideTopic
+                summary={aiSummary(raw)}
+                guard={() => {
+                  if (isMember) return true;
+                  requireJoin();
+                  return false;
+                }}
+              />
             ))
+          ) : (
+            <TimelineEmpty
+              title="No posts yet"
+              body={isMember ? "Start the conversation — you’ll be the first to post." : "Join the room and start the conversation."}
+            />
           )
         ) : null}
 
-        {tab === "Polls" ? (
+        {tab === "polls" ? (
           pollsQuery.isLoading ? (
-            <>
-              <PollCardSkeleton />
-              <PollCardSkeleton />
-            </>
-          ) : polls.length === 0 ? (
-            <p className="py-8 text-center text-sm text-muted-foreground">No polls in this discussion yet.</p>
-          ) : (
-            <div className="space-y-3">
+            Array.from({ length: 2 }).map((_, index) => <PostRowSkeleton key={index} />)
+          ) : polls.length ? (
+            <div className="space-y-3 p-4">
               {polls.map((poll) => (
                 <PollCard key={poll.id} poll={poll} />
               ))}
             </div>
+          ) : (
+            <TimelineEmpty title="No polls yet" body="Polls created in this room will show up here." />
           )
         ) : null}
 
-        {tab === "Issues" ? (
-          issuesQuery.isLoading ? (
-            <>
-              <IssueCardSkeleton />
-              <IssueCardSkeleton />
-            </>
-          ) : issues.length === 0 ? (
-            <p className="py-8 text-center text-sm text-muted-foreground">No related issues yet.</p>
+        {tab === "voices" ? (
+          topVoices.length ? (
+            topVoices.map((voice, index) => <TopVoiceRow key={voice.author} rank={index + 1} {...voice} />)
           ) : (
-            <div className="space-y-3">
-              {issues.map((issue) => (
-                <IssueCard key={issue.id} issue={issue} />
-              ))}
-            </div>
-          )
-        ) : null}
-
-        {tab === "Top voices" ? (
-          topVoices.length === 0 ? (
-            <p className="py-8 text-center text-sm text-muted-foreground">Top voices will appear as people post.</p>
-          ) : (
-            <div className="space-y-3">
-              {topVoices.map((voice) => (
-                <TopVoiceCard key={voice.author} {...voice} />
-              ))}
-            </div>
+            <TimelineEmpty title="No top voices yet" body="The most-liked contributors will show up here as people post." />
           )
         ) : null}
       </div>
-
-      {tab === "Posts" && isMember ? (
-        <form onSubmit={handleCompose} className="space-y-2.5 border-t border-border/80 bg-card px-4 py-2.5">
-          <MediaAttachmentPicker items={media} onChange={setMedia} disabled={createPostMutation.isPending} />
-          <div className="flex items-center gap-2.5">
-            <Input
-              value={draft}
-              onChange={(event) => setDraft(event.target.value)}
-              placeholder="Add to the discussion"
-              className="h-9 flex-1 rounded-full bg-slate-50 text-xs dark:bg-muted/40"
-              disabled={createPostMutation.isPending}
-            />
-            <button
-              type="submit"
-              disabled={
-                createPostMutation.isPending ||
-                media.some((item) => item.uploading) ||
-                (!draft.trim() && !readyMediaAttachments(media).length)
-              }
-              className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-primary text-primary-foreground transition-opacity disabled:opacity-50"
-              aria-label="Send post"
-            >
-              <AppIcon icon={SentIcon} size={15} />
-            </button>
-          </div>
-        </form>
-      ) : null}
-
-      {tab === "Posts" && !isMember ? (
-        <div className="border-t border-border/80 bg-card px-4 py-3 text-center text-xs text-muted-foreground">
-          Join the discussion to post, like, comment, or share.
-        </div>
-      ) : null}
-    </div>
+    </>
   );
 }
