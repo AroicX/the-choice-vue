@@ -317,8 +317,9 @@ export function normalizePoll(raw: ApiRecord): Poll {
 export function normalizeElection(raw: ApiRecord): Election {
   const votes = Number(raw.electionCount ?? raw.voteCount ?? 0);
   const options = normalizeVoteOptions(raw, votes || undefined);
+  // Only an explicit cover. Falling back to the first candidate's photo put
+  // one candidate on the cover, which reads as an endorsement.
   const cover = String(raw.image ?? raw.imageUrl ?? raw.banner ?? raw.coverImage ?? "").trim();
-  const firstOptionImage = options.find((option) => option.image)?.image;
   return {
     id: recordId(raw),
     title: String(raw.title ?? raw.question ?? "Untitled election"),
@@ -327,12 +328,22 @@ export function normalizeElection(raw: ApiRecord): Election {
     type: raw.type ? String(raw.type) : undefined,
     votes: votes || options.reduce((total, option) => total + (option.rawValue ?? 0), 0),
     options,
-    image: cover || firstOptionImage || undefined,
+    image: cover || undefined,
     createdAt: raw.createdAt ? String(raw.createdAt) : undefined,
     updatedAt: raw.updatedAt ? String(raw.updatedAt) : undefined,
     hasVoted: Boolean(raw.hasVoted),
     userOption: raw.userOption ? String(raw.userOption) : null
   };
+}
+
+export type ElectionPhase = "live" | "upcoming" | "closed";
+
+/** Voting is open only when live; upcoming shows candidates, closed shows results. */
+export function electionPhase(status: string): ElectionPhase {
+  const value = status.toUpperCase();
+  if (/(LIVE|ONGOING|OPEN)/.test(value)) return "live";
+  if (/(UPCOMING|CREATED|PENDING|SCHEDULED)/.test(value)) return "upcoming";
+  return "closed";
 }
 
 export function normalizeRatingOffice(value: unknown) {
