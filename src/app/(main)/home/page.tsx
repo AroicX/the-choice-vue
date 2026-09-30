@@ -6,10 +6,10 @@ import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { PostCard } from "@/components/cards/post-card";
 import { PostRowSkeleton } from "@/components/skeletons/card-skeletons";
+import { TimelineEmpty, TimelineError, TimelineHeader } from "@/components/timeline/timeline";
 import { Skeleton } from "@/components/ui/skeleton";
 import { civicQueries } from "@/services/queries/civic.queries";
 import { asArray, normalizePost } from "@/lib/content-utils";
-import { cn } from "@/lib/utils";
 import type { ApiRecord } from "@/types";
 import { useAuthStore } from "@/stores/auth-store";
 import { useLoginModalStore } from "@/stores/login-modal-store";
@@ -170,57 +170,17 @@ export default function HomePage() {
         </div>
       </section>
 
-      <div className="sticky top-[53px] z-20 border-y bg-background/85 backdrop-blur-md lg:top-0">
-        <div role="tablist" aria-label="Feeds" className="flex">
-          {tabs.map((tab) => {
-            const isActive = tab.id === active;
-            return (
-              <button
-                key={tab.id}
-                type="button"
-                role="tab"
-                aria-selected={isActive}
-                onClick={() => setSelected(tab.id)}
-                className="flex h-[53px] flex-1 justify-center px-2 transition-colors hover:bg-foreground/[0.03] focus-visible:bg-foreground/[0.06] focus-visible:outline-none"
-              >
-                <span
-                  className={cn(
-                    "relative flex items-center text-[15px]",
-                    isActive ? "font-bold text-foreground" : "font-medium text-muted-foreground"
-                  )}
-                >
-                  {tab.label}
-                  {isActive ? (
-                    <span className="absolute inset-x-0 bottom-0 h-1 rounded-full bg-primary" aria-hidden />
-                  ) : null}
-                </span>
-              </button>
-            );
-          })}
-        </div>
-      </div>
+      <TimelineHeader tabs={tabs} active={active} onSelect={setSelected} className="border-t" />
 
       <div role="tabpanel" aria-busy={feedQuery.isLoading}>
         {feedQuery.isLoading ? (
           Array.from({ length: 5 }).map((_, index) => <PostRowSkeleton key={index} />)
         ) : feedQuery.isError ? (
-          <div className="px-8 py-12 text-center">
-            <p className="text-[17px] font-bold">Couldn’t load posts</p>
-            <p className="mt-1 text-[15px] text-muted-foreground">Check your connection and try again.</p>
-            <Button className="mt-5" onClick={() => feedQuery.refetch()}>
-              Retry
-            </Button>
-          </div>
+          <TimelineError onRetry={() => feedQuery.refetch()} />
         ) : posts.length ? (
           posts.map((post) => <PostCard key={post.id} post={post} variant="timeline" />)
         ) : (
-          <div className="mx-auto max-w-[400px] px-8 py-12">
-            <p className="text-[31px] font-extrabold leading-9 tracking-tight">{empty.title}</p>
-            <p className="mt-2 text-[15px] leading-5 text-muted-foreground">{empty.body}</p>
-            <Button asChild size="lg" className="mt-7">
-              <Link href={empty.href}>{empty.action}</Link>
-            </Button>
-          </div>
+          <TimelineEmpty {...empty} />
         )}
       </div>
     </>

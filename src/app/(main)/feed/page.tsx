@@ -1,75 +1,105 @@
 "use client";
 
-import { useQuery } from "@tanstack/react-query";
-import Link from "next/link";
-import { useSearchParams } from "next/navigation";
 import { Suspense } from "react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { useQuery } from "@tanstack/react-query";
+import { FactCheckRow } from "@/components/cards/fact-check-row";
 import { PostCard } from "@/components/cards/post-card";
-import { PageHeader } from "@/components/shared/page-header";
-import { QueryListState } from "@/components/shared/query-states";
-import { GenericCardSkeleton, PostCardSkeleton } from "@/components/skeletons/card-skeletons";
-import { TabList } from "@/components/ui/tabs";
-import { Card, CardContent } from "@/components/ui/card";
+import { PostRowSkeleton } from "@/components/skeletons/card-skeletons";
+import { TimelineEmpty, TimelineError, TimelineHeader, type TimelineTab } from "@/components/timeline/timeline";
 import { civicQueries } from "@/services/queries/civic.queries";
-import { asArray, displayName, normalizePost, recordId } from "@/lib/content-utils";
-import type { ApiRecord } from "@/types";
+import { asArray, normalizeFactCheck, normalizePost } from "@/lib/content-utils";
 import { useAuthStore } from "@/stores/auth-store";
+import type { ApiRecord } from "@/types";
 
-const tabs = ["For You", "Following", "Local", "Trending", "Fact Checks"];
-const feedEndpointByTab: Record<string, () => Promise<unknown>> = {
-  "For You": () => civicQueries.feed("home"),
-  Following: () => civicQueries.feed("following"),
-  Local: () => civicQueries.feed("local"),
-  Trending: () => civicQueries.feed("trending"),
-  "Fact Checks": civicQueries.factChecks
+type FeedTabId = "for-you" | "following" | "local" | "trending" | "fact-checks";
+
+const ALL_TABS: Array<TimelineTab<FeedTabId> & { requiresAuth?: boolean }> = [
+  { id: "for-you", label: "For you" },
+  { id: "trending", label: "Trending" },
+  { id: "fact-checks", label: "Fact checks" },
+  { id: "following", label: "Following", requiresAuth: true },
+  { id: "local", label: "Local", requiresAuth: true }
+];
+
+const FETCHERS: Record<FeedTabId, () => Promise<unknown>> = {
+  "for-you": () => civicQueries.feed("home"),
+  trending: () => civicQueries.feed("trending"),
+  "fact-checks": civicQueries.factChecks,
+  following: () => civicQueries.feed("following"),
+  local: () => civicQueries.feed("local")
+};
+
+const EMPTY: Record<FeedTabId, { title: string; body: string; href: string; action: string }> = {
+  "for-you": { title: "Nothing here yet", body: "Posts from civic discussions will show up here.", href: "/discourse", action: "Browse discussions" },
+  trending: { title: "Nothing is trending", body: "Check back soon, or start a conversation.", href: "/discourse", action: "Browse discussions" },
+  "fact-checks": { title: "No fact checks yet", body: "Verified claims about public figures will appear here.", href: "/fact-checks", action: "See all fact checks" },
+  following: { title: "Your following feed is empty", body: "Follow leaders and citizens to see their activity here.", href: "/politicians", action: "Find leaders to follow" },
+  local: { title: "No local posts yet", body: "Add your state and LGA to see what’s happening near you.", href: "/settings", action: "Update your location" }
+};
+
+// Links shared before this redesign used display names (?tab=Fact Checks).
+const LEGACY_TAB: Record<string, FeedTabId> = {
+  "For You": "for-you",
+  Following: "following",
+  Local: "local",
+  Trending: "trending",
+  "Fact Checks": "fact-checks"
 };
 
 export default function FeedPage() {
   return (
-    <Suspense fallback={<div className="space-y-4">{Array.from({ length: 3 }).map((_, index) => <PostCardSkeleton key={index} />)}</div>}>
+    <Suspense fallback={Array.from({ length: 5 }).map((_, index) => <PostRowSkeleton key={index} />)}>
       <FeedContent />
     </Suspense>
   );
 }
 
 function FeedContent() {
+  const router = useRouter();
+  const pathname = usePathname();
   const searchParams = useSearchParams();
   const userId = useAuthStore((state) => state.user?.id);
-  const active = searchParams.get("tab") ?? tabs[0];
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+
+  const tabs = ALL_TABS.filter((tab) => !tab.requiresAuth || isAuthenticated);
+  const requested = searchParams.get("tab") ?? "";
+  const requestedId = (LEGACY_TAB[requested] ?? requested) as FeedTabId;
+  const active = tabs.some((tab) => tab.id === requestedId) ? requestedId : "for-you";
+
   const query = useQuery({
-    queryKey: ["feed", active],
-    queryFn: feedEndpointByTab[active] ?? feedEndpointByTab["For You"]
+    queryKey: ["feed", active, userId ?? null],
+    queryFn: FETCHERS[active]
   });
   const records = asArray<ApiRecord>(query.data);
-  const posts = active === "Fact Checks" ? [] : records.map((record) => normalizePost(record, userId));
+
+  function select(id: FeedTabId) {
+    // Replace, not push: switching tabs shouldn't fill the back stack.
+    router.replace(id === "for-you" ? pathname : `${pathname}?tab=${id}`, { scroll: false });
+  }
 
   return (
-    <div>
-      <PageHeader title="Civic Feed" description="Posts, civic updates, public performance notes, and community signals." />
-      <TabList tabs={tabs} active={active} />
-      <div className="mt-5 space-y-4">
-        <QueryListState
-          isLoading={query.isLoading}
-          isEmpty={records.length === 0}
-          count={3}
-          skeleton={active === "Fact Checks" ? <GenericCardSkeleton /> : <PostCardSkeleton />}
-          emptyMessage="No records found for this tab."
-        >
-          {active === "Fact Checks"
-            ? records.map((record) => (
-                <Link key={recordId(record)} href={`/fact-checks/${recordId(record)}`}>
-                  <Card className="transition-colors hover:bg-accent">
-                    <CardContent className="p-5">
-                      <p className="text-sm font-medium text-primary">{String(record.verdict ?? "Fact check")}</p>
-                      <h2 className="mt-2 text-lg font-semibold">{displayName(record)}</h2>
-                      <p className="mt-2 line-clamp-2 text-sm text-muted-foreground">{String(record.explanation ?? record.description ?? "")}</p>
-                    </CardContent>
-                  </Card>
-                </Link>
-              ))
-            : posts.map((post) => <PostCard key={post.id} post={post} />)}
-        </QueryListState>
+    <>
+      <TimelineHeader title="Civic feed" tabs={tabs} active={active} onSelect={select} />
+      <div role="tabpanel" aria-busy={query.isLoading}>
+        {query.isLoading ? (
+          Array.from({ length: 5 }).map((_, index) => <PostRowSkeleton key={index} />)
+        ) : query.isError ? (
+          <TimelineError onRetry={() => query.refetch()} what={active === "fact-checks" ? "fact checks" : "posts"} />
+        ) : !records.length ? (
+          <TimelineEmpty {...EMPTY[active]} />
+        ) : active === "fact-checks" ? (
+          records.map((record) => {
+            const factCheck = normalizeFactCheck(record);
+            return <FactCheckRow key={factCheck.id} factCheck={factCheck} />;
+          })
+        ) : (
+          records.map((record) => {
+            const post = normalizePost(record, userId);
+            return <PostCard key={post.id} post={post} variant="timeline" />;
+          })
+        )}
       </div>
-    </div>
+    </>
   );
 }
