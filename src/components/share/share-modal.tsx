@@ -47,12 +47,12 @@ function ShareMediaGrid({ items }: { items: MediaAttachment[] }) {
     count === 1 ? "grid-cols-1" : count === 2 ? "grid-cols-2" : count === 3 ? "grid-cols-2" : "grid-cols-2";
 
   return (
-    <div className={cn("mt-3 grid gap-0.5 overflow-hidden rounded-lg border border-[#EFF3F4]", gridClass)}>
+    <div className={cn("mt-3 grid gap-0.5 overflow-hidden rounded-md border border-white/10", gridClass)}>
       {images.map((item, index) => (
         <div
           key={item.id ?? item.url}
           className={cn(
-            "relative overflow-hidden bg-[#EFF3F4]",
+            "relative overflow-hidden bg-white/10",
             count === 1 ? "aspect-[16/10]" : "aspect-square",
             count === 3 && index === 0 && "row-span-2 aspect-auto min-h-full"
           )}
@@ -131,7 +131,7 @@ export function ShareModal() {
     return toPng(cardRef.current, {
       cacheBust: true,
       pixelRatio: 2,
-      backgroundColor: "#ffffff",
+      backgroundColor: "#0B2E22",
       skipFonts: false
     });
   }
@@ -284,7 +284,7 @@ export function ShareModal() {
         role="dialog"
         aria-modal="true"
         aria-label={title}
-        className="relative z-10 max-h-[92vh] w-full max-w-[440px] overflow-y-auto rounded-t-2xl border border-border bg-popover dark:border-white/10 sm:rounded-2xl"
+        className="relative z-10 max-h-[92vh] w-full max-w-[440px] overflow-y-auto rounded-t-xl border border-border bg-popover dark:border-white/10 sm:rounded-xl"
       >
         <div className="flex items-center justify-between px-5 pb-2 pt-4">
           <h2 className="text-[17px] font-semibold">{title}</h2>
@@ -298,50 +298,57 @@ export function ShareModal() {
           </button>
         </div>
 
-        {/* Preview of the image that gets saved/shared. The card is always
-            light: it becomes a PNG that people post elsewhere. */}
-        <div className="mx-5 rounded-xl bg-secondary p-3">
-          <div ref={cardRef} className="rounded-xl bg-white p-5 text-[#0F1419]">
-            <div className="mb-4 flex items-center gap-2">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src="/icon-192x192.png" alt="" className="size-6" />
-              <span className="text-[13px] font-bold tracking-tight">Choice9ja</span>
-            </div>
+        {/* Preview of the image that gets saved/shared: the home carousel's
+            forest halftone with a dark wash for legibility. Plain <img> and
+            gradients (no CSS masks) so html-to-image renders it faithfully. */}
+        <div className="px-5">
+          <div ref={cardRef} className="relative overflow-hidden rounded-lg bg-[#0B2E22] p-5 text-white">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/carousel/pulse.webp" alt="" className="absolute inset-0 size-full object-cover opacity-50" />
+            <div className="absolute inset-0 bg-gradient-to-br from-[#0B2E22] via-[#0B2E22]/85 to-[#0B2E22]/40" aria-hidden />
 
-            {isComment && sharePayload.quotedPost ? (
-              <div className="mb-4 rounded-lg border border-[#EFF3F4] p-3">
-                <p className="text-[13px]">
-                  <span className="font-bold">{sharePayload.quotedPost.author}</span>{" "}
-                  <span className="text-[#536471]">{sharePayload.quotedPost.handle}</span>
-                </p>
-                <p className="mt-1 line-clamp-3 text-[13px] leading-[18px] text-[#536471]">{sharePayload.quotedPost.message}</p>
-                {quotedImages.length ? <ShareMediaGrid items={quotedImages} /> : null}
+            <div className="relative">
+              <div className="mb-4 flex items-center gap-2">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src="/icon-192x192.png" alt="" className="size-6" />
+                <span className="text-[13px] font-bold tracking-tight">Choice9ja</span>
               </div>
-            ) : null}
 
-            <div className="flex items-center gap-2.5">
-              {sharePayload.authorAvatar ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img src={sharePayload.authorAvatar} alt="" crossOrigin="anonymous" className="size-9 rounded-full object-cover" />
-              ) : (
-                <span className="grid size-9 place-items-center rounded-full bg-[#EFF3F4] text-[13px] font-bold">
-                  {initials(sharePayload.author)}
-                </span>
-              )}
-              <div className="min-w-0 leading-[18px]">
-                <p className="truncate text-[14px] font-bold">{sharePayload.author}</p>
-                <p className="truncate text-[13px] text-[#536471]">{handle}</p>
+              {isComment && sharePayload.quotedPost ? (
+                <div className="mb-4 rounded-md border border-white/15 bg-white/5 p-3">
+                  <p className="text-[13px]">
+                    <span className="font-bold">{sharePayload.quotedPost.author}</span>{" "}
+                    <span className="text-white/60">{sharePayload.quotedPost.handle}</span>
+                  </p>
+                  <p className="mt-1 line-clamp-3 text-[13px] leading-[18px] text-white/70">{sharePayload.quotedPost.message}</p>
+                  {quotedImages.length ? <ShareMediaGrid items={quotedImages} /> : null}
+                </div>
+              ) : null}
+
+              <div className="flex items-center gap-2.5">
+                {sharePayload.authorAvatar ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={sharePayload.authorAvatar} alt="" crossOrigin="anonymous" className="size-9 rounded-full object-cover" />
+                ) : (
+                  <span className="grid size-9 place-items-center rounded-full bg-white/15 text-[13px] font-bold">
+                    {initials(sharePayload.author)}
+                  </span>
+                )}
+                <div className="min-w-0 leading-[18px]">
+                  <p className="truncate text-[14px] font-bold">{sharePayload.author}</p>
+                  <p className="truncate text-[13px] text-white/60">{handle}</p>
+                </div>
               </div>
+
+              {sharePayload.message.trim() ? (
+                <p className="mt-3 whitespace-pre-wrap break-words text-[16px] leading-[22px]">{sharePayload.message}</p>
+              ) : null}
+              {images.length ? <ShareMediaGrid items={images} /> : null}
+
+              <p className="mt-4 text-[12px] text-[#6EE7A0]">
+                {sharePayload.topic ? `${sharePayload.topic} · ` : ""}thechoice9ja.com
+              </p>
             </div>
-
-            {sharePayload.message.trim() ? (
-              <p className="mt-3 whitespace-pre-wrap break-words text-[16px] leading-[22px]">{sharePayload.message}</p>
-            ) : null}
-            {images.length ? <ShareMediaGrid items={images} /> : null}
-
-            <p className="mt-4 text-[12px] text-[#536471]">
-              {sharePayload.topic ? `${sharePayload.topic} · ` : ""}thechoice9ja.com
-            </p>
           </div>
         </div>
 
@@ -354,7 +361,7 @@ export function ShareModal() {
               disabled={Boolean(busy)}
               className="group flex flex-col items-center gap-1.5 rounded-lg py-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-60"
             >
-              <span className={cn("grid size-12 place-items-center rounded-full transition-colors", target.className)}>
+              <span className={cn("grid size-12 place-items-center rounded-[10px] transition-colors", target.className)}>
                 {target.icon}
               </span>
               <span className="text-[12px] text-muted-foreground">{target.label}</span>
