@@ -11,6 +11,7 @@ import { AppIcon } from "@/components/ui/icon";
 import { CheckmarkCircle02Icon } from "@/lib/icons";
 import { useRequireAuth } from "@/hooks/use-require-auth";
 import { normalizeRatingOffice } from "@/lib/content-utils";
+import { cn } from "@/lib/utils";
 import { getData } from "@/services/client/api";
 import { endpoints } from "@/services/client/endpoints";
 import { RateCandidateModal } from "@/components/cards/rate-candidate-modal";
@@ -22,6 +23,50 @@ type SdgCriteria = Record<string, SdgLevel[]>;
 
 /** Offices the API will return criteria for; anything else has no template. */
 const RATABLE_OFFICES = ["PRESIDENCY", "HOUSE", "GOVERNOR", "SENATOR"];
+
+/** Circular approval meter; a dashed empty ring when nobody has rated yet. */
+function ScoreRing({ score }: { score: number | null }) {
+  const size = 52;
+  const stroke = 4;
+  const radius = (size - stroke) / 2;
+  const circumference = 2 * Math.PI * radius;
+  const value = score === null ? 0 : Math.max(0, Math.min(100, score));
+
+  return (
+    <span
+      className="relative grid size-[52px] shrink-0 place-items-center"
+      role="img"
+      aria-label={score === null ? "No public score yet" : `Public approval ${Math.round(value)} percent`}
+    >
+      <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} className="absolute inset-0 -rotate-90" aria-hidden>
+        <circle
+          cx={size / 2}
+          cy={size / 2}
+          r={radius}
+          fill="none"
+          strokeWidth={stroke}
+          className="stroke-secondary"
+          strokeDasharray={score === null ? "3 4" : undefined}
+        />
+        {score !== null ? (
+          <circle
+            cx={size / 2}
+            cy={size / 2}
+            r={radius}
+            fill="none"
+            strokeWidth={stroke}
+            strokeLinecap="round"
+            className="stroke-primary"
+            strokeDasharray={`${(value / 100) * circumference} ${circumference}`}
+          />
+        ) : null}
+      </svg>
+      <span className={cn("text-[13px] font-bold tabular-nums", score === null && "text-muted-foreground")}>
+        {score === null ? "—" : `${Math.round(value)}%`}
+      </span>
+    </span>
+  );
+}
 
 export function RatingCard({ candidate }: { candidate: RatingCandidate }) {
   const queryClient = useQueryClient();
@@ -75,80 +120,73 @@ export function RatingCard({ candidate }: { candidate: RatingCandidate }) {
   });
 
   const place = [candidate.constituency, candidate.state].filter(Boolean).join(", ");
-  const background = [candidate.profession, candidate.education].filter(Boolean).join(" · ");
 
   return (
-    <article className="flex flex-col overflow-hidden rounded-2xl border bg-card">
-      <div className="relative aspect-[4/3] bg-secondary">
-        {candidate.image ? (
-          <Image
-            src={candidate.image}
-            alt=""
-            fill
-            className="object-cover object-top"
-            sizes="(max-width:768px) 100vw, (max-width:1280px) 50vw, 33vw"
-          />
-        ) : (
-          <span className="absolute inset-0 grid place-items-center text-4xl font-bold text-muted-foreground" aria-hidden>
-            {candidate.name.charAt(0)}
-          </span>
-        )}
+    <article className="flex flex-col rounded-2xl border bg-card p-4">
+      <div className="flex items-start gap-3.5">
+        <span className="relative size-14 shrink-0 overflow-hidden rounded-full bg-secondary">
+          {candidate.image ? (
+            <Image src={candidate.image} alt="" fill className="object-cover object-top" sizes="56px" />
+          ) : (
+            <span className="absolute inset-0 grid place-items-center text-lg font-bold text-muted-foreground" aria-hidden>
+              {candidate.name.charAt(0)}
+            </span>
+          )}
+        </span>
+
+        <div className="min-w-0 flex-1 pt-0.5">
+          <h2 className="truncate text-[16px] font-bold leading-5">{candidate.name}</h2>
+          <p className="truncate text-[14px] text-muted-foreground">
+            {officeTitle(candidate.position)}
+            {place ? ` · ${place}` : ""}
+          </p>
+          {candidate.party ? (
+            <p className="mt-1 flex items-center gap-1.5 text-[13px] text-muted-foreground">
+              {candidate.partyImage ? (
+                <Image src={candidate.partyImage} alt="" width={16} height={16} className="size-4 rounded-full object-cover" />
+              ) : null}
+              <span className="truncate">{candidate.party}</span>
+            </p>
+          ) : null}
+        </div>
+
+        <ScoreRing score={candidate.rated ? candidate.score : null} />
       </div>
 
-      <div className="flex flex-1 flex-col p-4">
-        <h2 className="truncate text-[17px] font-bold leading-6">{candidate.name}</h2>
-        <p className="truncate text-[14px] text-muted-foreground">
-          {officeTitle(candidate.position)}
-          {place ? ` · ${place}` : ""}
-        </p>
-        <p className="mt-1 flex min-w-0 items-center gap-2 text-[13px] text-muted-foreground">
-          {candidate.partyImage ? (
-            <Image src={candidate.partyImage} alt="" width={18} height={18} className="size-[18px] shrink-0 rounded-full object-cover" />
+      <div className="mt-4 flex items-center justify-between gap-3 border-t pt-3">
+        <p className="min-w-0 truncate text-[13px] text-muted-foreground">
+          {/* No votes means no public score; "0%" would read as a real rating. */}
+          {candidate.rated
+            ? `${candidate.totalVotes.toLocaleString()} ${candidate.totalVotes === 1 ? "rating" : "ratings"}`
+            : "No ratings yet"}
+          {candidate.politicianId ? (
+            <>
+              {" · "}
+              <Link href={`/politicians/${candidate.politicianId}`} className="text-foreground hover:underline">
+                Profile
+              </Link>
+            </>
           ) : null}
-          <span className="truncate">{[candidate.party, background].filter(Boolean).join(" · ") || " "}</span>
         </p>
-
-        {/* Spacer keeps footers aligned across cards with more or less detail. */}
-        <div className="min-h-4 flex-1" aria-hidden />
-        <div className="flex items-center justify-between gap-3 border-t pt-3">
-          {candidate.rated ? (
-            <span>
-              <span className="block text-xl font-bold leading-6 tabular-nums">{candidate.score}%</span>
-              <span className="block text-[12px] text-muted-foreground">
-                {candidate.totalVotes.toLocaleString()} {candidate.totalVotes === 1 ? "rating" : "ratings"}
-              </span>
-            </span>
-          ) : (
-            // No votes means no public score; "0%" would read as a real rating.
-            <span className="text-[13px] text-muted-foreground">Not yet rated</span>
-          )}
-
-          <div className="flex shrink-0 items-center gap-1">
-            {candidate.politicianId ? (
-              <Button variant="ghost" size="sm" asChild>
-                <Link href={`/politicians/${candidate.politicianId}`}>Profile</Link>
-              </Button>
-            ) : null}
-            {hasRated ? (
-              <span className="inline-flex h-9 items-center gap-1.5 rounded-full bg-secondary px-4 text-sm font-bold text-muted-foreground">
-                <AppIcon icon={CheckmarkCircle02Icon} size={16} />
-                Rated
-              </span>
-            ) : (
-              <Button
-                size="sm"
-                // Gate before opening: asking for sign-in only at submit meant
-                // filling in every criterion first, then losing it to a login prompt.
-                onClick={() => {
-                  if (!requireAuth("Sign in to rate this candidate.")) return;
-                  setOpen(true);
-                }}
-              >
-                Rate
-              </Button>
-            )}
-          </div>
-        </div>
+        {hasRated ? (
+          <span className="inline-flex h-9 shrink-0 items-center gap-1.5 rounded-full bg-secondary px-4 text-sm font-bold text-muted-foreground">
+            <AppIcon icon={CheckmarkCircle02Icon} size={16} />
+            Rated
+          </span>
+        ) : (
+          <Button
+            size="sm"
+            className="shrink-0"
+            // Gate before opening: asking for sign-in only at submit meant
+            // filling in every criterion first, then losing it to a login prompt.
+            onClick={() => {
+              if (!requireAuth("Sign in to rate this candidate.")) return;
+              setOpen(true);
+            }}
+          >
+            Rate
+          </Button>
+        )}
       </div>
 
       <RateCandidateModal

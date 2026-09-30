@@ -4,7 +4,7 @@ import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { RatingCard } from "@/components/cards/rating-card";
 import { PageHeader } from "@/components/shared/page-header";
-import { PoliticianCardSkeleton } from "@/components/skeletons/card-skeletons";
+import { RatingCardSkeleton } from "@/components/skeletons/card-skeletons";
 import { TimelineEmpty, TimelineError } from "@/components/timeline/timeline";
 import { Button } from "@/components/ui/button";
 import { FilterSelect, SearchField, UnderlineTabs } from "@/components/ui/filters";
@@ -158,7 +158,7 @@ export default function RatingsPage() {
         {query.isLoading ? (
           <div className={grid}>
             {Array.from({ length: 6 }).map((_, index) => (
-              <PoliticianCardSkeleton key={index} />
+              <RatingCardSkeleton key={index} />
             ))}
           </div>
         ) : query.isError ? (
