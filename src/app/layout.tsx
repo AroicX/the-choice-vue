@@ -13,18 +13,26 @@ const inter = Inter({ subsets: ["latin"], variable: "--font-sans", display: "swa
 
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL ?? "https://thechoice9ja.com"),
-  title: "Choice9ja",
+  title: { default: "Choice9ja", template: "%s" },
   description:
-    "Choice9ja provides a platform for Nigerian citizens to increase transparency, strengthen participatory governance, and ensure accountability of leaders.",
+    "Know your leaders. Track their performance. Rate politicians, report local issues and join civic conversations in Nigeria.",
+  applicationName: "Choice9ja",
   icons: {
     icon: "/favicon.ico",
     apple: "/icon-192x192.png"
   },
+  // Page-level metadata overrides these; the image comes from app/opengraph-image.tsx.
   openGraph: {
+    siteName: "Choice9ja",
+    type: "website",
+    locale: "en_NG",
     title: "Choice9ja",
-    description:
-      "Raise issues, join civic discussions, track leaders, and rate politicians according to their actions.",
-    images: ["/icon.png"]
+    description: "Rate politicians, report local issues and join civic conversations in Nigeria."
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Choice9ja",
+    description: "Rate politicians, report local issues and join civic conversations in Nigeria."
   }
 };
 

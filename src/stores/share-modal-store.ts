@@ -8,7 +8,7 @@ export type ShareQuotedPost = Pick<Post, "author" | "handle" | "topic" | "messag
 };
 
 export type SharePayload = {
-  type: "post" | "comment";
+  type: "post" | "comment" | "election";
   url: string;
   author: string;
   handle?: string;
@@ -17,6 +17,9 @@ export type SharePayload = {
   topic?: string;
   attachments?: MediaAttachment[];
   quotedPost?: ShareQuotedPost;
+  /** Elections: status line (e.g. "Voting now") and candidates for the card. */
+  status?: string;
+  candidates?: Array<{ label: string; image?: string }>;
 };
 
 type ShareModalState = {

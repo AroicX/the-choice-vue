@@ -103,7 +103,8 @@ export function ShareModal() {
   if (!isOpen || !sharePayload) return null;
 
   const isComment = sharePayload.type === "comment";
-  const title = isComment ? "Share comment" : "Share post";
+  const isElection = sharePayload.type === "election";
+  const title = isComment ? "Share comment" : isElection ? "Share election" : "Share post";
   const filename = `choice9ja-${sharePayload.type}-${Date.now()}.png`;
 
   async function waitForImages() {
@@ -325,25 +326,55 @@ export function ShareModal() {
                 </div>
               ) : null}
 
+              {isElection ? (
+                <>
+                  {sharePayload.status ? <p className="text-[13px] font-semibold text-[#6EE7A0]">{sharePayload.status}</p> : null}
+                  <p className="mt-1 text-[22px] font-bold leading-7 tracking-[-0.01em]">{sharePayload.message}</p>
+                  {sharePayload.candidates?.length ? (
+                    <>
+                      <div className="mt-4 flex">
+                        {sharePayload.candidates.slice(0, 5).map((candidate, index) => (
+                          <span
+                            key={candidate.label}
+                            className="relative size-11 overflow-hidden rounded-full border-[3px] border-[#0B2E22] bg-white/15"
+                            style={{ marginLeft: index ? -10 : 0 }}
+                          >
+                            {candidate.image ? (
+                              // eslint-disable-next-line @next/next/no-img-element
+                              <img src={candidate.image} alt="" crossOrigin="anonymous" className="size-full object-cover object-top" />
+                            ) : null}
+                          </span>
+                        ))}
+                      </div>
+                      <p className="mt-2 text-[13px] text-white/70">
+                        {sharePayload.candidates.map((candidate) => candidate.label).join(" · ")}
+                      </p>
+                    </>
+                  ) : null}
+                </>
+              ) : (
+                <>
               <div className="flex items-center gap-2.5">
-                {sharePayload.authorAvatar ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img src={sharePayload.authorAvatar} alt="" crossOrigin="anonymous" className="size-9 rounded-full object-cover" />
-                ) : (
-                  <span className="grid size-9 place-items-center rounded-full bg-white/15 text-[13px] font-bold">
-                    {initials(sharePayload.author)}
-                  </span>
-                )}
-                <div className="min-w-0 leading-[18px]">
-                  <p className="truncate text-[14px] font-bold">{sharePayload.author}</p>
-                  <p className="truncate text-[13px] text-white/60">{handle}</p>
-                </div>
-              </div>
+                    {sharePayload.authorAvatar ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={sharePayload.authorAvatar} alt="" crossOrigin="anonymous" className="size-9 rounded-full object-cover" />
+                    ) : (
+                      <span className="grid size-9 place-items-center rounded-full bg-white/15 text-[13px] font-bold">
+                        {initials(sharePayload.author)}
+                      </span>
+                    )}
+                    <div className="min-w-0 leading-[18px]">
+                      <p className="truncate text-[14px] font-bold">{sharePayload.author}</p>
+                      <p className="truncate text-[13px] text-white/60">{handle}</p>
+                    </div>
+                  </div>
 
-              {sharePayload.message.trim() ? (
-                <p className="mt-3 whitespace-pre-wrap break-words text-[16px] leading-[22px]">{sharePayload.message}</p>
-              ) : null}
-              {images.length ? <ShareMediaGrid items={images} /> : null}
+                  {sharePayload.message.trim() ? (
+                    <p className="mt-3 whitespace-pre-wrap break-words text-[16px] leading-[22px]">{sharePayload.message}</p>
+                  ) : null}
+                  {images.length ? <ShareMediaGrid items={images} /> : null}
+                </>
+              )}
 
               <p className="mt-4 text-[12px] text-[#6EE7A0]">
                 {sharePayload.topic ? `${sharePayload.topic} · ` : ""}thechoice9ja.com

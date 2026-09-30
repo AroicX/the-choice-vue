@@ -4,6 +4,10 @@ import Image from "next/image";
 import Link from "next/link";
 import { RoomCover } from "@/components/discourse/room-cover";
 import { ElectionStatusPill } from "@/components/elections/election-status";
+import { electionSharePayload } from "@/components/elections/share-election";
+import { AppIcon } from "@/components/ui/icon";
+import { Share08Icon } from "@/lib/icons";
+import { useShareModalStore } from "@/stores/share-modal-store";
 import { electionPhase } from "@/lib/content-utils";
 import type { Election } from "@/types";
 
@@ -14,6 +18,7 @@ const MAX_FACES = 4;
  * results live; no inline voting, so there is one place to act.
  */
 export function ElectionCard({ election }: { election: Election }) {
+  const openShareModal = useShareModalStore((state) => state.open);
   const phase = electionPhase(election.status);
   const faces = election.options.filter((option) => option.image).slice(0, MAX_FACES);
   const count = election.options.length;
@@ -40,6 +45,19 @@ export function ElectionCard({ election }: { election: Election }) {
           <RoomCover seed={election.id} text="elections" className="h-28" />
         )}
         <ElectionStatusPill phase={phase} className="absolute left-3 top-3" />
+        <button
+          type="button"
+          aria-label={`Share ${election.title}`}
+          // Inside the card link: don't navigate.
+          onClick={(event) => {
+            event.preventDefault();
+            event.stopPropagation();
+            openShareModal(electionSharePayload(election));
+          }}
+          className="absolute right-3 top-3 grid size-8 place-items-center rounded-md bg-black/55 text-white backdrop-blur-md transition-colors hover:bg-black/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
+        >
+          <AppIcon icon={Share08Icon} size={16} />
+        </button>
       </div>
 
       <div className="flex flex-1 flex-col p-4">

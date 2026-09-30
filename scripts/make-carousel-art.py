@@ -111,7 +111,37 @@ COVERS = [
 COVERS_DIR = os.path.join(ROOT, "public", "covers")
 
 
+# Link-preview (Open Graph) backgrounds: 1200x630 PNG, because the OG image
+# renderer can't decode WebP. Bundled with the OG routes, not served publicly.
+OG_DIR = os.path.join(ROOT, "src", "lib", "og-assets")
+OG = [
+    # id, unsplash id, background, dots, vertical focus, invert
+    ("forest", "nmLJAvTfanU", "#0B2E22", "#1F7A52", 0.7, True),
+    ("ink", "Ciba8rvHYng", "#141A2B", "#3A4A73", 0.5, False),
+    ("clay", "cFT_Xq4XyA0", "#3A1D14", "#8A4A34", 0.5, False),
+]
+
+
+def og_background(path, background, dots, focus_y, invert):
+    global OUT_W, OUT_H
+    saved = (OUT_W, OUT_H)
+    OUT_W, OUT_H = 1200, 630
+    try:
+        art = halftone(path, background, dots, focus_y, invert)
+    finally:
+        OUT_W, OUT_H = saved
+    # Few colours in a halftone: quantising keeps the PNG small.
+    return art.quantize(colors=24, method=Image.Quantize.MEDIANCUT)
+
+
 def main():
+    os.makedirs(OG_DIR, exist_ok=True)
+    for og_id, unsplash_id, background, dots, focus_y, invert in OG:
+        art = og_background(source(unsplash_id), background, dots, focus_y, invert)
+        out = os.path.join(OG_DIR, f"{og_id}.png")
+        art.save(out, "PNG", optimize=True)
+        print(f"{out}  {os.path.getsize(out) // 1024} KB")
+
     os.makedirs(OUT_DIR, exist_ok=True)
     os.makedirs(COVERS_DIR, exist_ok=True)
     for topic, unsplash_id, focus_y, invert in COVERS:

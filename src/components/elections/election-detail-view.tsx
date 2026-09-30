@@ -11,7 +11,10 @@ import { ElectionStatusPill } from "@/components/elections/election-status";
 import { TimelineEmpty } from "@/components/timeline/timeline";
 import { AppIcon } from "@/components/ui/icon";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ArrowLeft01Icon } from "@/lib/icons";
+import { ArrowLeft01Icon, Share08Icon } from "@/lib/icons";
+import { Button } from "@/components/ui/button";
+import { electionSharePayload } from "@/components/elections/share-election";
+import { useShareModalStore } from "@/stores/share-modal-store";
 import { useRequireAuth } from "@/hooks/use-require-auth";
 import { electionPhase, normalizeElection } from "@/lib/content-utils";
 import { getData } from "@/services/client/api";
@@ -30,6 +33,7 @@ export function ElectionDetailView({ electionId }: { electionId: string }) {
     retry: false
   });
 
+  const openShareModal = useShareModalStore((state) => state.open);
   const election = query.data ? normalizeElection(query.data) : null;
   const hasVoted = Boolean(election?.hasVoted || votedLocally);
   const phase = electionPhase(election?.status ?? "");
@@ -85,7 +89,13 @@ export function ElectionDetailView({ electionId }: { electionId: string }) {
             <ElectionStatusPill phase={phase} className="absolute left-3 top-3" />
           </div>
 
-          <h1 className="mt-4 text-[26px] font-bold leading-8 tracking-[-0.02em]">{election.title}</h1>
+          <div className="mt-4 flex items-start justify-between gap-4">
+            <h1 className="text-[26px] font-bold leading-8 tracking-[-0.02em]">{election.title}</h1>
+            <Button variant="outline" className="shrink-0" onClick={() => openShareModal(electionSharePayload(election))}>
+              <AppIcon icon={Share08Icon} size={16} />
+              Share
+            </Button>
+          </div>
           <p className="mt-1 flex flex-wrap gap-x-4 text-[15px] text-muted-foreground">
             <span>
               <strong className="font-bold text-foreground">{election.options.length}</strong> candidates
