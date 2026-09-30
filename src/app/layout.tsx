@@ -4,6 +4,7 @@ import "@/app/globals.css";
 import "goey-toast/styles.css";
 import { ThemeProvider } from "@/components/providers/theme-provider";
 import { QueryProvider } from "@/components/providers/query-provider";
+import { ConnectionSnackbar } from "@/components/providers/connection-snackbar";
 import { ToastProvider } from "@/components/providers/toast-provider";
 import { LoginModal } from "@/components/auth/login-modal";
 import { CommentModal } from "@/components/comments/comment-modal";
@@ -38,6 +39,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             <LoginModal />
             <CommentModal />
             <ShareModal />
+            <ConnectionSnackbar />
           </QueryProvider>
           <ToastProvider />
         </ThemeProvider>

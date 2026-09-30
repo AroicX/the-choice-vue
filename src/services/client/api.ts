@@ -1,6 +1,7 @@
 import axios, { AxiosError } from "axios";
 import { ApiClientError, parseValidationPayload } from "@/lib/api-validation";
 import { useAuthStore } from "@/stores/auth-store";
+import { useConnectionStore } from "@/stores/connection-store";
 
 export type ApiEnvelope<T> = {
   success?: boolean;
@@ -26,12 +27,31 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
+/** Gateway/availability statuses: the server is up but can't serve right now. */
+const UNAVAILABLE_STATUSES = new Set([502, 503, 504]);
+
+export const CONNECTION_ERROR_MESSAGE = "Connection problem. Nothing was sent — please try again.";
+
 api.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    if (typeof window !== "undefined") useConnectionStore.getState().reportReachable();
+    return response;
+  },
   (error: AxiosError<unknown>) => {
     if (error.response?.status === 401 && typeof window !== "undefined") {
       useAuthStore.getState().clearSession();
     }
+
+    // No response at all (dropped connection, DNS, timeout) or a gateway
+    // error: a connectivity problem rather than something wrong with the
+    // request, so flag it for the connection snackbar and say so plainly.
+    const status = error.response?.status;
+    const isConnectionError = !error.response || (status !== undefined && UNAVAILABLE_STATUSES.has(status));
+    if (isConnectionError) {
+      if (typeof window !== "undefined") useConnectionStore.getState().reportUnreachable();
+      return Promise.reject(new ApiClientError(CONNECTION_ERROR_MESSAGE, status, undefined, undefined, error.response?.data));
+    }
+    if (typeof window !== "undefined") useConnectionStore.getState().reportReachable();
 
     const payload = error.response?.data;
     const parsed = parseValidationPayload(payload);
