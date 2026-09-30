@@ -54,6 +54,7 @@ export const endpoints = {
     detail: (id: string) => `/discussions/${id}`,
     create: "/discussions/create",
     update: (id: string) => `/discussions/update/${id}`,
+    cover: (id: string) => `/discussions/${id}/cover`,
     delete: (id: string) => `/discussions/delete/${id}`
   },
   rooms: {

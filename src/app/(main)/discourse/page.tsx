@@ -5,7 +5,7 @@ import { Suspense, useMemo, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import { PollCard } from "@/components/cards/poll-card";
-import { RoomTile } from "@/components/discourse/room-tile";
+import { RoomCover } from "@/components/discourse/room-cover";
 import { AppIcon } from "@/components/ui/icon";
 import { Skeleton } from "@/components/ui/skeleton";
 import { TimelineEmpty, TimelineError, TimelineHeader, type TimelineTab } from "@/components/timeline/timeline";
@@ -41,7 +41,7 @@ function RoomRow({ room, joined }: { room: ApiRecord; joined: boolean }) {
       href={`/discussions/${recordId(room)}`}
       className="flex gap-3 border-b px-4 py-3.5 transition-colors hover:bg-foreground/[0.03] focus-visible:bg-foreground/[0.06] focus-visible:outline-none"
     >
-      <RoomTile title={title} />
+      <RoomCover seed={recordId(room)} src={room.coverImage ? String(room.coverImage) : null} className="h-14 w-20 shrink-0 rounded-lg" />
       <span className="min-w-0 flex-1">
         <span className="flex items-start justify-between gap-3">
           <span className="line-clamp-2 text-[15px] font-bold leading-5">{title}</span>
@@ -73,7 +73,7 @@ function RoomRow({ room, joined }: { room: ApiRecord; joined: boolean }) {
 function RoomRowSkeleton() {
   return (
     <div className="flex gap-3 border-b px-4 py-3.5" aria-hidden>
-      <Skeleton className="size-12 shrink-0 rounded-xl" />
+      <Skeleton className="h-14 w-20 shrink-0 rounded-lg" />
       <div className="flex-1 space-y-2 pt-1">
         <Skeleton className="h-4 w-3/5" />
         <Skeleton className="h-3.5 w-full" />

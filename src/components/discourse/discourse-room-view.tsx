@@ -7,7 +7,8 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { gooeyToast } from "goey-toast";
 import { PollCard } from "@/components/cards/poll-card";
 import { PostCard } from "@/components/cards/post-card";
-import { RoomTile } from "@/components/discourse/room-tile";
+import { RoomCover } from "@/components/discourse/room-cover";
+import { RoomCoverEditor } from "@/components/discourse/room-cover-editor";
 import { MediaAttachmentPicker, readyMediaAttachments, type PendingMedia } from "@/components/media/media-attachment-picker";
 import { PostRowSkeleton } from "@/components/skeletons/card-skeletons";
 import { TimelineEmpty, TimelineError, TimelineHeader, type TimelineTab } from "@/components/timeline/timeline";
@@ -72,8 +73,9 @@ export function DiscourseRoomView({ discussionId }: { discussionId: string }) {
   const [draft, setDraft] = useState("");
   const [media, setMedia] = useState<PendingMedia[]>([]);
 
+  const detailKey = ["detail", endpoints.discussions.detail(discussionId)] as const;
   const query = useQuery({
-    queryKey: ["detail", endpoints.discussions.detail(discussionId)],
+    queryKey: detailKey,
     queryFn: () => getData<ApiRecord>(endpoints.discussions.detail(discussionId)),
     retry: false
   });
@@ -222,6 +224,10 @@ export function DiscourseRoomView({ discussionId }: { discussionId: string }) {
   }
 
   const title = displayName(record);
+  const coverImage = record.coverImage ? String(record.coverImage) : null;
+  const canEditCover = Boolean(
+    user && (user.id === record.createdById || user.role === "ADMIN" || user.role === "SUPER_ADMIN")
+  );
   const question = record.question ? String(record.question) : "";
   const description = record.description ? String(record.description) : "";
 
@@ -241,9 +247,14 @@ export function DiscourseRoomView({ discussionId }: { discussionId: string }) {
         </div>
       </div>
 
-      <section className="px-4 pb-4 pt-2">
+      <div className="relative">
+        <RoomCover seed={id} src={coverImage} className="aspect-[3/1] w-full" />
+        {canEditCover ? <RoomCoverEditor discussionId={id} hasCover={Boolean(coverImage)} detailQueryKey={detailKey} /> : null}
+      </div>
+
+      <section className="px-4 pb-4 pt-3">
         <div className="flex items-start justify-between gap-4">
-          <RoomTile title={title} className="size-16 rounded-2xl text-2xl" />
+          <h1 className="pt-1 text-xl font-bold leading-6 tracking-tight">{title}</h1>
           {isMember ? (
             <span className="inline-flex h-10 items-center rounded-full border px-5 text-sm font-bold">Joined</span>
           ) : (
@@ -252,7 +263,6 @@ export function DiscourseRoomView({ discussionId }: { discussionId: string }) {
             </Button>
           )}
         </div>
-        <h1 className="mt-3 text-xl font-bold leading-6 tracking-tight">{title}</h1>
         {question && question !== title ? <p className="mt-2 text-[15px] font-medium leading-5">{question}</p> : null}
         {description ? <p className="mt-1.5 line-clamp-3 text-[15px] leading-5 text-muted-foreground">{description}</p> : null}
         <p className="mt-3 flex flex-wrap gap-x-4 text-[13px] text-muted-foreground">
