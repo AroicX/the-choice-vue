@@ -7,18 +7,20 @@ import { AppIcon } from "@/components/ui/icon";
 import { Button } from "@/components/ui/button";
 
 export function ThemeToggle() {
-  const { theme, setTheme } = useTheme();
+  const { resolvedTheme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
     setMounted(true);
   }, []);
 
-  const isDark = theme === "dark";
+  // resolvedTheme, not theme: with the "system" default, theme is "system", so
+  // a dark-mode user saw a moon icon and the first click switched to light.
+  const isDark = resolvedTheme === "dark";
 
   return (
     <Button
-      aria-label="Toggle theme"
+      aria-label={isDark ? "Switch to light theme" : "Switch to dark theme"}
       size="icon"
       variant="ghost"
       type="button"

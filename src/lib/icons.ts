@@ -12,6 +12,7 @@ export {
   Cancel01Icon,
   CheckListIcon,
   CheckmarkBadge01Icon,
+  CheckmarkCircle02Icon,
   Comment01Icon,
   Compass01Icon,
   Copy01Icon,

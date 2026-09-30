@@ -230,3 +230,22 @@ export function CommentSkeleton() {
     </div>
   );
 }
+
+/** Placeholder for a timeline-variant PostCard; same geometry so nothing jumps on load. */
+export function PostRowSkeleton() {
+  return (
+    <div className="flex gap-3 border-b px-4 py-3" aria-hidden>
+      <Skeleton className="size-10 shrink-0 rounded-full" />
+      <div className="min-w-0 flex-1 space-y-2 pt-1">
+        <Skeleton className="h-3.5 w-1/2" />
+        <Skeleton className="h-3.5 w-full" />
+        <Skeleton className="h-3.5 w-4/5" />
+        <div className="flex max-w-[425px] justify-between pt-2">
+          {Array.from({ length: 5 }).map((_, index) => (
+            <Skeleton key={index} className="h-4 w-8 rounded-full" />
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}

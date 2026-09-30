@@ -64,15 +64,19 @@ const config: Config = {
           lime: "#84CC16"
         }
       },
+      fontFamily: {
+        sans: ["var(--font-sans)", "ui-sans-serif", "system-ui", "sans-serif"]
+      },
       borderRadius: {
         lg: "var(--radius)",
         md: "calc(var(--radius) - 2px)",
         sm: "calc(var(--radius) - 4px)"
       },
       boxShadow: {
-        soft: "0 18px 50px rgba(15, 23, 42, 0.08)",
-        glow: "0 12px 40px rgba(22, 163, 74, 0.18)",
-        panel: "0 20px 60px rgba(15, 23, 42, 0.12)"
+        // Neutral elevation only; the old green "glow" is retired app-wide.
+        soft: "0 1px 2px rgba(15, 20, 25, 0.06)",
+        glow: "0 1px 2px rgba(15, 20, 25, 0.06)",
+        panel: "0 0 15px rgba(101, 119, 134, 0.2), 0 0 3px 1px rgba(101, 119, 134, 0.15)"
       },
       animation: {
         "fade-up": "fade-up 0.5s ease-out both",

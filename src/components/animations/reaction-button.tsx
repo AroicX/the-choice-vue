@@ -55,7 +55,7 @@ export function ReactionButton({
       aria-label={active ? `Undo ${label.toLowerCase()}` : label}
       aria-pressed={active}
       className={cn(
-        "group -ml-1 inline-flex items-center gap-1 rounded-full text-sm text-muted-foreground",
+        "group inline-flex items-center rounded-full text-[13px] text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
         "transition-colors disabled:pointer-events-none disabled:opacity-50",
         active && tone.text,
         className
@@ -70,7 +70,7 @@ export function ReactionButton({
     >
       <span
         className={cn(
-          "relative flex h-8 w-8 items-center justify-center rounded-full transition-colors",
+          "relative flex size-[34px] items-center justify-center rounded-full transition-colors",
           tone.hoverBg,
           tone.hoverText
         )}
@@ -88,8 +88,9 @@ export function ReactionButton({
           )}
         />
       </span>
-      <span className={cn("tabular-nums transition-colors", tone.hoverText)}>
-        {count}
+      {/* Blank rather than "0", as on X; the button's label still names it. */}
+      <span className={cn("min-w-[1ch] pr-2 tabular-nums transition-colors", tone.hoverText)}>
+        {count > 0 ? count.toLocaleString() : ""}
       </span>
     </button>
   );
