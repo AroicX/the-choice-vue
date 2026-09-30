@@ -29,11 +29,11 @@ import { cn } from "@/lib/utils";
 import type { ApiRecord, RoomRecord, User } from "@/types";
 
 /**
- * Routes that render as a single ~600px timeline column, X-style. Everything
+ * Routes that render as a single ~660px timeline column, X-style. Everything
  * else (grids, dashboards, detail pages) gets the wider fluid column so its
  * multi-column layouts keep their room.
  */
-const TIMELINE_ROUTES = ["/home", "/feed", "/notifications", "/threads"];
+const TIMELINE_ROUTES = ["/home", "/feed", "/discourse", "/notifications", "/threads"];
 
 function isTimelineRoute(pathname: string) {
   return TIMELINE_ROUTES.some((route) => pathname === route || pathname.startsWith(`${route}/`));
@@ -199,7 +199,7 @@ export function MainShell({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="mx-auto flex max-w-[1300px] justify-center">
+      <div className="mx-auto flex max-w-[1440px] justify-center">
         {/* Left rail: icons only at lg, icons + labels from xl. */}
         <header className="sticky top-0 hidden h-screen w-[88px] shrink-0 flex-col items-end px-3 lg:flex xl:w-[275px] xl:items-stretch">
           <div className="flex h-full w-fit flex-col xl:w-full">
@@ -291,7 +291,7 @@ export function MainShell({ children }: { children: React.ReactNode }) {
         <div
           className={cn(
             "min-w-0 border-border lg:border-x",
-            timeline ? "w-full max-w-[600px]" : "w-full max-w-[600px] flex-1 lg:max-w-[990px]"
+            timeline ? "w-full max-w-[660px]" : "w-full max-w-[660px] flex-1 lg:max-w-[1080px]"
           )}
         >
           {/* Mobile top bar. */}
@@ -318,7 +318,7 @@ export function MainShell({ children }: { children: React.ReactNode }) {
         {/* Right sidebar: timeline routes only, so wide pages keep their width. */}
         <aside
           className={cn(
-            "sticky top-0 hidden h-screen w-[350px] shrink-0 overflow-y-auto pl-7 pr-2",
+            "sticky top-0 hidden h-screen w-[380px] shrink-0 overflow-y-auto pl-7 pr-2",
             timeline && "xl:block"
           )}
         >

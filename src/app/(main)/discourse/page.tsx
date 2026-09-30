@@ -1,118 +1,127 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { Suspense, useMemo, useState } from "react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
-import { Message01Icon, Search01Icon } from "@/lib/icons";
-import { AppIcon } from "@/components/ui/icon";
-import { PageHeader } from "@/components/shared/page-header";
-import { QueryListState } from "@/components/shared/query-states";
-import { GenericCardSkeleton, PollCardSkeleton } from "@/components/skeletons/card-skeletons";
-import { Input } from "@/components/ui/input";
 import { PollCard } from "@/components/cards/poll-card";
+import { AppIcon } from "@/components/ui/icon";
+import { Skeleton } from "@/components/ui/skeleton";
+import { TimelineEmpty, TimelineError, TimelineHeader, type TimelineTab } from "@/components/timeline/timeline";
 import { civicQueries } from "@/services/queries/civic.queries";
 import { userQueries } from "@/services/queries/user.queries";
-import { asArray, displayName, isRoomMember, normalizePoll, recordId, stringifyJson } from "@/lib/content-utils";
-import { useRequireAuth } from "@/hooks/use-require-auth";
+import { asArray, isRoomMember, normalizePoll, recordId } from "@/lib/content-utils";
+import { Search01Icon } from "@/lib/icons";
 import { cn } from "@/lib/utils";
+import { useAuthStore } from "@/stores/auth-store";
 import type { ApiRecord, RoomRecord } from "@/types";
 
-function DiscourseRoomCard({ room, joined }: { room: ApiRecord; joined?: boolean }) {
-  const roomId = recordId(room);
-  const posts = Number(room.postCount ?? room.posts ?? 0);
-  const members = Number(room.memberCount ?? room.members ?? 0);
-  const title = displayName(room);
-  const subtitle = String(room.question ?? room.description ?? room.topic ?? "Open civic discussion");
+type TabId = "rooms" | "joined" | "polls";
+
+const ALL_TABS: Array<TimelineTab<TabId> & { requiresAuth?: boolean }> = [
+  { id: "rooms", label: "Rooms" },
+  { id: "joined", label: "Your rooms", requiresAuth: true },
+  { id: "polls", label: "Polls" }
+];
+
+// Each room gets a stable tint from its title, so the list scans by colour
+// without anyone having to upload a room image.
+const TILE_TONES = [
+  "bg-primary/15 text-primary",
+  "bg-sky-500/15 text-sky-600 dark:text-sky-400",
+  "bg-amber-500/15 text-amber-700 dark:text-amber-400",
+  "bg-violet-500/15 text-violet-600 dark:text-violet-400",
+  "bg-rose-500/15 text-rose-600 dark:text-rose-400"
+];
+
+function toneFor(text: string) {
+  let hash = 0;
+  for (let index = 0; index < text.length; index += 1) hash = (hash * 31 + text.charCodeAt(index)) | 0;
+  return TILE_TONES[Math.abs(hash) % TILE_TONES.length];
+}
+
+function plural(count: number, word: string) {
+  return `${count.toLocaleString()} ${word}${count === 1 ? "" : "s"}`;
+}
+
+function RoomRow({ room, joined }: { room: ApiRecord; joined: boolean }) {
+  const title = String(room.topic ?? room.title ?? "Untitled room");
+  const question = String(room.question ?? room.description ?? "");
+  const counts = (room._count ?? {}) as { rooms?: number; posts?: number; polls?: number };
+  const members = Number(counts.rooms ?? 0);
+  const posts = Number(counts.posts ?? 0);
+  const polls = Number(counts.polls ?? 0);
 
   return (
     <Link
-      href={`/discussions/${roomId}`}
-      className={cn(
-        "group block rounded-2xl border p-4 transition-all duration-200",
-        joined
-          ? "border-primary/20 bg-gradient-to-br from-primary/10 via-card to-card shadow-sm hover:border-primary/35 hover:shadow-glow"
-          : "border-border/80 bg-card hover:border-primary/20 hover:bg-accent/30"
-      )}
+      href={`/discussions/${recordId(room)}`}
+      className="flex gap-3 border-b px-4 py-3.5 transition-colors hover:bg-foreground/[0.03] focus-visible:bg-foreground/[0.06] focus-visible:outline-none"
     >
-      <div className="flex items-start gap-3.5">
-        <div
-          className={cn(
-            "grid h-11 w-11 shrink-0 place-items-center rounded-xl",
-            joined ? "bg-primary text-primary-foreground shadow-sm" : "bg-secondary text-secondary-foreground"
-          )}
-        >
-          <AppIcon icon={Message01Icon} size={20} />
-        </div>
-        <div className="min-w-0 flex-1">
-          <div className="flex items-start justify-between gap-3">
-            <h2 className="truncate text-[15px] font-semibold text-foreground group-hover:text-primary">{title}</h2>
-            {joined ? (
-              <span className="shrink-0 rounded-full bg-primary/15 px-2 py-0.5 text-[10px] font-semibold text-primary">
-                Joined
-              </span>
-            ) : null}
-          </div>
-          <p className="mt-1 line-clamp-2 text-sm leading-5 text-muted-foreground">{subtitle}</p>
-          <div className="mt-3 flex items-center gap-3 text-xs text-muted-foreground">
-            <span>{posts.toLocaleString()} posts</span>
-            <span className="h-1 w-1 rounded-full bg-border" />
-            <span>{members.toLocaleString()} members</span>
-          </div>
-        </div>
-      </div>
+      <span className={cn("grid size-12 shrink-0 place-items-center rounded-xl text-lg font-bold", toneFor(title))} aria-hidden>
+        {title.trim().charAt(0).toUpperCase() || "#"}
+      </span>
+      <span className="min-w-0 flex-1">
+        <span className="flex items-start justify-between gap-3">
+          <span className="line-clamp-2 text-[15px] font-bold leading-5">{title}</span>
+          {joined ? (
+            <span className="mt-0.5 shrink-0 rounded-full border px-2 py-0.5 text-[12px] font-semibold text-muted-foreground">
+              Joined
+            </span>
+          ) : null}
+        </span>
+        {question && question !== title ? (
+          <span className="mt-1 line-clamp-2 block text-[15px] leading-5 text-muted-foreground">{question}</span>
+        ) : null}
+        <span className="mt-2 flex flex-wrap items-center gap-x-2 text-[13px] text-muted-foreground">
+          <span>{plural(members, "member")}</span>
+          <span aria-hidden>·</span>
+          <span>{plural(posts, "post")}</span>
+          {polls ? (
+            <>
+              <span aria-hidden>·</span>
+              <span>{plural(polls, "poll")}</span>
+            </>
+          ) : null}
+        </span>
+      </span>
     </Link>
   );
 }
 
-function RoomSection({
-  title,
-  description,
-  rooms,
-  joined,
-  isLoading,
-  emptyMessage
-}: {
-  title: string;
-  description: string;
-  rooms: ApiRecord[];
-  joined?: boolean;
-  isLoading: boolean;
-  emptyMessage: string;
-}) {
+function RoomRowSkeleton() {
   return (
-    <section className="mb-8">
-      <div className="mb-4">
-        <h2 className="text-lg font-semibold tracking-tight">{title}</h2>
-        <p className="mt-1 text-sm text-muted-foreground">{description}</p>
+    <div className="flex gap-3 border-b px-4 py-3.5" aria-hidden>
+      <Skeleton className="size-12 shrink-0 rounded-xl" />
+      <div className="flex-1 space-y-2 pt-1">
+        <Skeleton className="h-4 w-3/5" />
+        <Skeleton className="h-3.5 w-full" />
+        <Skeleton className="h-3 w-1/3" />
       </div>
-      <div className="grid gap-3 sm:grid-cols-2">
-        <QueryListState
-          isLoading={isLoading}
-          isEmpty={rooms.length === 0}
-          count={joined ? 2 : 4}
-          skeleton={<GenericCardSkeleton />}
-          emptyMessage={emptyMessage}
-        >
-          {rooms.map((room) => (
-            <DiscourseRoomCard key={recordId(room)} room={room} joined={joined} />
-          ))}
-        </QueryListState>
-      </div>
-    </section>
+    </div>
   );
 }
 
 export default function DiscoursePage() {
+  return (
+    <Suspense fallback={Array.from({ length: 5 }).map((_, index) => <RoomRowSkeleton key={index} />)}>
+      <DiscourseContent />
+    </Suspense>
+  );
+}
+
+function DiscourseContent() {
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   const [search, setSearch] = useState("");
-  const { isAuthenticated } = useRequireAuth();
-  const query = useQuery({
-    queryKey: ["discussions"],
-    queryFn: civicQueries.discussions
-  });
-  const pollsQuery = useQuery({
-    queryKey: ["discourse", "polls"],
-    queryFn: civicQueries.polls
-  });
+
+  const tabs = ALL_TABS.filter((tab) => !tab.requiresAuth || isAuthenticated);
+  const requested = searchParams.get("tab") as TabId | null;
+  const active: TabId = tabs.some((tab) => tab.id === requested) ? (requested as TabId) : "rooms";
+
+  const discussionsQuery = useQuery({ queryKey: ["discussions"], queryFn: civicQueries.discussions });
+  const pollsQuery = useQuery({ queryKey: ["discourse", "polls"], queryFn: civicQueries.polls, enabled: active === "polls" });
   const roomsQuery = useQuery({
     queryKey: ["rooms", "me"],
     queryFn: userQueries.rooms,
@@ -121,64 +130,84 @@ export default function DiscoursePage() {
   });
   const memberships = asArray<RoomRecord>(roomsQuery.data);
 
-  const { joinedRooms, discoverRooms } = useMemo(() => {
+  const rooms = useMemo(() => {
     const term = search.trim().toLowerCase();
-    const all = asArray<ApiRecord>(query.data).filter((room) => !term || stringifyJson(room).toLowerCase().includes(term));
-    const joined: ApiRecord[] = [];
-    const discover: ApiRecord[] = [];
+    return asArray<ApiRecord>(discussionsQuery.data)
+      .map((room) => ({ room, joined: isRoomMember(memberships, recordId(room)) }))
+      .filter(({ joined }) => active !== "joined" || joined)
+      .filter(({ room }) => {
+        if (!term) return true;
+        const haystack = [room.topic, room.question, room.description].map((value) => String(value ?? "")).join(" ");
+        return haystack.toLowerCase().includes(term);
+      });
+  }, [active, discussionsQuery.data, memberships, search]);
 
-    for (const room of all) {
-      if (isRoomMember(memberships, recordId(room))) joined.push(room);
-      else discover.push(room);
-    }
+  const polls = asArray<ApiRecord>(pollsQuery.data).map(normalizePoll);
 
-    return { joinedRooms: joined, discoverRooms: discover };
-  }, [memberships, query.data, search]);
+  function select(id: TabId) {
+    router.replace(id === "rooms" ? pathname : `${pathname}?tab=${id}`, { scroll: false });
+  }
 
-  const polls = asArray<ApiRecord>(pollsQuery.data).map(normalizePoll).slice(0, 4);
-  const isLoading = query.isLoading || (isAuthenticated && roomsQuery.isLoading);
+  const roomsLoading = discussionsQuery.isLoading || (active === "joined" && roomsQuery.isLoading);
 
   return (
-    <div>
-      <PageHeader title="Discourse Forums" description="Join focused civic rooms around policy, places, elections, and public services." />
-      <div className="relative mb-6">
-        <AppIcon icon={Search01Icon} size={18} className="absolute left-3 top-3 text-muted-foreground" />
-        <Input className="pl-9" placeholder="Search discourse rooms" value={search} onChange={(event) => setSearch(event.target.value)} />
-      </div>
+    <>
+      <TimelineHeader title="Discourse" tabs={tabs} active={active} onSelect={select} />
 
-      {isAuthenticated ? (
-        <RoomSection
-          title="Your rooms"
-          description="Discussions you’ve already joined."
-          rooms={joinedRooms}
-          joined
-          isLoading={isLoading}
-          emptyMessage={search ? "No joined rooms match your search." : "You haven’t joined any rooms yet."}
-        />
+      {active !== "polls" ? (
+        <div className="border-b px-4 py-3">
+          <div className="relative">
+            <AppIcon
+              icon={Search01Icon}
+              size={18}
+              className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground"
+            />
+            <input
+              type="search"
+              value={search}
+              onChange={(event) => setSearch(event.target.value)}
+              placeholder="Search rooms"
+              aria-label="Search rooms"
+              className="h-10 w-full rounded-full border border-transparent bg-secondary pl-11 pr-4 text-[15px] placeholder:text-muted-foreground focus:border-primary focus:bg-background focus:outline-none"
+            />
+          </div>
+        </div>
       ) : null}
 
-      <RoomSection
-        title={isAuthenticated ? "Discover rooms" : "All rooms"}
-        description={isAuthenticated ? "Browse other civic discussions and join the ones that matter to you." : "Browse civic discussions and join the ones that matter to you."}
-        rooms={discoverRooms}
-        isLoading={isLoading}
-        emptyMessage={search ? "No rooms match your search." : "No discourse rooms yet."}
-      />
-
-      <h2 className="mb-4 text-lg font-semibold tracking-tight">Polls in discourse</h2>
-      <div className="grid gap-4 md:grid-cols-2">
-        <QueryListState
-          isLoading={pollsQuery.isLoading}
-          isEmpty={polls.length === 0}
-          count={2}
-          skeleton={<PollCardSkeleton />}
-          emptyMessage="No discourse polls available yet."
-        >
-          {polls.map((poll) => (
-            <PollCard poll={poll} key={poll.id} />
-          ))}
-        </QueryListState>
+      <div role="tabpanel">
+        {active === "polls" ? (
+          pollsQuery.isLoading ? (
+            Array.from({ length: 3 }).map((_, index) => <RoomRowSkeleton key={index} />)
+          ) : pollsQuery.isError ? (
+            <TimelineError onRetry={() => pollsQuery.refetch()} what="polls" />
+          ) : polls.length ? (
+            <div className="space-y-3 p-4">
+              {polls.map((poll) => (
+                <PollCard key={poll.id} poll={poll} />
+              ))}
+            </div>
+          ) : (
+            <TimelineEmpty title="No polls yet" body="Polls created inside discussion rooms will show up here." />
+          )
+        ) : roomsLoading ? (
+          Array.from({ length: 6 }).map((_, index) => <RoomRowSkeleton key={index} />)
+        ) : discussionsQuery.isError ? (
+          <TimelineError onRetry={() => discussionsQuery.refetch()} what="rooms" />
+        ) : rooms.length ? (
+          rooms.map(({ room, joined }) => <RoomRow key={recordId(room)} room={room} joined={joined} />)
+        ) : search ? (
+          <TimelineEmpty title="No matches" body={`No rooms match “${search.trim()}”. Try a different word.`} />
+        ) : active === "joined" ? (
+          <TimelineEmpty
+            title="You haven’t joined a room"
+            body="Join a room to post, vote in its polls and follow the conversation."
+            href="/discourse"
+            action="Browse rooms"
+          />
+        ) : (
+          <TimelineEmpty title="No rooms yet" body="Discussion rooms will appear here once they’re created." />
+        )}
       </div>
-    </div>
+    </>
   );
 }
