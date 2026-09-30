@@ -3,6 +3,7 @@ export {
   AiMagicIcon,
   Alert02Icon,
   Analytics01Icon,
+  ArrowDown01Icon,
   ArrowLeft01Icon,
   ArrowRight01Icon,
   ArrowUp01Icon,

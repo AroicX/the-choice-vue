@@ -5,10 +5,12 @@ import Link from "next/link";
 import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { gooeyToast } from "goey-toast";
-import { Badge } from "@/components/ui/badge";
+import { officeTitle } from "@/components/cards/politician-card";
+import { TimelineEmpty } from "@/components/timeline/timeline";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { DetailSkeleton } from "@/components/skeletons/card-skeletons";
+import { AppIcon } from "@/components/ui/icon";
+import { Skeleton } from "@/components/ui/skeleton";
+import { ArrowDown01Icon, ArrowLeft01Icon, CheckmarkBadge01Icon } from "@/lib/icons";
 import { useRequireAuth } from "@/hooks/use-require-auth";
 import { asArray, normalizeIssue, normalizePolitician, normalizeScorecard } from "@/lib/content-utils";
 import { cn } from "@/lib/utils";
@@ -42,18 +44,29 @@ function StatBar({ label, value, noData = false }: { label: string; value: numbe
   const safe = noData ? 0 : Math.max(0, Math.min(100, Number(value) || 0));
   return (
     <div>
-      <div className="mb-1.5 flex items-center justify-between gap-3 text-sm">
-        <span className="text-muted-foreground">{label}</span>
+      <div className="mb-1.5 flex items-center justify-between gap-3 text-[15px]">
+        <span>{label}</span>
         {noData ? (
-          <span className="font-medium text-muted-foreground">No data</span>
+          <span className="text-muted-foreground">No data</span>
         ) : (
-          <span className="font-semibold">{safe.toFixed(safe % 1 ? 1 : 0)}%</span>
+          <span className="font-bold tabular-nums">{safe.toFixed(safe % 1 ? 1 : 0)}%</span>
         )}
       </div>
-      <div className="h-2.5 overflow-hidden rounded-full bg-muted">
-        <div className="h-full rounded-full bg-gradient-to-r from-primary to-emerald-400" style={{ width: `${safe}%` }} />
+      <div className="h-1.5 overflow-hidden rounded-full bg-secondary">
+        <div className="h-full rounded-full bg-primary" style={{ width: `${safe}%` }} />
       </div>
     </div>
+  );
+}
+
+/** Plain section: hairline on top, bold heading, optional muted subtitle. */
+function Section({ title, subtitle, children }: { title: string; subtitle?: string; children: React.ReactNode }) {
+  return (
+    <section className="border-t py-6">
+      <h2 className="text-lg font-bold tracking-tight">{title}</h2>
+      {subtitle ? <p className="mt-0.5 text-[15px] text-muted-foreground">{subtitle}</p> : null}
+      <div className="mt-4">{children}</div>
+    </section>
   );
 }
 
@@ -81,7 +94,7 @@ function Biography({ text }: { text: string }) {
 
   return (
     <div className="space-y-3">
-      <div className="space-y-3 text-sm leading-7 text-muted-foreground">
+      <div className="space-y-3 text-[15px] leading-6">
         {visible.map((paragraph, index) => (
           <p key={index} className={!expanded && isLong && index === 0 ? "line-clamp-4" : undefined}>
             {paragraph}
@@ -92,7 +105,7 @@ function Biography({ text }: { text: string }) {
         <button
           type="button"
           onClick={() => setExpanded((value) => !value)}
-          className="text-sm font-medium text-primary hover:underline"
+          className="text-[15px] text-primary hover:underline"
         >
           {expanded ? "Show less" : "Read more"}
         </button>
@@ -113,8 +126,9 @@ export function PoliticianDetailView({ politicianId }: { politicianId: string })
   });
 
   const listQuery = useQuery({
-    queryKey: ["politicians", "compare-options"],
-    queryFn: () => politiciansService.list<ApiRecord>(),
+    queryKey: ["politicians", "all"],
+    // Every page; a single list call stopped at the API's default of 20.
+    queryFn: () => politiciansService.listAll<ApiRecord>(),
     staleTime: 60_000
   });
 
@@ -167,219 +181,239 @@ export function PoliticianDetailView({ politicianId }: { politicianId: string })
     return asArray<ApiRecord>(listQuery.data)
       .map(normalizePolitician)
       .filter((item) => item.id !== politicianId)
-      .slice(0, 40);
+      .sort((a, b) => a.name.localeCompare(b.name));
   }, [listQuery.data, politicianId]);
 
   const promises = asArray<ApiRecord>(promisesQuery.data);
   const issues = asArray<ApiRecord>(issuesQuery.data).map(normalizeIssue);
 
-  return (
-    <div className="mx-auto max-w-4xl space-y-5">
-      <div>
-        <Link href="/politicians" className="text-sm font-medium text-primary hover:underline">
-          ← Back to politicians
-        </Link>
-      </div>
+  const place = politician ? [politician.constituency || politician.lga, politician.state].filter(Boolean).join(", ") : "";
+  const term = politician?.termStart
+    ? `${new Date(politician.termStart).getFullYear()}–${politician.termEnd ? new Date(politician.termEnd).getFullYear() : "present"}`
+    : null;
+  const promiseCount = politician?.promiseCount ?? promises.length;
+  const issueCount = politician?.issueCount ?? issues.length;
 
-      {detailQuery.isLoading ? <DetailSkeleton /> : null}
+  return (
+    <div className="mx-auto max-w-2xl">
+      <Link
+        href="/politicians"
+        className="-ml-2 inline-flex h-9 items-center gap-0.5 rounded-full pl-1.5 pr-3.5 text-[15px] font-medium transition-colors hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+      >
+        <AppIcon icon={ArrowLeft01Icon} size={20} />
+        Politicians
+      </Link>
+
+      {detailQuery.isLoading ? (
+        <div className="mt-6 space-y-3" aria-busy>
+          <Skeleton className="size-32 rounded-full" />
+          <Skeleton className="h-7 w-2/3" />
+          <Skeleton className="h-4 w-1/2" />
+          <Skeleton className="h-20 w-full" />
+        </div>
+      ) : null}
       {detailQuery.isError ? (
-        <Card>
-          <CardContent className="p-5 text-destructive">
-            {detailQuery.error instanceof Error ? detailQuery.error.message : "Could not load politician."}
-          </CardContent>
-        </Card>
+        <TimelineEmpty title="Profile not found" body="It may have been removed, or the link is wrong." href="/politicians" action="Back to politicians" />
       ) : null}
 
       {politician ? (
         <>
-          <Card className="overflow-hidden">
-            <CardContent className="space-y-5 p-0">
-              {/* items-start: without it the image column stretched to match the
-                  biography's height, producing a 220px-wide strip several
-                  thousand pixels tall with the subject's face cropped out. */}
-              <div className="grid items-start gap-0 md:grid-cols-[220px_1fr]">
-                {politician.imageUrl ? (
-                  <div className="relative aspect-[4/5] w-full bg-muted">
-                    <Image
-                      src={politician.imageUrl}
-                      alt={politician.name}
-                      fill
-                      // object-top keeps the face in frame on portrait crops.
-                      className="object-cover object-top"
-                      sizes="(max-width: 768px) 100vw, 220px"
-                      priority
-                    />
-                  </div>
-                ) : (
-                  <div className="grid aspect-[4/5] w-full place-items-center bg-primary/10 text-4xl font-bold text-primary">
-                    {politician.name.slice(0, 2).toUpperCase()}
-                  </div>
-                )}
-                <div className="space-y-4 p-5">
-                  <div className="flex flex-wrap items-start justify-between gap-3">
-                    <div>
-                      <div className="flex flex-wrap items-center gap-2">
-                        <h1 className="text-2xl font-bold tracking-tight">{politician.name}</h1>
-                        {politician.verified ? <Badge>Verified</Badge> : <Badge variant="secondary">Unverified</Badge>}
-                      </div>
-                      <p className="mt-1 text-sm text-muted-foreground">
-                        {politician.position} · {politician.party}
-                        {politician.state ? ` · ${politician.state}` : ""}
-                      </p>
-                    </div>
-                    <Button
-                      onClick={() => {
-                        if (!requireAuth("Sign in to follow this politician.")) return;
-                        followMutation.mutate();
-                      }}
-                      disabled={followMutation.isPending}
-                    >
-                      {followMutation.isPending ? "Following..." : "Follow"}
-                    </Button>
-                  </div>
+          <header className="pb-6 pt-6">
+            {/* Portrait on its own row, as a circle anchored to the top of the photo. */}
+            <div className="relative size-32 overflow-hidden rounded-full bg-secondary ring-4 ring-background">
+              {politician.imageUrl ? (
+                <Image
+                  src={politician.imageUrl}
+                  alt=""
+                  fill
+                  className="object-cover object-top"
+                  sizes="128px"
+                  priority
+                />
+              ) : (
+                <span className="absolute inset-0 grid place-items-center text-4xl font-bold text-muted-foreground" aria-hidden>
+                  {politician.name.charAt(0)}
+                </span>
+              )}
+            </div>
 
-                  {politician.biography ? <Biography text={politician.biography} /> : null}
-
-                  <div className="grid gap-3 sm:grid-cols-3">
-                    {[
-                      // A bare "0%" reads as a measured score; withhold it until
-                      // there are votes behind it.
-                      ["Approval", scorecard?.rated ? `${politician.approvalScore}%` : "Not rated"],
-                      ["Performance", scorecard?.rated ? `${politician.performanceScore}%` : "Not rated"],
-                      ["Constituency", politician.constituency || politician.lga || politician.state],
-                      ["Promises", String(politician.promiseCount ?? promises.length)],
-                      ["Issues", String(politician.issueCount ?? issues.length)],
-                      ["Term", politician.termStart ? `${new Date(politician.termStart).getFullYear()}–${politician.termEnd ? new Date(politician.termEnd).getFullYear() : "present"}` : "—"]
-                    ].map(([label, value]) => (
-                      <div key={label} className="rounded-xl border bg-background p-3">
-                        <p className="text-xs text-muted-foreground">{label}</p>
-                        <p className="mt-1 text-sm font-semibold">{value}</p>
-                      </div>
-                    ))}
-                  </div>
-                </div>
+            <div className="mt-4 flex items-start justify-between gap-4">
+              <div className="min-w-0">
+                <h1 className="flex items-center gap-1.5 text-[26px] font-bold leading-8 tracking-[-0.02em]">
+                  <span className="min-w-0">{politician.name}</span>
+                  {politician.verified ? (
+                    <AppIcon icon={CheckmarkBadge01Icon} size={22} className="shrink-0 text-primary" />
+                  ) : null}
+                </h1>
+                <p className="mt-0.5 text-[15px] text-muted-foreground">
+                  {officeTitle(politician.position)}
+                  {place ? ` · ${place}` : ""}
+                  {term ? ` · ${term}` : ""}
+                </p>
               </div>
-            </CardContent>
-          </Card>
+              <Button
+                variant="inverted"
+                className="shrink-0"
+                onClick={() => {
+                  if (!requireAuth("Sign in to follow this politician.")) return;
+                  followMutation.mutate();
+                }}
+                disabled={followMutation.isPending}
+              >
+                {followMutation.isPending ? "Following…" : "Follow"}
+              </Button>
+            </div>
+
+            {politician.party ? (
+              <p className="mt-3 flex items-center gap-2 text-[15px]">
+                {politician.partyImage ? (
+                  <Image src={politician.partyImage} alt="" width={20} height={20} className="size-5 rounded-full object-cover" />
+                ) : null}
+                {politician.party}
+              </p>
+            ) : null}
+
+            {politician.biography ? (
+              <div className="mt-4">
+                <Biography text={politician.biography} />
+              </div>
+            ) : null}
+
+            <p className="mt-4 flex flex-wrap gap-x-5 gap-y-1 text-[15px] text-muted-foreground">
+              <span>
+                <strong className="font-bold text-foreground">{promiseCount.toLocaleString()}</strong>{" "}
+                {promiseCount === 1 ? "promise" : "promises"}
+              </span>
+              <span>
+                <strong className="font-bold text-foreground">{issueCount.toLocaleString()}</strong>{" "}
+                {issueCount === 1 ? "issue" : "issues"}
+              </span>
+              <span>
+                <strong className="font-bold text-foreground">{(scorecard?.totalVotes ?? 0).toLocaleString()}</strong>{" "}
+                {scorecard?.totalVotes === 1 ? "rating" : "ratings"}
+              </span>
+            </p>
+          </header>
 
           {scorecard ? (
-            <Card>
-              <CardContent className="space-y-4 p-5">
-                <div>
-                  <h2 className="font-semibold">Scorecard</h2>
-                  <p className="mt-1 text-sm text-muted-foreground">
-                    {scorecard.rated
-                      ? `Based on ${scorecard.totalVotes} ${scorecard.totalVotes === 1 ? "rating" : "ratings"} from the public.`
-                      : "Live civic performance metrics for this politician."}
-                  </p>
-                </div>
-                {/* With no votes behind them, approval-style metrics would read as
-                    a measured 0% rather than "no data", so they are withheld. */}
-                {!scorecard.rated ? (
-                  <p className="rounded-xl border border-dashed p-4 text-sm text-muted-foreground">
-                    No public ratings yet — approval and performance scores appear once
-                    people start rating this politician.
-                  </p>
-                ) : null}
-                <div className="grid gap-4 md:grid-cols-2">
-                  {SCORE_METRICS.filter(
-                    (metric) => scorecard.rated || !VOTE_BACKED_METRICS.includes(metric.key)
-                  ).map((metric) => (
-                    <StatBar
-                      key={metric.key}
-                      label={metric.label}
-                      value={scorecard[metric.key]}
-                      noData={metric.source ? scorecard.coverage[metric.source] === 0 : false}
-                    />
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
+            <Section title="Scorecard">
+              <div className="mb-5 flex items-baseline gap-3">
+                {scorecard.rated ? (
+                  <>
+                    <span className="text-5xl font-bold tracking-tight tabular-nums">{Math.round(scorecard.approvalRating)}%</span>
+                    <span className="text-[15px] text-muted-foreground">
+                      approval from {scorecard.totalVotes.toLocaleString()} {scorecard.totalVotes === 1 ? "rating" : "ratings"}
+                    </span>
+                  </>
+                ) : (
+                  // With no votes behind it, a 0% would read as a measured score.
+                  <span className="text-[15px] text-muted-foreground">
+                    Not rated yet. Approval appears once people start rating this leader.
+                  </span>
+                )}
+              </div>
+              <div className="grid gap-x-8 gap-y-4 sm:grid-cols-2">
+                {SCORE_METRICS.filter(
+                  (metric) => metric.key !== "approvalRating" && (scorecard.rated || !VOTE_BACKED_METRICS.includes(metric.key))
+                ).map((metric) => (
+                  <StatBar
+                    key={metric.key}
+                    label={metric.label}
+                    value={scorecard[metric.key]}
+                    noData={metric.source ? scorecard.coverage[metric.source] === 0 : false}
+                  />
+                ))}
+              </div>
+            </Section>
           ) : null}
 
-          <Card>
-            <CardContent className="space-y-4 p-5">
-              <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-                <div>
-                  <h2 className="font-semibold">Compare politicians</h2>
-                  <p className="mt-1 text-sm text-muted-foreground">Pick another politician for a side-by-side scorecard.</p>
-                </div>
-                <select
-                  className="h-10 min-w-[220px] rounded-lg border bg-background px-3 text-sm"
-                  value={compareId}
-                  onChange={(event) => setCompareId(event.target.value)}
-                >
-                  <option value="">Select opponent</option>
-                  {compareOptions.map((option) => (
-                    <option key={option.id} value={option.id}>
-                      {option.name} · {option.party}
-                    </option>
-                  ))}
-                </select>
-              </div>
+          <Section title="Compare" subtitle="See this leader side by side with another.">
+            <div className="relative w-full sm:w-72">
+              <select
+                aria-label="Politician to compare with"
+                className="h-10 w-full appearance-none rounded-full border border-input bg-transparent pl-4 pr-9 text-sm font-medium focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                value={compareId}
+                onChange={(event) => setCompareId(event.target.value)}
+              >
+                <option value="">Choose a politician</option>
+                {compareOptions.map((option) => (
+                  <option key={option.id} value={option.id}>
+                    {option.name}
+                    {option.party ? ` · ${option.party}` : ""}
+                  </option>
+                ))}
+              </select>
+              <AppIcon
+                icon={ArrowDown01Icon}
+                size={16}
+                className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground"
+              />
+            </div>
 
-              {compareQuery.isLoading ? <p className="text-sm text-muted-foreground">Loading comparison...</p> : null}
-              {compareQuery.isError ? (
-                <p className="text-sm text-destructive">
-                  {compareQuery.error instanceof Error ? compareQuery.error.message : "Could not compare."}
-                </p>
-              ) : null}
-
-              {compareQuery.data ? (
+            {compareQuery.isLoading ? <p className="mt-4 text-[15px] text-muted-foreground">Loading comparison…</p> : null}
+            {compareQuery.isError ? (
+              <p className="mt-4 text-[15px] text-destructive">
+                {compareQuery.error instanceof Error ? compareQuery.error.message : "Could not compare."}
+              </p>
+            ) : null}
+            {compareQuery.data ? (
+              <div className="mt-4">
                 <ComparePanel
                   left={normalizePolitician(compareQuery.data.politicianA.politician)}
                   right={normalizePolitician(compareQuery.data.politicianB.politician)}
                   metrics={compareQuery.data.metrics}
                   summary={compareQuery.data.summary}
                 />
-              ) : null}
-            </CardContent>
-          </Card>
+              </div>
+            ) : null}
+          </Section>
 
           {politician.manifesto ? (
-            <Card>
-              <CardContent className="space-y-2 p-5">
-                <h2 className="font-semibold">Manifesto</h2>
-                <p className="whitespace-pre-line text-sm leading-7 text-muted-foreground">{politician.manifesto}</p>
-              </CardContent>
-            </Card>
+            <Section title="Manifesto">
+              <p className="whitespace-pre-line text-[15px] leading-6">{politician.manifesto}</p>
+            </Section>
           ) : null}
 
-          <div className="grid gap-5 lg:grid-cols-2">
-            <Card>
-              <CardContent className="space-y-3 p-5">
-                <h2 className="font-semibold">Campaign promises</h2>
-                {promisesQuery.isLoading ? <p className="text-sm text-muted-foreground">Loading...</p> : null}
-                {!promisesQuery.isLoading && promises.length === 0 ? (
-                  <p className="text-sm text-muted-foreground">No promises listed yet.</p>
-                ) : null}
-                {promises.slice(0, 6).map((promise) => (
-                  <div key={String(promise.id)} className="rounded-xl border p-3">
-                    <p className="text-sm font-medium">{String(promise.title ?? promise.promise ?? "Promise")}</p>
-                    <p className="mt-1 text-xs text-muted-foreground">{String(promise.status ?? "Tracked")}</p>
-                  </div>
+          <Section title="Campaign promises">
+            {promisesQuery.isLoading ? (
+              <Skeleton className="h-12 w-full" />
+            ) : promises.length ? (
+              <ul className="divide-y">
+                {promises.slice(0, 8).map((promise) => (
+                  <li key={String(promise.id)} className="flex items-center justify-between gap-4 py-3">
+                    <span className="text-[15px]">{String(promise.title ?? promise.promise ?? "Promise")}</span>
+                    <span className="shrink-0 rounded-full bg-secondary px-2.5 py-0.5 text-[12px] font-semibold capitalize text-muted-foreground">
+                      {String(promise.status ?? "tracked").toLowerCase().replaceAll("_", " ")}
+                    </span>
+                  </li>
                 ))}
-              </CardContent>
-            </Card>
+              </ul>
+            ) : (
+              <p className="text-[15px] text-muted-foreground">No promises recorded yet.</p>
+            )}
+          </Section>
 
-            <Card>
-              <CardContent className="space-y-3 p-5">
-                <h2 className="font-semibold">Related issues</h2>
-                {issuesQuery.isLoading ? <p className="text-sm text-muted-foreground">Loading...</p> : null}
-                {!issuesQuery.isLoading && issues.length === 0 ? (
-                  <p className="text-sm text-muted-foreground">No linked issues yet.</p>
-                ) : null}
-                {issues.slice(0, 6).map((issue) => (
-                  <Link key={issue.id} href={`/issues/${issue.id}`} className="block rounded-xl border p-3 hover:bg-accent/40">
-                    <p className="text-sm font-medium">{issue.title}</p>
-                    <p className="mt-1 text-xs text-muted-foreground">
-                      {issue.status} · {issue.upvotes.toLocaleString()} upvotes
-                    </p>
-                  </Link>
+          <Section title="Related issues">
+            {issuesQuery.isLoading ? (
+              <Skeleton className="h-12 w-full" />
+            ) : issues.length ? (
+              <ul className="divide-y">
+                {issues.slice(0, 8).map((issue) => (
+                  <li key={issue.id}>
+                    <Link href={`/issues/${issue.id}`} className="-mx-2 block rounded-lg px-2 py-3 transition-colors hover:bg-foreground/[0.03]">
+                      <span className="block text-[15px] font-medium">{issue.title}</span>
+                      <span className="block text-[13px] capitalize text-muted-foreground">
+                        {issue.status.toLowerCase().replaceAll("_", " ")} · {issue.upvotes.toLocaleString()}{" "}
+                        {issue.upvotes === 1 ? "upvote" : "upvotes"}
+                      </span>
+                    </Link>
+                  </li>
                 ))}
-              </CardContent>
-            </Card>
-          </div>
+              </ul>
+            ) : (
+              <p className="text-[15px] text-muted-foreground">No issues linked to this leader yet.</p>
+            )}
+          </Section>
         </>
       ) : null}
     </div>

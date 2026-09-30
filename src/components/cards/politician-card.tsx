@@ -3,78 +3,75 @@
 import Image from "next/image";
 import Link from "next/link";
 import { AppIcon } from "@/components/ui/icon";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
+import { ratingOfficeLabel } from "@/lib/content-utils";
 import { CheckmarkBadge01Icon } from "@/lib/icons";
 import type { Politician } from "@/types";
 
+/** Singular office name for one person ("Governor", not "Governors"). */
+export function officeTitle(position: string) {
+  const label = ratingOfficeLabel(position);
+  return label === "House of Reps" ? "House of Reps" : label.replace(/s$/, "");
+}
+
+/**
+ * Profile card: portrait, name, office and place, party, approval. The whole
+ * card is the link. Approval only; Performance duplicated it (status item 30).
+ */
 export function PoliticianCard({ politician }: { politician: Politician }) {
-  const score = politician.performanceScore || politician.approvalScore;
+  const rated = politician.approvalScore > 0;
+  const place = [politician.constituency, politician.state].filter(Boolean).join(", ");
 
   return (
-    <Card className="overflow-hidden transition-colors">
-      <CardContent className="space-y-4 p-5">
+    <Link
+      href={`/politicians/${politician.id}`}
+      className="group flex flex-col overflow-hidden rounded-2xl border bg-card transition-colors hover:bg-foreground/[0.02] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+    >
+      <div className="relative aspect-[4/3] bg-secondary">
         {politician.imageUrl ? (
-          <div className="relative h-44 w-full overflow-hidden rounded-xl bg-muted">
-            <Image
-              src={politician.imageUrl}
-              alt={politician.name}
-              fill
-              className="object-cover"
-              sizes="(max-width:768px) 100vw, 33vw"
-            />
-          </div>
-        ) : null}
+          <Image
+            src={politician.imageUrl}
+            alt=""
+            fill
+            // Portraits: anchor to the top so heads aren't cropped off.
+            className="object-cover object-top"
+            sizes="(max-width:768px) 100vw, (max-width:1280px) 50vw, 33vw"
+          />
+        ) : (
+          <span className="absolute inset-0 grid place-items-center text-4xl font-bold text-muted-foreground" aria-hidden>
+            {politician.name.charAt(0)}
+          </span>
+        )}
+      </div>
 
-        <div className="min-w-0">
-          <div className="flex items-center gap-2">
-            <h2 className="truncate font-semibold leading-5">{politician.name}</h2>
-            {politician.verified ? <AppIcon icon={CheckmarkBadge01Icon} size={18} className="shrink-0 text-primary" /> : null}
-          </div>
-          <p className="mt-1 text-sm text-muted-foreground">
-            {politician.position}
-            {politician.party ? ` · ${politician.party}` : ""}
-          </p>
-          <div className="mt-2 flex flex-wrap items-center gap-2">
-            {politician.state ? <Badge variant="secondary">{politician.state}</Badge> : null}
-            {politician.constituency ? <Badge variant="outline">{politician.constituency}</Badge> : null}
+      <div className="flex flex-1 flex-col p-4">
+        <div className="flex items-center gap-1.5">
+          <h2 className="truncate text-[17px] font-bold leading-6">{politician.name}</h2>
+          {politician.verified ? (
+            <AppIcon icon={CheckmarkBadge01Icon} size={18} className="shrink-0 text-primary" />
+          ) : null}
+        </div>
+        <p className="truncate text-[14px] text-muted-foreground">
+          {officeTitle(politician.position)}
+          {place ? ` · ${place}` : ""}
+        </p>
+
+        <div className="mt-4 flex items-end justify-between gap-3 border-t pt-3">
+          <span className="flex min-w-0 items-center gap-2 text-[13px] text-muted-foreground">
             {politician.partyImage ? (
-              <div className="relative h-5 w-5 overflow-hidden rounded-full bg-muted">
-                <Image src={politician.partyImage} alt={politician.party} fill className="object-cover" sizes="20px" />
-              </div>
+              <Image src={politician.partyImage} alt="" width={20} height={20} className="size-5 shrink-0 rounded-full object-cover" />
             ) : null}
-          </div>
+            <span className="truncate">{politician.party || "No party listed"}</span>
+          </span>
+          {rated ? (
+            <span className="shrink-0 text-right">
+              <span className="block text-xl font-bold leading-6 tabular-nums">{Math.round(politician.approvalScore)}%</span>
+              <span className="block text-[12px] text-muted-foreground">approval</span>
+            </span>
+          ) : (
+            <span className="shrink-0 text-[13px] text-muted-foreground">Not yet rated</span>
+          )}
         </div>
-
-        <div className="flex items-end justify-between gap-3">
-          <div>
-            <p className="text-2xl font-bold">{score || "—"}{score ? "%" : ""}</p>
-            <p className="text-sm text-muted-foreground">Performance</p>
-          </div>
-          <div className="text-right">
-            <p className="text-lg font-semibold">{politician.approvalScore || "—"}{politician.approvalScore ? "%" : ""}</p>
-            <p className="text-xs text-muted-foreground">Approval</p>
-          </div>
-        </div>
-
-        <div>
-          <div className="mb-2 flex justify-between text-sm">
-            <span className="text-muted-foreground">Scorecard</span>
-            <span className="font-semibold">{score}%</span>
-          </div>
-          <div className="h-2.5 overflow-hidden rounded-full bg-muted">
-            <div
-              className="h-2.5 rounded-full bg-gradient-to-r from-primary to-emerald-400 transition-all"
-              style={{ width: `${Math.max(0, Math.min(100, score))}%` }}
-            />
-          </div>
-        </div>
-
-        <Button className="w-full" variant="outline" asChild>
-          <Link href={`/politicians/${politician.id}`}>View scorecard</Link>
-        </Button>
-      </CardContent>
-    </Card>
+      </div>
+    </Link>
   );
 }

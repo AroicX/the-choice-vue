@@ -54,27 +54,20 @@ export function IssueCardSkeleton() {
   );
 }
 
+/** Matches PoliticianCard / RatingCard geometry: 4:3 image, name, meta, footer. */
 export function PoliticianCardSkeleton() {
   return (
-    <Card className="overflow-hidden">
-      <CardContent className="space-y-4 p-5">
-        <Skeleton className="h-44 w-full rounded-xl" />
-        <div className="space-y-2">
-          <Skeleton className="h-5 w-40" />
-          <Skeleton className="h-3 w-32" />
-          <div className="flex gap-2">
-            <Skeleton className="h-5 w-16 rounded-full" />
-            <Skeleton className="h-5 w-24 rounded-full" />
-          </div>
-        </div>
-        <div className="flex items-end justify-between">
-          <Skeleton className="h-8 w-16" />
+    <div className="overflow-hidden rounded-2xl border" aria-hidden>
+      <Skeleton className="aspect-[4/3] w-full rounded-none" />
+      <div className="space-y-2 p-4">
+        <Skeleton className="h-5 w-2/3" />
+        <Skeleton className="h-3.5 w-1/2" />
+        <div className="flex items-end justify-between border-t pt-3">
+          <Skeleton className="h-3.5 w-24" />
           <Skeleton className="h-6 w-12" />
         </div>
-        <Skeleton className="h-2.5 w-full rounded-full" />
-        <Skeleton className="h-9 w-full" />
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 }
 

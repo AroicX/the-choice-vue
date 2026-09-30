@@ -4,19 +4,17 @@ import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { RatingCard } from "@/components/cards/rating-card";
 import { PageHeader } from "@/components/shared/page-header";
-import { QueryListState } from "@/components/shared/query-states";
-import { GenericCardSkeleton } from "@/components/skeletons/card-skeletons";
+import { PoliticianCardSkeleton } from "@/components/skeletons/card-skeletons";
+import { TimelineEmpty, TimelineError } from "@/components/timeline/timeline";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { FilterSelect, SearchField, UnderlineTabs } from "@/components/ui/filters";
 import {
   asArray,
   normalizeRatingCandidate,
   normalizeRatingOffice,
   ratingOfficeLabel
 } from "@/lib/content-utils";
-import { cn } from "@/lib/utils";
-import { getData } from "@/services/client/api";
-import { endpoints } from "@/services/client/endpoints";
+import { ratingsService } from "@/services/ratings.service";
 import type { ApiRecord, RatingCandidate } from "@/types";
 import { useAuthStore } from "@/stores/auth-store";
 
@@ -58,14 +56,15 @@ export default function RatingsPage() {
   const viewerId = useAuthStore((state) => state.user?.id ?? "anon");
   const [office, setOffice] = useState<OfficeTab>("ALL");
   const [search, setSearch] = useState("");
-  const [party, setParty] = useState("ALL");
-  const [state, setState] = useState("ALL");
+  const [party, setParty] = useState("");
+  const [state, setState] = useState("");
 
   // Scoped by viewer: the response carries per-user `hasRated`, so an unscoped
   // key would show one account's rated state to the next person on this browser.
   const query = useQuery({
     queryKey: ["ratings", "candidates", viewerId],
-    queryFn: () => getData<ApiRecord[]>(endpoints.ratings.list, { take: 100 })
+    // Every page: take=100 silently dropped candidates past the 100th (prod has 106).
+    queryFn: () => ratingsService.listAll<ApiRecord>()
   });
 
   const candidates = useMemo(
@@ -103,8 +102,8 @@ export default function RatingsPage() {
     return candidates.filter((candidate) => {
       const candidateOffice = normalizeRatingOffice(candidate.position);
       if (office !== "ALL" && candidateOffice !== office) return false;
-      if (party !== "ALL" && (candidate.party ?? "").toUpperCase() !== party.toUpperCase()) return false;
-      if (state !== "ALL" && (candidate.state ?? "").toLowerCase() !== state.toLowerCase()) return false;
+      if (party && (candidate.party ?? "").toUpperCase() !== party.toUpperCase()) return false;
+      if (state && (candidate.state ?? "").toLowerCase() !== state.toLowerCase()) return false;
       if (!term) return true;
       return [candidate.name, candidate.party, candidate.state, candidate.constituency, candidate.position]
         .filter(Boolean)
@@ -115,141 +114,88 @@ export default function RatingsPage() {
   }, [candidates, office, party, search, state]);
 
   const grouped = useMemo(() => groupByOffice(filtered), [filtered]);
-  const hasActiveFilters = office !== "ALL" || party !== "ALL" || state !== "ALL" || Boolean(search.trim());
+  const hasActiveFilters = office !== "ALL" || Boolean(party || state || search.trim());
 
   function clearFilters() {
     setOffice("ALL");
     setSearch("");
-    setParty("ALL");
-    setState("ALL");
+    setParty("");
+    setState("");
   }
 
+  const grid = "grid gap-4 sm:grid-cols-2";
+
   return (
-    <div className="space-y-5">
-      <PageHeader
-        title="Ratings Hub"
-        description="Rate leaders by office — President, Senators, Governors, and House members."
+    <div>
+      <PageHeader title="Ratings" description="Score leaders on the goals that matter to you. One rating per person, per candidate." />
+
+      <UnderlineTabs
+        label="Office"
+        // Empty offices would be dead-end tabs; keep "All" and the active one.
+        tabs={OFFICE_TABS.filter((tab) => tab.id === "ALL" || tab.id === office || officeCounts[tab.id]).map((tab) => ({
+          id: tab.id,
+          label: tab.label,
+          count: officeCounts[tab.id] ?? 0
+        }))}
+        active={office}
+        onSelect={setOffice}
       />
 
-      <div className="-mx-1 flex gap-2 overflow-x-auto pb-1">
-        {OFFICE_TABS.map((tab) => {
-          const active = office === tab.id;
-          const count = officeCounts[tab.id] ?? 0;
-          return (
-            <button
-              key={tab.id}
-              type="button"
-              onClick={() => setOffice(tab.id)}
-              className={cn(
-                "shrink-0 rounded-full px-4 py-2 text-sm font-medium transition",
-                active
-                  ? "bg-primary text-primary-foreground shadow-sm"
-                  : "border border-border/70 bg-card text-muted-foreground hover:bg-accent hover:text-foreground"
-              )}
-            >
-              {tab.label}
-              <span className={cn("ml-2 tabular-nums", active ? "text-primary-foreground/80" : "text-muted-foreground")}>
-                {count}
-              </span>
-            </button>
-          );
-        })}
+      <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:items-center">
+        <SearchField value={search} onChange={setSearch} placeholder="Search candidates" className="sm:max-w-sm sm:flex-1" />
+        <div className="flex flex-wrap items-center gap-2">
+          <FilterSelect label="Party" value={party} onChange={setParty} options={parties} allLabel="All parties" />
+          <FilterSelect label="State" value={state} onChange={setState} options={states} allLabel="All states" />
+          {hasActiveFilters ? (
+            <Button type="button" variant="ghost" onClick={clearFilters}>
+              Clear
+            </Button>
+          ) : null}
+        </div>
       </div>
 
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        <Input
-          value={search}
-          onChange={(event) => setSearch(event.target.value)}
-          placeholder="Search by name, party, state..."
-          aria-label="Search candidates"
-        />
-        <select
-          value={party}
-          onChange={(event) => setParty(event.target.value)}
-          className="h-10 rounded-md border border-input bg-background px-3 text-sm"
-          aria-label="Filter by party"
-        >
-          <option value="ALL">All parties</option>
-          {parties.map((item) => (
-            <option key={item} value={item}>
-              {item}
-            </option>
-          ))}
-        </select>
-        <select
-          value={state}
-          onChange={(event) => setState(event.target.value)}
-          className="h-10 rounded-md border border-input bg-background px-3 text-sm"
-          aria-label="Filter by state"
-        >
-          <option value="ALL">All states</option>
-          {states.map((item) => (
-            <option key={item} value={item}>
-              {item}
-            </option>
-          ))}
-        </select>
-        <Button
-          type="button"
-          variant="outline"
-          disabled={!hasActiveFilters}
-          onClick={clearFilters}
-          className="w-full"
-        >
-          Clear filters
-        </Button>
-      </div>
-
-      {query.isLoading ? (
-        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-          {Array.from({ length: 6 }).map((_, index) => (
-            <GenericCardSkeleton key={index} />
-          ))}
-        </div>
-      ) : filtered.length === 0 ? (
-        <QueryListState
-          isLoading={false}
-          isEmpty
-          count={0}
-          skeleton={<GenericCardSkeleton />}
-          emptyMessage="No candidates matched your search or filters."
-        >
-          {null}
-        </QueryListState>
-      ) : office === "ALL" ? (
-        <div className="space-y-8">
-          {grouped.map((group) => (
-            <section key={group.key} className="space-y-4">
-              <div className="flex items-end justify-between gap-3 border-b border-border/60 pb-2">
-                <div>
-                  <h2 className="text-lg font-semibold">{group.label}</h2>
-                  <p className="text-sm text-muted-foreground">
-                    {group.items.length} candidate{group.items.length === 1 ? "" : "s"}
-                  </p>
-                </div>
-                <Button type="button" variant="ghost" size="sm" onClick={() => setOffice(group.key as OfficeTab)}>
-                  View only
-                </Button>
-              </div>
-              <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-                {group.items.map((candidate) => (
-                  <RatingCard key={candidate.id} candidate={candidate} />
-                ))}
-              </div>
-            </section>
-          ))}
-        </div>
-      ) : (
-        <div className="space-y-4">
-          <div className="flex items-end justify-between gap-3">
-            <div>
-              <h2 className="text-lg font-semibold">{ratingOfficeLabel(office)}</h2>
-              <p className="text-sm text-muted-foreground">
-                {filtered.length} candidate{filtered.length === 1 ? "" : "s"}
-              </p>
-            </div>
+      <div className="mt-6">
+        {query.isLoading ? (
+          <div className={grid}>
+            {Array.from({ length: 6 }).map((_, index) => (
+              <PoliticianCardSkeleton key={index} />
+            ))}
           </div>
-          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+        ) : query.isError ? (
+          <TimelineError onRetry={() => query.refetch()} what="candidates" />
+        ) : filtered.length === 0 ? (
+          hasActiveFilters ? (
+            <TimelineEmpty title="No matches" body="No candidates match these filters. Try widening your search." />
+          ) : (
+            <TimelineEmpty title="No candidates yet" body="Candidates will appear here once they’re added." />
+          )
+        ) : office === "ALL" ? (
+          <div className="space-y-10">
+            {grouped.map((group) => (
+              <section key={group.key} aria-labelledby={`office-${group.key}`}>
+                <div className="mb-3 flex items-baseline justify-between gap-3">
+                  <h2 id={`office-${group.key}`} className="text-xl font-bold tracking-tight">
+                    {group.label}
+                    <span className="ml-2 text-[15px] font-medium text-muted-foreground">{group.items.length}</span>
+                  </h2>
+                  <button
+                    type="button"
+                    onClick={() => setOffice(group.key as OfficeTab)}
+                    className="rounded text-[15px] text-primary hover:underline"
+                  >
+                    Show all
+                  </button>
+                </div>
+                <div className={grid}>
+                  {group.items.map((candidate) => (
+                    <RatingCard key={candidate.id} candidate={candidate} />
+                  ))}
+                </div>
+              </section>
+            ))}
+          </div>
+        ) : (
+          <div className={grid}>
             {filtered
               .slice()
               .sort((a, b) => a.name.localeCompare(b.name))
@@ -257,8 +203,8 @@ export default function RatingsPage() {
                 <RatingCard key={candidate.id} candidate={candidate} />
               ))}
           </div>
-        </div>
-      )}
+        )}
+      </div>
     </div>
   );
 }

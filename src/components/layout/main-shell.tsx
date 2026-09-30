@@ -315,13 +315,8 @@ export function MainShell({ children }: { children: React.ReactNode }) {
           <main className={cn("min-w-0 pb-24 lg:pb-0", !timeline && "px-4 py-5 sm:px-6")}>{children}</main>
         </div>
 
-        {/* Right sidebar: timeline routes only, so wide pages keep their width. */}
-        <aside
-          className={cn(
-            "sticky top-0 hidden h-screen w-[380px] shrink-0 overflow-y-auto pl-7 pr-2",
-            timeline && "xl:block"
-          )}
-        >
+        {/* Right sidebar: search and widgets, on every page from xl up. */}
+        <aside className="sticky top-0 hidden h-screen w-[380px] shrink-0 overflow-y-auto pl-7 pr-2 xl:block">
           <div className="sticky top-0 z-10 bg-background pb-3 pt-1.5">
             <form role="search" onSubmit={handleSearch} className="relative">
               <AppIcon

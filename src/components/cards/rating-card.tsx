@@ -5,11 +5,12 @@ import Link from "next/link";
 import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { gooeyToast } from "goey-toast";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
+import { officeTitle } from "@/components/cards/politician-card";
+import { AppIcon } from "@/components/ui/icon";
+import { CheckmarkCircle02Icon } from "@/lib/icons";
 import { useRequireAuth } from "@/hooks/use-require-auth";
-import { normalizeRatingOffice, ratingOfficeLabel } from "@/lib/content-utils";
+import { normalizeRatingOffice } from "@/lib/content-utils";
 import { getData } from "@/services/client/api";
 import { endpoints } from "@/services/client/endpoints";
 import { RateCandidateModal } from "@/components/cards/rate-candidate-modal";
@@ -73,88 +74,82 @@ export function RatingCard({ candidate }: { candidate: RatingCandidate }) {
     }
   });
 
+  const place = [candidate.constituency, candidate.state].filter(Boolean).join(", ");
+  const background = [candidate.profession, candidate.education].filter(Boolean).join(" · ");
+
   return (
-    <Card className="overflow-hidden transition-colors">
-      <CardContent className="space-y-4 p-5">
+    <article className="flex flex-col overflow-hidden rounded-2xl border bg-card">
+      <div className="relative aspect-[4/3] bg-secondary">
         {candidate.image ? (
-          <div className="relative h-44 w-full overflow-hidden rounded-xl bg-muted">
-            <Image src={candidate.image} alt={candidate.name} fill className="object-cover" sizes="(max-width:768px) 100vw, 33vw" />
-          </div>
-        ) : null}
+          <Image
+            src={candidate.image}
+            alt=""
+            fill
+            className="object-cover object-top"
+            sizes="(max-width:768px) 100vw, (max-width:1280px) 50vw, 33vw"
+          />
+        ) : (
+          <span className="absolute inset-0 grid place-items-center text-4xl font-bold text-muted-foreground" aria-hidden>
+            {candidate.name.charAt(0)}
+          </span>
+        )}
+      </div>
 
-        <div className="min-w-0">
-          <h2 className="font-semibold leading-5">{candidate.name}</h2>
-          <p className="mt-1 text-sm text-muted-foreground">
-            {ratingOfficeLabel(candidate.position)}
-            {candidate.party ? ` · ${candidate.party}` : ""}
-          </p>
-          {/* The disabled "Rated" action already signals the rated state, so no
-              badge here competing with the location chips for the same row. */}
-          <div className="mt-2 flex flex-wrap items-center gap-2">
-            {candidate.state ? <Badge variant="secondary">{candidate.state}</Badge> : null}
-            {candidate.constituency ? <Badge variant="outline">{candidate.constituency}</Badge> : null}
-            {candidate.partyImage ? (
-              <div className="relative h-5 w-5 overflow-hidden rounded-full bg-muted">
-                <Image src={candidate.partyImage} alt={candidate.party ?? "Party"} fill className="object-cover" sizes="20px" />
-              </div>
-            ) : null}
-          </div>
-          {(candidate.education || candidate.profession) ? (
-            <p className="mt-2 text-xs text-muted-foreground">
-              {[candidate.profession, candidate.education].filter(Boolean).join(" · ")}
-            </p>
+      <div className="flex flex-1 flex-col p-4">
+        <h2 className="truncate text-[17px] font-bold leading-6">{candidate.name}</h2>
+        <p className="truncate text-[14px] text-muted-foreground">
+          {officeTitle(candidate.position)}
+          {place ? ` · ${place}` : ""}
+        </p>
+        <p className="mt-1 flex min-w-0 items-center gap-2 text-[13px] text-muted-foreground">
+          {candidate.partyImage ? (
+            <Image src={candidate.partyImage} alt="" width={18} height={18} className="size-[18px] shrink-0 rounded-full object-cover" />
           ) : null}
-        </div>
+          <span className="truncate">{[candidate.party, background].filter(Boolean).join(" · ") || " "}</span>
+        </p>
 
-        {/* Score and actions each get their own row. Sharing one row squeezed
-            "Public score · 3 votes" into three wrapped lines. */}
-        <div className="space-y-3 border-t border-border/60 pt-4">
-          <div className="flex items-baseline justify-between gap-3">
-            {candidate.rated ? (
-              <>
-                <div className="flex items-baseline gap-2">
-                  <span className="text-2xl font-bold tabular-nums leading-none">
-                    {candidate.score}%
-                  </span>
-                  <span className="text-xs uppercase tracking-wide text-muted-foreground">
-                    Public score
-                  </span>
-                </div>
-                <span className="shrink-0 whitespace-nowrap text-xs text-muted-foreground">
-                  {candidate.totalVotes} {candidate.totalVotes === 1 ? "vote" : "votes"}
-                </span>
-              </>
-            ) : (
-              // No votes means no public score; a big "0%" would read as an
-              // actual rating of zero.
-              <span className="text-sm text-muted-foreground">Not yet rated</span>
-            )}
-          </div>
+        {/* Spacer keeps footers aligned across cards with more or less detail. */}
+        <div className="min-h-4 flex-1" aria-hidden />
+        <div className="flex items-center justify-between gap-3 border-t pt-3">
+          {candidate.rated ? (
+            <span>
+              <span className="block text-xl font-bold leading-6 tabular-nums">{candidate.score}%</span>
+              <span className="block text-[12px] text-muted-foreground">
+                {candidate.totalVotes.toLocaleString()} {candidate.totalVotes === 1 ? "rating" : "ratings"}
+              </span>
+            </span>
+          ) : (
+            // No votes means no public score; "0%" would read as a real rating.
+            <span className="text-[13px] text-muted-foreground">Not yet rated</span>
+          )}
 
-          <div className="flex gap-2">
+          <div className="flex shrink-0 items-center gap-1">
             {candidate.politicianId ? (
-              <Button variant="outline" size="sm" className="flex-1" asChild>
+              <Button variant="ghost" size="sm" asChild>
                 <Link href={`/politicians/${candidate.politicianId}`}>Profile</Link>
               </Button>
             ) : null}
-            <Button
-              size="sm"
-              variant={hasRated ? "secondary" : "default"}
-              className="flex-1"
-              // Gate before opening: asking for sign-in only at submit meant
-              // filling in every criterion first, then losing it to a login prompt.
-              onClick={() => {
-                if (!requireAuth("Sign in to rate this candidate.")) return;
-                setOpen(true);
-              }}
-              disabled={hasRated}
-            >
-              {hasRated ? "Rated" : "Rate"}
-            </Button>
+            {hasRated ? (
+              <span className="inline-flex h-9 items-center gap-1.5 rounded-full bg-secondary px-4 text-sm font-bold text-muted-foreground">
+                <AppIcon icon={CheckmarkCircle02Icon} size={16} />
+                Rated
+              </span>
+            ) : (
+              <Button
+                size="sm"
+                // Gate before opening: asking for sign-in only at submit meant
+                // filling in every criterion first, then losing it to a login prompt.
+                onClick={() => {
+                  if (!requireAuth("Sign in to rate this candidate.")) return;
+                  setOpen(true);
+                }}
+              >
+                Rate
+              </Button>
+            )}
           </div>
         </div>
-
-      </CardContent>
+      </div>
 
       <RateCandidateModal
         open={open && !hasRated}
@@ -182,6 +177,6 @@ export function RatingCard({ candidate }: { candidate: RatingCandidate }) {
         isLoadingCriteria={!ownCriteria && criteriaQuery.isLoading}
         hasCriteriaError={!ownCriteria && criteriaQuery.isError}
       />
-    </Card>
+    </article>
   );
 }
