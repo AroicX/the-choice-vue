@@ -20,8 +20,6 @@ type Slide = {
   accent: string;
   /** Halftone art from scripts/make-carousel-art.py (public/carousel). */
   art: string;
-  /** Photographer of the source photo (Unsplash; credit is optional but kind). */
-  credit: string;
   primary: Action;
   secondary?: Action;
 };
@@ -90,8 +88,7 @@ export function CivicCarousel({ dateLabel }: { dateLabel: string }) {
       body: "Know your leaders. Track their performance. Hold power to account.",
       background: "#0B2E22",
       accent: "#6EE7A0",
-      art: "/carousel/pulse.webp",
-      credit: "Salem Ochidi",
+      art: "/carousel/pulse.webp", // Unsplash, Salem Ochidi
       primary: isAuthenticated ? { label: "Rate a leader", href: "/ratings" } : { label: "Create account", href: "/register" },
       secondary: isAuthenticated
         ? { label: "Report an issue", onClick: reportIssue }
@@ -104,8 +101,7 @@ export function CivicCarousel({ dateLabel }: { dateLabel: string }) {
       body: "Score leaders on jobs, security, power and more — it takes about a minute.",
       background: "#141A2B",
       accent: "#93A8D8",
-      art: "/carousel/rate.webp",
-      credit: "Olumide Bamgbelu",
+      art: "/carousel/rate.webp", // Unsplash, Olumide Bamgbelu
       primary: { label: "Start rating", href: "/ratings" },
       secondary: { label: "Browse leaders", href: "/politicians" }
     },
@@ -116,8 +112,7 @@ export function CivicCarousel({ dateLabel }: { dateLabel: string }) {
       body: "Report broken roads, blackouts or vote buying, and follow it until it’s resolved.",
       background: "#4A2419",
       accent: "#F0A585",
-      art: "/carousel/report.webp",
-      credit: "Opeyemi Adisa",
+      art: "/carousel/report.webp", // Unsplash, Opeyemi Adisa
       primary: { label: "Report an issue", onClick: reportIssue },
       secondary: { label: "See issues", href: "/issues" }
     }
@@ -179,7 +174,6 @@ export function CivicCarousel({ dateLabel }: { dateLabel: string }) {
               priority={index === 0}
               className="object-cover opacity-60 [mask-image:linear-gradient(to_left,black_25%,transparent_80%)]"
             />
-            <p className="absolute bottom-2 right-3 text-[11px] text-white/60">Photo: {slide.credit}</p>
             <div className="relative flex min-h-[236px] flex-col justify-between p-6 sm:p-7">
               <div>
                 <p className="text-[13px] font-medium" style={{ color: slide.accent }} suppressHydrationWarning>
