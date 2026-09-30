@@ -8,7 +8,7 @@ export type ShareQuotedPost = Pick<Post, "author" | "handle" | "topic" | "messag
 };
 
 export type SharePayload = {
-  type: "post" | "comment" | "election";
+  type: "post" | "comment" | "election" | "poll";
   url: string;
   author: string;
   handle?: string;
@@ -20,6 +20,8 @@ export type SharePayload = {
   /** Elections: status line (e.g. "Voting now") and candidates for the card. */
   status?: string;
   candidates?: Array<{ label: string; image?: string }>;
+  /** Polls: options, with percentages once there are votes. */
+  options?: Array<{ label: string; percent?: number }>;
 };
 
 type ShareModalState = {

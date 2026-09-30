@@ -303,15 +303,36 @@ export function normalizeVoteOptions(raw: ApiRecord, totalVotes?: number) {
 
 export function normalizePoll(raw: ApiRecord): Poll {
   const votes = Number(raw.pollCount ?? raw.voteCount ?? 0);
+  const status = String(raw.status ?? "CREATED").toUpperCase();
+  const expiresAt = raw.expiresAt ? String(raw.expiresAt) : undefined;
+  const expired = expiresAt ? new Date(expiresAt).getTime() <= Date.now() : false;
+  const discussion = raw.discussions && typeof raw.discussions === "object" ? (raw.discussions as ApiRecord) : null;
   return {
     id: recordId(raw),
     question: String(raw.question ?? raw.title ?? "Untitled poll"),
     votes: votes || normalizeVoteOptions(raw).reduce((total, option) => total + (option.rawValue ?? 0), 0),
-    expiresIn: String(raw.status ?? raw.expiresIn ?? "Active"),
+    status,
+    closed: /(CLOSED|ENDED|COMPLETED)/.test(status) || expired,
+    expiresAt,
+    createdAt: raw.createdAt ? String(raw.createdAt) : undefined,
     options: normalizeVoteOptions(raw, votes || undefined),
     hasVoted: Boolean(raw.hasVoted),
-    userOption: raw.userOption ? String(raw.userOption) : null
+    userOption: raw.userOption ? String(raw.userOption) : null,
+    discussionId: String(raw.discussionsId ?? discussion?.id ?? "") || undefined,
+    topic: discussion?.topic ? String(discussion.topic) : undefined
   };
+}
+
+/** "Ends in 3 days" / "Ends in 5 hours" for an open poll with an expiry. */
+export function endsIn(expiresAt?: string) {
+  if (!expiresAt) return null;
+  const ms = new Date(expiresAt).getTime() - Date.now();
+  if (!Number.isFinite(ms) || ms <= 0) return null;
+  const hours = Math.round(ms / 3_600_000);
+  if (hours < 1) return "Ends in under an hour";
+  if (hours < 48) return `Ends in ${hours} hour${hours === 1 ? "" : "s"}`;
+  const days = Math.round(hours / 24);
+  return `Ends in ${days} days`;
 }
 
 export function normalizeElection(raw: ApiRecord): Election {

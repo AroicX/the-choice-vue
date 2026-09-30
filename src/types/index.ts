@@ -206,10 +206,18 @@ export type Poll = {
   id: string;
   question: string;
   votes: number;
-  expiresIn: string;
+  /** Raw status (CREATED / ONGOING / CLOSED). */
+  status: string;
+  /** Closed by status or past expiresAt. Voting is off; show final results. */
+  closed: boolean;
+  expiresAt?: string;
+  createdAt?: string;
   options: VoteOption[];
   hasVoted?: boolean;
   userOption?: string | null;
+  /** The discussion room the poll belongs to. */
+  discussionId?: string;
+  topic?: string;
 };
 
 export type Election = {

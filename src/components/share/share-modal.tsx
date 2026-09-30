@@ -103,8 +103,9 @@ export function ShareModal() {
   if (!isOpen || !sharePayload) return null;
 
   const isComment = sharePayload.type === "comment";
-  const isElection = sharePayload.type === "election";
-  const title = isComment ? "Share comment" : isElection ? "Share election" : "Share post";
+  const isElection = sharePayload.type === "election" || sharePayload.type === "poll";
+  const title =
+    sharePayload.type === "poll" ? "Share poll" : isComment ? "Share comment" : isElection ? "Share election" : "Share post";
   const filename = `choice9ja-${sharePayload.type}-${Date.now()}.png`;
 
   async function waitForImages() {
@@ -330,6 +331,21 @@ export function ShareModal() {
                 <>
                   {sharePayload.status ? <p className="text-[13px] font-semibold text-[#6EE7A0]">{sharePayload.status}</p> : null}
                   <p className="mt-1 text-[22px] font-bold leading-7 tracking-[-0.01em]">{sharePayload.message}</p>
+                  {sharePayload.options?.length ? (
+                    <div className="mt-4 space-y-1.5">
+                      {sharePayload.options.slice(0, 5).map((option) => (
+                        <div key={option.label} className="relative overflow-hidden rounded-md border border-white/20 px-3 py-2 text-[14px]">
+                          {option.percent !== undefined ? (
+                            <span className="absolute inset-y-0 left-0 bg-white/15" style={{ width: `${option.percent}%` }} />
+                          ) : null}
+                          <span className="relative flex justify-between gap-3">
+                            <span className="truncate">{option.label}</span>
+                            {option.percent !== undefined ? <span className="font-bold">{option.percent}%</span> : null}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  ) : null}
                   {sharePayload.candidates?.length ? (
                     <>
                       <div className="mt-4 flex">

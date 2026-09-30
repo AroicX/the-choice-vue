@@ -254,3 +254,19 @@ export function PostRowSkeleton() {
 export function RatingCardSkeleton() {
   return <PoliticianCardSkeleton />;
 }
+
+/** Matches PollCard in the timeline: icon, context, question, option bars. */
+export function PollRowSkeleton() {
+  return (
+    <div className="flex gap-3 border-b px-4 py-3" aria-hidden>
+      <Skeleton className="size-10 shrink-0 rounded-full" />
+      <div className="flex-1 space-y-2 pt-1">
+        <Skeleton className="h-3 w-1/3" />
+        <Skeleton className="h-4 w-4/5" />
+        {Array.from({ length: 3 }).map((_, index) => (
+          <Skeleton key={index} className="h-9 w-full rounded-md" />
+        ))}
+      </div>
+    </div>
+  );
+}

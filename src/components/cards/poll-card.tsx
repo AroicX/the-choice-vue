@@ -1,61 +1,89 @@
 "use client";
 
-import { useState } from "react";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { gooeyToast } from "goey-toast";
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { OptionVotePanel } from "@/components/voting/option-vote-panel";
-import { useRequireAuth } from "@/hooks/use-require-auth";
-import { votePollMutation } from "@/services/mutations/civic.mutations";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { PostAction } from "@/components/cards/post-card";
+import { PollBlock } from "@/components/polls/poll-block";
+import { AppIcon } from "@/components/ui/icon";
+import { formatRelativeTime } from "@/lib/content-utils";
+import { CheckListIcon, Message01Icon, Share08Icon } from "@/lib/icons";
+import { cn } from "@/lib/utils";
+import { useShareModalStore, type SharePayload } from "@/stores/share-modal-store";
 import type { Poll } from "@/types";
 
-export function PollCard({ poll }: { poll: Poll }) {
-  const queryClient = useQueryClient();
-  const { requireAuth } = useRequireAuth();
-  const [votedLocally, setVotedLocally] = useState(false);
-  const hasVoted = Boolean(poll.hasVoted || votedLocally);
+export function pollSharePayload(poll: Poll): SharePayload {
+  const total = poll.options.reduce((sum, option) => sum + (option.rawValue ?? 0), 0);
+  return {
+    type: "poll",
+    url: `${window.location.origin}/polls/${poll.id}`,
+    author: "Choice9ja",
+    message: poll.question,
+    status: `Poll · ${total.toLocaleString()} ${total === 1 ? "vote" : "votes"}${poll.closed ? " · Final results" : ""}`,
+    options: poll.options.map((option) => ({ label: option.label, percent: total ? option.value : undefined }))
+  };
+}
 
-  const voteMutation = useMutation({
-    mutationFn: (value: string) => votePollMutation({ pollId: poll.id, value }),
-    onSuccess: () => {
-      setVotedLocally(true);
-      gooeyToast.success("Vote cast");
-      queryClient.invalidateQueries({ queryKey: ["polls"] });
-      queryClient.invalidateQueries({ queryKey: ["discussion-polls"] });
-      queryClient.invalidateQueries({ queryKey: ["detail"] });
-      queryClient.invalidateQueries({ queryKey: ["discourse", "polls"] });
-      queryClient.invalidateQueries({ queryKey: ["shell", "polls"] });
-    },
-    onError: (error) => {
-      const message = error instanceof Error ? error.message : "Try again.";
-      if (/already/i.test(message)) setVotedLocally(true);
-      gooeyToast.error("Could not cast vote", { description: message });
-    }
-  });
+/**
+ * A poll as a timeline row (or bordered card): room context, question, the
+ * inline poll, and share. Tapping the row outside the options opens the poll.
+ */
+export function PollCard({ poll, variant = "card" }: { poll: Poll; variant?: "timeline" | "card" }) {
+  const router = useRouter();
+  const openShareModal = useShareModalStore((state) => state.open);
+  const time = formatRelativeTime(poll.createdAt);
 
   return (
-    <Card className="animate-fade-up">
-      <CardHeader>
-        <div className="flex items-start justify-between gap-3">
-          <CardTitle>{poll.question}</CardTitle>
-          <Badge variant="secondary">{poll.expiresIn}</Badge>
+    <article
+      onClick={() => {
+        if (window.getSelection()?.toString()) return;
+        router.push(`/polls/${poll.id}`);
+      }}
+      className={cn(
+        "flex cursor-pointer gap-3 px-4 py-3 transition-colors hover:bg-foreground/[0.02]",
+        variant === "timeline" ? "border-b" : "rounded-xl border"
+      )}
+    >
+      <span className="grid size-10 shrink-0 place-items-center rounded-full bg-secondary" aria-hidden>
+        <AppIcon icon={CheckListIcon} size={20} />
+      </span>
+      <div className="min-w-0 flex-1">
+        <p className="flex min-w-0 items-center gap-1 text-[13px] text-muted-foreground">
+          <span className="font-semibold text-foreground">Poll</span>
+          {poll.topic && poll.discussionId ? (
+            <>
+              <span aria-hidden>·</span>
+              <Link
+                href={`/discussions/${poll.discussionId}`}
+                onClick={(event) => event.stopPropagation()}
+                className="truncate hover:underline"
+              >
+                {poll.topic}
+              </Link>
+            </>
+          ) : null}
+          {time ? (
+            <>
+              <span aria-hidden>·</span>
+              <Link href={`/polls/${poll.id}`} onClick={(event) => event.stopPropagation()} className="shrink-0 hover:underline">
+                {time}
+              </Link>
+            </>
+          ) : null}
+        </p>
+        <p className="mb-3 mt-0.5 text-[15px] font-medium leading-5">{poll.question}</p>
+        <PollBlock poll={poll} />
+        <div className="-ml-2 mt-1 flex" onClick={(event) => event.stopPropagation()}>
+          {poll.discussionId ? (
+            <PostAction
+              icon={Message01Icon}
+              label="Discuss in the room"
+              tone="primary"
+              onClick={() => router.push(`/discussions/${poll.discussionId}`)}
+            />
+          ) : null}
+          <PostAction icon={Share08Icon} label="Share poll" tone="sky" onClick={() => openShareModal(pollSharePayload(poll))} />
         </div>
-      </CardHeader>
-      <CardContent>
-        <OptionVotePanel
-          onBeforeSelect={() => requireAuth("Sign in to cast your vote.")}
-          options={poll.options}
-          totalVotes={poll.votes}
-          hasVoted={hasVoted}
-          initialSelectedKey={poll.userOption}
-          isSubmitting={voteMutation.isPending}
-          onVote={(value) => {
-            if (!requireAuth("Sign in to cast your vote.")) return;
-            voteMutation.mutate(value);
-          }}
-        />
-      </CardContent>
-    </Card>
+      </div>
+    </article>
   );
 }
