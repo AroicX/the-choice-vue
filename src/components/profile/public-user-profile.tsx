@@ -3,20 +3,21 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { gooeyToast } from "goey-toast";
+import { IssueCard } from "@/components/cards/issue-card";
 import { PostCard } from "@/components/cards/post-card";
+import { RoomCover } from "@/components/discourse/room-cover";
 import { MediaLightbox } from "@/components/media/media-lightbox";
-import { PageHeader } from "@/components/shared/page-header";
-import { QueryListState } from "@/components/shared/query-states";
-import { PostCardSkeleton, ProfileSkeleton } from "@/components/skeletons/card-skeletons";
-import { AppIcon } from "@/components/ui/icon";
-import { Badge } from "@/components/ui/badge";
+import { ProfileEditModal, type ProfileUpdatePayload } from "@/components/profile/profile-edit-modal";
+import { PostRowSkeleton } from "@/components/skeletons/card-skeletons";
+import { TimelineEmpty, TimelineHeader, type TimelineTab } from "@/components/timeline/timeline";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
+import { AppIcon } from "@/components/ui/icon";
+import { Skeleton } from "@/components/ui/skeleton";
 import { useRequireAuth } from "@/hooks/use-require-auth";
 import {
-  formatDate,
   formatRelativeTime,
   normalizeIssue,
   normalizePost,
@@ -24,492 +25,373 @@ import {
   userDisplayName,
   userInitials
 } from "@/lib/content-utils";
-import {
-  CheckmarkBadge01Icon,
-  Comment01Icon,
-  FavouriteIcon,
-  ImageAdd01Icon,
-  Message01Icon,
-  Settings01Icon,
-  UserAdd01Icon,
-  Video01Icon
-} from "@/lib/icons";
-import { cn } from "@/lib/utils";
+import { ArrowLeft01Icon, CheckmarkBadge01Icon, Location01Icon, Video01Icon } from "@/lib/icons";
 import { api } from "@/services/client/api";
 import { endpoints } from "@/services/client/endpoints";
 import { userQueries } from "@/services/queries/user.queries";
 import { useAuthStore } from "@/stores/auth-store";
-import type { ApiRecord, MediaAttachment } from "@/types";
+import type { ApiRecord, MediaAttachment, User } from "@/types";
 
 type ProfileTab = "posts" | "media" | "likes" | "comments" | "votes" | "issues";
 
-const TABS: Array<{ id: ProfileTab; label: string }> = [
+const TABS: TimelineTab<ProfileTab>[] = [
   { id: "posts", label: "Posts" },
+  { id: "comments", label: "Replies" },
   { id: "media", label: "Media" },
   { id: "likes", label: "Likes" },
-  { id: "comments", label: "Comments" },
   { id: "votes", label: "Votes" },
   { id: "issues", label: "Issues" }
 ];
 
-function StatChip({ label, value }: { label: string; value: number }) {
+const items = (value: unknown) => (Array.isArray(value) ? (value as ApiRecord[]) : []);
+
+function Rows() {
   return (
-    <div className="rounded-2xl border border-border/70 bg-card/80 px-4 py-3">
-      <p className="text-xl font-bold tabular-nums">{value.toLocaleString()}</p>
-      <p className="mt-0.5 text-xs text-muted-foreground">{label}</p>
-    </div>
+    <>
+      {Array.from({ length: 3 }).map((_, index) => (
+        <PostRowSkeleton key={index} />
+      ))}
+    </>
   );
 }
 
+/**
+ * The one profile page, X-style: cover, avatar, bio, counts and activity
+ * tabs. On your own profile the action is "Edit profile" (opens the editor).
+ */
 export function PublicUserProfile({ identifier }: { identifier: string }) {
+  const router = useRouter();
   const queryClient = useQueryClient();
   const sessionUser = useAuthStore((state) => state.user);
   const { requireAuth } = useRequireAuth();
   const [tab, setTab] = useState<ProfileTab>("posts");
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
+  const [editOpen, setEditOpen] = useState(false);
+  const [following, setFollowing] = useState<boolean | null>(null);
 
   const handle = identifier.replace(/^@+/, "");
-
   const profileQuery = useQuery({
-    queryKey: ["public-profile", handle],
+    queryKey: ["public-profile", handle, sessionUser?.id ?? null],
     queryFn: () => userQueries.publicProfile(handle),
     enabled: Boolean(handle)
   });
-
   const profile = profileQuery.data ? normalizeUserProfile(profileQuery.data as ApiRecord) : null;
   const isSelf = Boolean(profile?.viewer?.isSelf || (sessionUser && profile && sessionUser.id === profile.id));
+  const isFollowing = following ?? Boolean(profile?.viewer?.isFollowing);
 
-  const postsQuery = useQuery({
-    queryKey: ["public-profile", handle, "posts"],
-    queryFn: () => userQueries.publicPosts(handle),
-    enabled: Boolean(handle) && tab === "posts"
-  });
-
+  const enabled = (which: ProfileTab) => Boolean(handle) && tab === which;
+  const postsQuery = useQuery({ queryKey: ["public-profile", handle, "posts"], queryFn: () => userQueries.publicPosts(handle), enabled: enabled("posts") });
   const mediaQuery = useQuery({
     queryKey: ["public-profile", handle, "media"],
     queryFn: () => userQueries.publicMedia(handle),
     enabled: Boolean(handle) && (tab === "media" || lightboxIndex != null)
   });
+  const likesQuery = useQuery({ queryKey: ["public-profile", handle, "likes"], queryFn: () => userQueries.publicLikes(handle), enabled: enabled("likes") });
+  const commentsQuery = useQuery({ queryKey: ["public-profile", handle, "comments"], queryFn: () => userQueries.publicComments(handle), enabled: enabled("comments") });
+  const votesQuery = useQuery({ queryKey: ["public-profile", handle, "votes"], queryFn: () => userQueries.publicVotes(handle), enabled: enabled("votes") });
+  const issuesQuery = useQuery({ queryKey: ["public-profile", handle, "issues"], queryFn: () => userQueries.publicIssues(handle), enabled: enabled("issues") });
 
-  const likesQuery = useQuery({
-    queryKey: ["public-profile", handle, "likes"],
-    queryFn: () => userQueries.publicLikes(handle),
-    enabled: Boolean(handle) && tab === "likes"
-  });
-
-  const commentsQuery = useQuery({
-    queryKey: ["public-profile", handle, "comments"],
-    queryFn: () => userQueries.publicComments(handle),
-    enabled: Boolean(handle) && tab === "comments"
-  });
-
-  const votesQuery = useQuery({
-    queryKey: ["public-profile", handle, "votes"],
-    queryFn: () => userQueries.publicVotes(handle),
-    enabled: Boolean(handle) && tab === "votes"
-  });
-
-  const issuesQuery = useQuery({
-    queryKey: ["public-profile", handle, "issues"],
-    queryFn: () => userQueries.publicIssues(handle),
-    enabled: Boolean(handle) && tab === "issues"
-  });
-
-  const posts = useMemo(
-    () => asArrayPosts(postsQuery.data?.items).map((record) => normalizePost(record, sessionUser?.id)),
-    [postsQuery.data, sessionUser?.id]
+  const posts = useMemo(() => items(postsQuery.data?.items).map((record) => normalizePost(record, sessionUser?.id)), [postsQuery.data, sessionUser?.id]);
+  const liked = useMemo(() => items(likesQuery.data?.items).map((record) => normalizePost(record, sessionUser?.id)), [likesQuery.data, sessionUser?.id]);
+  const media = useMemo(
+    () =>
+      items(mediaQuery.data?.items)
+        .map((record) => ({
+          id: String(record.id ?? record.url),
+          url: String(record.url ?? ""),
+          type: (record.type === "video" ? "video" : "image") as MediaAttachment["type"]
+        }))
+        .filter((item) => item.url),
+    [mediaQuery.data]
   );
-  const likedPosts = useMemo(
-    () => asArrayPosts(likesQuery.data?.items).map((record) => normalizePost(record, sessionUser?.id)),
-    [likesQuery.data, sessionUser?.id]
-  );
-  const mediaItems = useMemo(() => {
-    return (mediaQuery.data?.items ?? []).map((item) => {
-      const record = item as ApiRecord;
-      return {
-        id: String(record.id ?? record.url),
-        url: String(record.url ?? ""),
-        type: (record.type === "video" ? "video" : "image") as MediaAttachment["type"],
-        postId: record.postId ? String(record.postId) : undefined,
-        postMessage: record.postMessage ? String(record.postMessage) : undefined
-      };
-    }).filter((item) => item.url);
-  }, [mediaQuery.data]);
 
-  const lightboxItems: MediaAttachment[] = mediaItems.map(({ id, url, type }) => ({ id, url, type }));
-
-  const followMutation = useMutation({
+  const follow = useMutation({
     mutationFn: async () => {
       if (!profile?.id) throw new Error("Profile unavailable.");
-      if (profile.viewer?.isFollowing) {
-        return api.delete(endpoints.follows.unfollowUser(profile.id));
-      }
-      return api.post(endpoints.follows.followUser(profile.id));
+      return isFollowing ? api.delete(endpoints.follows.unfollowUser(profile.id)) : api.post(endpoints.follows.followUser(profile.id));
     },
-    onSuccess: () => {
-      gooeyToast.success(profile?.viewer?.isFollowing ? "Unfollowed" : "Following");
-      queryClient.invalidateQueries({ queryKey: ["public-profile", handle] });
-    },
+    onMutate: () => setFollowing(!isFollowing),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["public-profile", handle] }),
     onError: (error) => {
-      gooeyToast.error("Could not update follow", {
-        description: error instanceof Error ? error.message : "Try again."
-      });
+      setFollowing(null);
+      gooeyToast.error("Couldn’t update follow", { description: error instanceof Error ? error.message : "Try again." });
     }
   });
 
+  const update = useMutation({
+    mutationFn: async (payload: ProfileUpdatePayload) => {
+      const response = await api.patch(endpoints.users.update, payload);
+      const body = response.data as { data?: User } | User;
+      return (body && typeof body === "object" && "data" in body ? body.data : body) as User;
+    },
+    onSuccess: (updated) => {
+      const normalized = normalizeUserProfile(updated as unknown as ApiRecord);
+      useAuthStore.setState((state) => ({ user: state.user ? { ...state.user, ...normalized } : normalized }));
+      gooeyToast.success("Profile updated");
+      setEditOpen(false);
+      queryClient.invalidateQueries({ queryKey: ["public-profile"] });
+      // A new username changes this page's address.
+      if (normalized.username && normalized.username !== handle) router.replace(`/u/${normalized.username}`);
+    },
+    onError: (error) => gooeyToast.error("Couldn’t update your profile", { description: error instanceof Error ? error.message : "Try again." })
+  });
+
+  const backBar = (
+    <div className="sticky top-[53px] z-20 flex h-[53px] items-center gap-6 bg-background/85 px-2 backdrop-blur-md lg:top-0">
+      <button
+        type="button"
+        onClick={() => (window.history.length > 1 ? router.back() : router.push("/home"))}
+        aria-label="Back"
+        className="grid size-9 place-items-center rounded-full transition-colors hover:bg-accent"
+      >
+        <AppIcon icon={ArrowLeft01Icon} size={20} />
+      </button>
+      <div className="min-w-0">
+        <p className="truncate text-[17px] font-bold leading-5">{profile ? userDisplayName(profile) : "Profile"}</p>
+        {profile?.stats ? (
+          <p className="text-[13px] text-muted-foreground">
+            {profile.stats.posts.toLocaleString()} {profile.stats.posts === 1 ? "post" : "posts"}
+          </p>
+        ) : null}
+      </div>
+    </div>
+  );
+
   if (profileQuery.isLoading) {
     return (
-      <div>
-        <PageHeader title="Citizen profile" description="Posts, media, votes, and civic engagement." />
-        <ProfileSkeleton />
-      </div>
+      <>
+        {backBar}
+        <Skeleton className="aspect-[3/1] w-full rounded-none" />
+        <div className="px-4">
+          <Skeleton className="-mt-12 size-24 rounded-full ring-4 ring-background" />
+          <Skeleton className="mt-3 h-6 w-1/2" />
+          <Skeleton className="mt-2 h-4 w-1/3" />
+        </div>
+      </>
     );
   }
 
-  if (profileQuery.error || !profile) {
+  if (profileQuery.isError || !profile) {
     return (
-      <div>
-        <PageHeader title="Citizen profile" description="Posts, media, votes, and civic engagement." />
-        <Card>
-          <CardContent className="space-y-3 p-6">
-            <p className="font-semibold">Profile not found</p>
-            <p className="text-sm text-muted-foreground">
-              {profileQuery.error instanceof Error
-                ? profileQuery.error.message
-                : `No citizen matched @${handle}.`}
-            </p>
-            <Button asChild variant="outline">
-              <Link href="/feed">Back to feed</Link>
-            </Button>
-          </CardContent>
-        </Card>
-      </div>
+      <>
+        {backBar}
+        <TimelineEmpty title="This account doesn’t exist" body={`No one is using @${handle}. Try searching for someone else.`} href="/home" action="Back to home" />
+      </>
     );
   }
 
   const stats = profile.stats;
+  const joined = profile.createdAt
+    ? new Date(profile.createdAt).toLocaleDateString("en-GB", { month: "long", year: "numeric" })
+    : null;
 
   return (
-    <div className="space-y-6">
-      <Card className="overflow-hidden border-primary/10">
-        <div className="h-28 bg-gradient-to-r from-primary/20 via-emerald-500/10 to-sky-500/10 sm:h-36" />
-        <CardContent className="relative space-y-5 px-5 pb-6 pt-0 sm:px-6">
-          <div className="-mt-12 flex flex-col gap-4 sm:-mt-14 sm:flex-row sm:items-end sm:justify-between">
-            <div className="flex items-end gap-4">
-              {profile.profilePic ? (
-                <Image
-                  src={profile.profilePic}
-                  alt={userDisplayName(profile)}
-                  width={112}
-                  height={112}
-                  className="h-24 w-24 rounded-2xl border-4 border-background object-cover shadow-sm sm:h-28 sm:w-28"
-                />
-              ) : (
-                <div className="grid h-24 w-24 place-items-center rounded-2xl border-4 border-background bg-primary/15 text-2xl font-bold text-primary shadow-sm sm:h-28 sm:w-28 sm:text-3xl">
-                  {userInitials(profile)}
-                </div>
-              )}
-              <div className="min-w-0 pb-1">
-                <div className="flex flex-wrap items-center gap-2">
-                  <h1 className="truncate text-2xl font-bold tracking-tight">{userDisplayName(profile)}</h1>
-                  {profile.verified || profile.verifiedPhone ? (
-                    <AppIcon icon={CheckmarkBadge01Icon} size={20} className="shrink-0 text-primary" />
-                  ) : null}
-                </div>
-                <p className="mt-1 text-sm text-muted-foreground">
-                  @{profile.username}
-                  {profile.state ? ` · ${profile.state}` : ""}
-                </p>
-              </div>
-            </div>
+    <>
+      {backBar}
+      <RoomCover seed={profile.id} text={profile.state ?? ""} className="aspect-[3/1] w-full" />
 
-            <div className="flex flex-wrap gap-2">
-              {isSelf ? (
-                <>
-                  <Button asChild>
-                    <Link href="/profile">Edit profile</Link>
-                  </Button>
-                  <Button variant="outline" asChild>
-                    <Link href="/settings">
-                      <AppIcon icon={Settings01Icon} size={16} className="mr-2" />
-                      Settings
-                    </Link>
-                  </Button>
-                </>
-              ) : (
-                <Button
-                  onClick={() => {
-                    if (!requireAuth("Sign in to follow this citizen.")) return;
-                    followMutation.mutate();
-                  }}
-                  disabled={followMutation.isPending}
-                  variant={profile.viewer?.isFollowing ? "outline" : "default"}
-                >
-                  <AppIcon icon={UserAdd01Icon} size={16} className="mr-2" />
-                  {profile.viewer?.isFollowing ? "Following" : "Follow"}
-                </Button>
-              )}
-            </div>
-          </div>
-
-          {profile.about ? <p className="max-w-2xl text-sm leading-7 text-foreground sm:text-base">{profile.about}</p> : null}
-
-          <div className="flex flex-wrap gap-2">
-            <Badge variant="secondary">{profile.role.replaceAll("_", " ")}</Badge>
-            {profile.verifiedPhone ? <Badge variant="outline">Verified phone</Badge> : null}
-            <Badge variant="outline">{profile.reputationScore ?? 0} reputation</Badge>
-            {profile.createdAt ? <Badge variant="outline">Joined {formatDate(profile.createdAt)}</Badge> : null}
-          </div>
-
-          {stats ? (
-            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
-              <StatChip label="Posts" value={stats.posts} />
-              <StatChip label="Likes" value={stats.likesReceived} />
-              <StatChip label="Comments" value={stats.comments} />
-              <StatChip label="Votes" value={stats.votes} />
-              <StatChip label="Media" value={stats.media} />
-              <StatChip label="Followers" value={stats.followers} />
-            </div>
-          ) : null}
-        </CardContent>
-      </Card>
-
-      <div className="-mx-1 flex gap-1 overflow-x-auto pb-1">
-        {TABS.map((item) => {
-          const active = tab === item.id;
-          return (
-            <button
-              key={item.id}
-              type="button"
-              onClick={() => setTab(item.id)}
-              className={cn(
-                "shrink-0 rounded-full px-4 py-2 text-sm font-medium transition",
-                active ? "bg-primary text-primary-foreground shadow-sm" : "text-muted-foreground hover:bg-accent hover:text-foreground"
-              )}
-            >
-              {item.label}
-            </button>
-          );
-        })}
-      </div>
-
-      {tab === "posts" ? (
-        <QueryListState
-          isLoading={postsQuery.isLoading}
-          isEmpty={!posts.length}
-          count={3}
-          skeleton={<PostCardSkeleton />}
-          emptyMessage="No posts yet."
-          className="space-y-4"
-        >
-          {posts.map((post) => (
-            <PostCard key={post.id} post={post} />
-          ))}
-        </QueryListState>
-      ) : null}
-
-      {tab === "likes" ? (
-        <QueryListState
-          isLoading={likesQuery.isLoading}
-          isEmpty={!likedPosts.length}
-          count={3}
-          skeleton={<PostCardSkeleton />}
-          emptyMessage="No liked posts yet."
-          className="space-y-4"
-        >
-          {likedPosts.map((post) => (
-            <PostCard key={post.id} post={post} />
-          ))}
-        </QueryListState>
-      ) : null}
-
-      {tab === "media" ? (
-        mediaQuery.isLoading ? (
-          <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
-            {Array.from({ length: 6 }).map((_, index) => (
-              <div key={index} className="aspect-square animate-pulse rounded-xl bg-muted" />
-            ))}
-          </div>
-        ) : mediaItems.length ? (
-          <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
-            {mediaItems.map((item, index) => (
-              <button
-                key={`${item.postId}-${item.url}`}
-                type="button"
-                onClick={() => setLightboxIndex(index)}
-                className="group relative aspect-square overflow-hidden rounded-xl bg-muted"
+      <section className="px-4 pb-3">
+        <div className="flex items-start justify-between gap-3">
+          <span className="relative -mt-12 size-24 shrink-0 overflow-hidden rounded-full bg-secondary ring-4 ring-background sm:-mt-16 sm:size-32">
+            {profile.profilePic ? (
+              <Image src={profile.profilePic} alt="" fill className="object-cover" sizes="128px" priority />
+            ) : (
+              <span className="absolute inset-0 grid place-items-center text-3xl font-bold" aria-hidden>
+                {userInitials(profile)}
+              </span>
+            )}
+          </span>
+          <div className="pt-3">
+            {isSelf ? (
+              <Button variant="outline" onClick={() => setEditOpen(true)}>
+                Edit profile
+              </Button>
+            ) : (
+              <Button
+                variant={isFollowing ? "outline" : "inverted"}
+                disabled={follow.isPending}
+                onClick={() => {
+                  if (!requireAuth("Sign in to follow this citizen.")) return;
+                  follow.mutate();
+                }}
               >
-                {item.type === "video" ? (
-                  <div className="grid h-full place-items-center bg-slate-900 text-white">
-                    <AppIcon icon={Video01Icon} size={28} />
-                  </div>
-                ) : (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img src={item.url} alt="" className="h-full w-full object-cover transition group-hover:scale-[1.03]" />
-                )}
-                <span className="absolute bottom-2 left-2 rounded-md bg-black/55 px-1.5 py-0.5 text-[10px] text-white">
-                  <AppIcon icon={item.type === "video" ? Video01Icon : ImageAdd01Icon} size={12} className="inline" />
-                </span>
-              </button>
-            ))}
+                {isFollowing ? "Following" : "Follow"}
+              </Button>
+            )}
           </div>
-        ) : (
-          <EmptyState icon={ImageAdd01Icon} message="No media attachments yet." />
-        )
-      ) : null}
+        </div>
 
-      {tab === "comments" ? (
-        commentsQuery.isLoading ? (
-          <div className="space-y-3">
-            {Array.from({ length: 3 }).map((_, index) => (
-              <div key={index} className="h-24 animate-pulse rounded-xl bg-muted" />
-            ))}
-          </div>
-        ) : commentsQuery.data?.items.length ? (
-          <div className="space-y-3">
-            {commentsQuery.data.items.map((item) => {
-              const comment = item as ApiRecord;
+        <h1 className="mt-3 flex items-center gap-1.5 text-xl font-bold leading-6 tracking-tight">
+          <span className="min-w-0 truncate">{userDisplayName(profile)}</span>
+          {profile.verified || profile.verifiedPhone ? <AppIcon icon={CheckmarkBadge01Icon} size={20} className="shrink-0 text-primary" /> : null}
+        </h1>
+        <p className="text-[15px] text-muted-foreground">@{profile.username}</p>
+
+        {profile.about ? <p className="mt-3 whitespace-pre-line text-[15px] leading-5">{profile.about}</p> : null}
+
+        <p className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-[15px] text-muted-foreground">
+          {profile.state ? (
+            <span className="inline-flex items-center gap-1">
+              <AppIcon icon={Location01Icon} size={16} />
+              {profile.state}
+            </span>
+          ) : null}
+          {joined ? <span>Joined {joined}</span> : null}
+        </p>
+
+        {stats ? (
+          <p className="mt-3 flex flex-wrap gap-x-5 gap-y-1 text-[15px] text-muted-foreground">
+            <span>
+              <strong className="font-bold text-foreground">{stats.followers.toLocaleString()}</strong> {stats.followers === 1 ? "Follower" : "Followers"}
+            </span>
+            <span>
+              <strong className="font-bold text-foreground">{stats.likesReceived.toLocaleString()}</strong> {stats.likesReceived === 1 ? "Like" : "Likes"}
+            </span>
+            <span>
+              <strong className="font-bold text-foreground">{stats.votes.toLocaleString()}</strong> {stats.votes === 1 ? "Vote" : "Votes"}
+            </span>
+          </p>
+        ) : null}
+      </section>
+
+      <TimelineHeader tabs={TABS} active={tab} onSelect={setTab} className="static border-t" />
+
+      <div role="tabpanel">
+        {tab === "posts" ? (
+          postsQuery.isLoading ? (
+            <Rows />
+          ) : posts.length ? (
+            posts.map((post) => <PostCard key={post.id} post={post} variant="timeline" />)
+          ) : (
+            <TimelineEmpty title={isSelf ? "You haven’t posted yet" : "No posts yet"} body={isSelf ? "Join a discussion room and add your voice." : `When @${profile.username} posts, it’ll show up here.`} href={isSelf ? "/discourse" : undefined} action={isSelf ? "Browse rooms" : undefined} />
+          )
+        ) : null}
+
+        {tab === "likes" ? (
+          likesQuery.isLoading ? <Rows /> : liked.length ? liked.map((post) => <PostCard key={post.id} post={post} variant="timeline" />) : <TimelineEmpty title="No likes yet" body="Posts they like will show up here." />
+        ) : null}
+
+        {tab === "media" ? (
+          mediaQuery.isLoading ? (
+            <div className="grid grid-cols-3 gap-0.5">
+              {Array.from({ length: 6 }).map((_, index) => (
+                <Skeleton key={index} className="aspect-square rounded-none" />
+              ))}
+            </div>
+          ) : media.length ? (
+            <div className="grid grid-cols-3 gap-0.5">
+              {media.map((item, index) => (
+                <button
+                  key={`${item.id}-${index}`}
+                  type="button"
+                  onClick={() => setLightboxIndex(index)}
+                  className="relative aspect-square overflow-hidden bg-secondary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  aria-label={item.type === "video" ? "Open video" : "Open photo"}
+                >
+                  {item.type === "video" ? (
+                    <span className="grid h-full place-items-center bg-[#0F1419] text-white">
+                      <AppIcon icon={Video01Icon} size={28} />
+                    </span>
+                  ) : (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={item.url} alt="" className="size-full object-cover" />
+                  )}
+                </button>
+              ))}
+            </div>
+          ) : (
+            <TimelineEmpty title="No photos or videos yet" body="Media from their posts will show up here." />
+          )
+        ) : null}
+
+        {tab === "comments" ? (
+          commentsQuery.isLoading ? (
+            <Rows />
+          ) : items(commentsQuery.data?.items).length ? (
+            items(commentsQuery.data?.items).map((comment) => {
               const post = comment.posts as ApiRecord | undefined;
               return (
-                <Card key={String(comment.id)}>
-                  <CardContent className="space-y-3 p-4">
-                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                      <AppIcon icon={Comment01Icon} size={14} />
-                      {comment.createdAt ? formatRelativeTime(String(comment.createdAt)) : "Comment"}
-                    </div>
-                    <p className="text-sm leading-6">{String(comment.message ?? "")}</p>
-                    {post?.id ? (
-                      <Link
-                        href={`/threads/post/${post.id}`}
-                        className="block rounded-xl border border-border/70 bg-muted/40 p-3 transition hover:bg-accent/40"
-                      >
-                        <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">On post</p>
-                        <p className="mt-1 line-clamp-2 text-sm">{String(post.message ?? "View post")}</p>
-                      </Link>
-                    ) : null}
-                  </CardContent>
-                </Card>
+                <Link
+                  key={String(comment.id)}
+                  href={post?.id ? `/threads/post/${post.id}#comments` : "#"}
+                  className="block border-b px-4 py-3 transition-colors hover:bg-foreground/[0.02]"
+                >
+                  <p className="text-[13px] text-muted-foreground">
+                    Replied {comment.createdAt ? formatRelativeTime(String(comment.createdAt)) : ""}
+                  </p>
+                  <p className="mt-0.5 text-[15px] leading-5">{String(comment.message ?? "")}</p>
+                  {post?.message ? (
+                    <p className="mt-2 line-clamp-2 rounded-lg border px-3 py-2 text-[14px] text-muted-foreground">{String(post.message)}</p>
+                  ) : null}
+                </Link>
               );
-            })}
-          </div>
-        ) : (
-          <EmptyState icon={Comment01Icon} message="No comments yet." />
-        )
-      ) : null}
+            })
+          ) : (
+            <TimelineEmpty title="No replies yet" body="Replies to posts will show up here." />
+          )
+        ) : null}
 
-      {tab === "votes" ? (
-        votesQuery.isLoading ? (
-          <div className="space-y-3">
-            {Array.from({ length: 3 }).map((_, index) => (
-              <div key={index} className="h-20 animate-pulse rounded-xl bg-muted" />
-            ))}
-          </div>
-        ) : votesQuery.data?.items.length ? (
-          <div className="space-y-3">
-            {votesQuery.data.items.map((item) => {
-              const vote = item as ApiRecord;
+        {tab === "votes" ? (
+          votesQuery.isLoading ? (
+            <Rows />
+          ) : items(votesQuery.data?.items).length ? (
+            items(votesQuery.data?.items).map((vote) => {
               const poll = vote.poll as ApiRecord | null | undefined;
               const election = vote.election as ApiRecord | null | undefined;
               const isPoll = String(vote.targetType) === "POLL";
-              const href = isPoll && poll?.id
-                ? `/polls/${poll.id}`
-                : election?.id
-                  ? `/elections/${election.id}`
-                  : null;
-              const title = isPoll
-                ? String(poll?.question ?? "Poll vote")
-                : String(election?.title ?? "Election vote");
-
-              const content = (
-                <CardContent className="flex items-start justify-between gap-3 p-4">
-                  <div className="min-w-0">
-                    <Badge variant="secondary">{isPoll ? "Poll" : "Election"}</Badge>
-                    <p className="mt-2 font-medium">{title}</p>
-                    <p className="mt-1 text-xs text-muted-foreground">
-                      {vote.optionId ? `Option ${String(vote.optionId)}` : "Voted"}
-                      {vote.createdAt ? ` · ${formatRelativeTime(String(vote.createdAt))}` : ""}
-                    </p>
-                  </div>
-                </CardContent>
+              const href = isPoll && poll?.id ? `/polls/${poll.id}` : election?.id ? `/elections/${election.id}` : null;
+              const title = isPoll ? String(poll?.question ?? "A poll") : String(election?.title ?? "An election");
+              const body = (
+                <>
+                  <p className="text-[13px] text-muted-foreground">
+                    Voted in {isPoll ? "a poll" : "a mock election"}
+                    {vote.createdAt ? ` · ${formatRelativeTime(String(vote.createdAt))}` : ""}
+                  </p>
+                  <p className="mt-0.5 text-[15px] font-medium leading-5">{title}</p>
+                </>
               );
-
               return href ? (
-                <Link key={String(vote.id)} href={href} className="block rounded-xl transition hover:opacity-95">
-                  <Card>{content}</Card>
+                <Link key={String(vote.id)} href={href} className="block border-b px-4 py-3 transition-colors hover:bg-foreground/[0.02]">
+                  {body}
                 </Link>
               ) : (
-                <Card key={String(vote.id)}>{content}</Card>
+                <div key={String(vote.id)} className="border-b px-4 py-3">
+                  {body}
+                </div>
               );
-            })}
-          </div>
-        ) : (
-          <EmptyState icon={FavouriteIcon} message="No poll or election votes yet." />
-        )
+            })
+          ) : (
+            <TimelineEmpty title="No votes yet" body="Polls and mock elections they vote in will show up here." />
+          )
+        ) : null}
+
+        {tab === "issues" ? (
+          issuesQuery.isLoading ? (
+            <Rows />
+          ) : items(issuesQuery.data?.items).length ? (
+            items(issuesQuery.data?.items).map((record) => {
+              const issue = normalizeIssue(record);
+              return <IssueCard key={issue.id} issue={issue} />;
+            })
+          ) : (
+            <TimelineEmpty title="No issues reported" body="Issues they report will show up here." href={isSelf ? "/issues/create" : undefined} action={isSelf ? "Report an issue" : undefined} />
+          )
+        ) : null}
+      </div>
+
+      {lightboxIndex != null && media.length ? (
+        <MediaLightbox items={media} index={lightboxIndex} onClose={() => setLightboxIndex(null)} onChange={setLightboxIndex} />
       ) : null}
 
-      {tab === "issues" ? (
-        issuesQuery.isLoading ? (
-          <div className="space-y-3">
-            {Array.from({ length: 3 }).map((_, index) => (
-              <div key={index} className="h-24 animate-pulse rounded-xl bg-muted" />
-            ))}
-          </div>
-        ) : issuesQuery.data?.items.length ? (
-          <div className="space-y-3">
-            {issuesQuery.data.items.map((item) => {
-              const issue = normalizeIssue(item as ApiRecord);
-              return (
-                <Link key={issue.id} href={`/issues/${issue.id}`} className="block">
-                  <Card className="transition hover:border-primary/30">
-                    <CardContent className="space-y-2 p-4">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <Badge variant="secondary">{issue.status}</Badge>
-                        {issue.location ? <Badge variant="outline">{issue.location}</Badge> : null}
-                      </div>
-                      <p className="font-medium">{issue.title}</p>
-                      <p className="line-clamp-2 text-sm text-muted-foreground">{issue.description}</p>
-                      <p className="text-xs text-muted-foreground">
-                        {issue.upvotes.toLocaleString()} upvotes
-                        {issue.createdAt ? ` · ${formatRelativeTime(issue.createdAt)}` : ""}
-                      </p>
-                    </CardContent>
-                  </Card>
-                </Link>
-              );
-            })}
-          </div>
-        ) : (
-          <EmptyState icon={Message01Icon} message="No issues reported yet." />
-        )
-      ) : null}
-
-      {lightboxIndex != null && lightboxItems.length ? (
-        <MediaLightbox
-          items={lightboxItems}
-          index={lightboxIndex}
-          onClose={() => setLightboxIndex(null)}
-          onChange={setLightboxIndex}
+      {isSelf && sessionUser ? (
+        <ProfileEditModal
+          open={editOpen}
+          user={{ ...sessionUser, ...profile }}
+          loading={update.isPending}
+          onClose={() => setEditOpen(false)}
+          onSubmit={(payload) => update.mutate(payload)}
         />
       ) : null}
-    </div>
+    </>
   );
-}
-
-function EmptyState({ icon, message }: { icon: typeof Message01Icon; message: string }) {
-  return (
-    <Card>
-      <CardContent className="flex flex-col items-center gap-3 px-6 py-12 text-center">
-        <span className="grid h-12 w-12 place-items-center rounded-2xl bg-muted text-muted-foreground">
-          <AppIcon icon={icon} size={22} />
-        </span>
-        <p className="text-sm text-muted-foreground">{message}</p>
-      </CardContent>
-    </Card>
-  );
-}
-
-function asArrayPosts(value: unknown) {
-  if (!value) return [] as ApiRecord[];
-  if (Array.isArray(value)) return value as ApiRecord[];
-  return [] as ApiRecord[];
 }

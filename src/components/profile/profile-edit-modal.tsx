@@ -182,9 +182,9 @@ export function ProfileEditModal({
 
   return (
     <div className="fixed inset-0 z-[100] flex items-end justify-center p-0 sm:items-center sm:p-4">
-      <button type="button" aria-label="Close edit profile" className="absolute inset-0 bg-slate-900/45 backdrop-blur-[2px]" onClick={onClose} />
+      <button type="button" aria-label="Close edit profile" className="absolute inset-0 bg-black/60 backdrop-blur-[2px] dark:bg-black/70" onClick={onClose} />
 
-      <div className="relative z-10 flex max-h-[92vh] w-full max-w-lg flex-col overflow-hidden rounded-t-3xl border border-border bg-background shadow-2xl sm:rounded-3xl">
+      <div className="relative z-10 flex max-h-[92vh] w-full max-w-lg flex-col overflow-hidden rounded-t-2xl border border-border bg-popover dark:border-white/10 sm:rounded-2xl">
         <div className="flex items-center justify-between gap-3 border-b border-border/70 px-5 py-4">
           <div>
             <h2 className="text-lg font-semibold">Edit profile</h2>
