@@ -330,7 +330,7 @@ export function MainShell({ children }: { children: React.ReactNode }) {
                 onChange={(event) => setSearch(event.target.value)}
                 placeholder="Search leaders"
                 aria-label="Search leaders"
-                className="h-11 w-full rounded-[10px] border border-transparent bg-secondary pl-12 pr-4 text-[15px] placeholder:text-muted-foreground focus:border-primary focus:bg-background focus:outline-none"
+                className="h-11 w-full rounded-full border border-transparent bg-secondary pl-12 pr-4 text-[15px] placeholder:text-muted-foreground focus:border-primary focus:bg-background focus:outline-none"
               />
             </form>
           </div>

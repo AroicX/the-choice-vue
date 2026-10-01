@@ -286,7 +286,7 @@ export function ShareModal() {
         role="dialog"
         aria-modal="true"
         aria-label={title}
-        className="relative z-10 max-h-[92vh] w-full max-w-[440px] overflow-y-auto rounded-t-xl border border-border bg-popover dark:border-white/10 sm:rounded-xl"
+        className="relative z-10 max-h-[92vh] w-full max-w-[440px] overflow-y-auto rounded-t-[12px] border border-border bg-popover dark:border-white/10 sm:rounded-[12px]"
       >
         <div className="flex items-center justify-between px-5 pb-2 pt-4">
           <h2 className="text-[17px] font-semibold">{title}</h2>
@@ -304,7 +304,7 @@ export function ShareModal() {
             forest halftone with a dark wash for legibility. Plain <img> and
             gradients (no CSS masks) so html-to-image renders it faithfully. */}
         <div className="px-5">
-          <div ref={cardRef} className="relative overflow-hidden rounded-lg bg-[#0B2E22] p-5 text-white">
+          <div ref={cardRef} className="relative overflow-hidden rounded-[8px] bg-[#0B2E22] p-5 text-white">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src="/carousel/pulse.webp" alt="" className="absolute inset-0 size-full object-cover opacity-50" />
             <div className="absolute inset-0 bg-gradient-to-br from-[#0B2E22] via-[#0B2E22]/85 to-[#0B2E22]/40" aria-hidden />

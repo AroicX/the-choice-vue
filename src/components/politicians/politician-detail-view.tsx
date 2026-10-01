@@ -331,7 +331,7 @@ export function PoliticianDetailView({ politicianId }: { politicianId: string })
             <div className="relative w-full sm:w-72">
               <select
                 aria-label="Politician to compare with"
-                className="h-10 w-full appearance-none rounded-[10px] border border-input bg-transparent pl-4 pr-9 text-sm font-medium focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                className="h-10 w-full appearance-none rounded-full border border-input bg-transparent pl-4 pr-9 text-sm font-medium focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                 value={compareId}
                 onChange={(event) => setCompareId(event.target.value)}
               >

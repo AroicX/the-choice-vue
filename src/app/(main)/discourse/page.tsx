@@ -155,7 +155,7 @@ function DiscourseContent() {
               onChange={(event) => setSearch(event.target.value)}
               placeholder="Search rooms"
               aria-label="Search rooms"
-              className="h-10 w-full rounded-[10px] border border-transparent bg-secondary pl-11 pr-4 text-[15px] placeholder:text-muted-foreground focus:border-primary focus:bg-background focus:outline-none"
+              className="h-10 w-full rounded-full border border-transparent bg-secondary pl-11 pr-4 text-[15px] placeholder:text-muted-foreground focus:border-primary focus:bg-background focus:outline-none"
             />
           </div>
         </div>

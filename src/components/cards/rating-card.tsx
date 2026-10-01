@@ -138,7 +138,7 @@ export function RatingCard({ candidate }: { candidate: RatingCandidate }) {
             </span>
           </span>
           {hasRated ? (
-            <span className="inline-flex h-9 shrink-0 items-center gap-1.5 rounded-[10px] bg-secondary px-4 text-sm font-medium text-muted-foreground">
+            <span className="inline-flex h-9 shrink-0 items-center gap-1.5 rounded-full bg-secondary px-4 text-sm font-medium text-muted-foreground">
               <AppIcon icon={CheckmarkCircle02Icon} size={16} />
               Rated
             </span>

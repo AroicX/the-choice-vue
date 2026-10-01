@@ -152,7 +152,7 @@ export function CivicCarousel({ dateLabel }: { dateLabel: string }) {
     >
       <div
         ref={trackRef}
-        className="flex snap-x snap-mandatory overflow-x-auto rounded-2xl [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+        className="flex snap-x snap-mandatory overflow-x-auto rounded-[12px] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
       >
         {slides.map((slide, index) => (
           <div

@@ -256,7 +256,7 @@ export function DiscourseRoomView({ discussionId }: { discussionId: string }) {
         <div className="flex items-start justify-between gap-4">
           <h1 className="pt-1 text-xl font-bold leading-6 tracking-tight">{title}</h1>
           {isMember ? (
-            <span className="inline-flex h-10 items-center rounded-[10px] border px-5 text-sm font-medium">Joined</span>
+            <span className="inline-flex h-10 items-center rounded-full border px-5 text-sm font-medium">Joined</span>
           ) : (
             <Button variant="inverted" onClick={handleJoin} disabled={joinMutation.isPending}>
               {joinMutation.isPending ? "Joining…" : "Join"}

@@ -106,7 +106,7 @@ export function RegisterForm() {
 
         {signup.error ? <AuthError error={signup.error} /> : null}
 
-        <Button className="!mt-6 h-11 w-full" disabled={signup.isPending}>
+        <Button className="!mt-6 h-11 w-full rounded-[10px]" disabled={signup.isPending}>
           {signup.isPending ? "Creating account…" : "Create account"}
         </Button>
       </form>

@@ -67,15 +67,10 @@ const config: Config = {
       fontFamily: {
         sans: ["var(--font-sans)", "ui-sans-serif", "system-ui", "sans-serif"]
       },
-      // Deliberately tight scale: large radii everywhere read as soft/"vibe
-      // coded". Pills (rounded-full) are for avatars, dots and small chips.
       borderRadius: {
-        sm: "4px",
-        md: "6px",
         lg: "var(--radius)",
-        xl: "10px",
-        "2xl": "12px",
-        "3xl": "14px"
+        md: "calc(var(--radius) - 2px)",
+        sm: "calc(var(--radius) - 4px)"
       },
       boxShadow: {
         // Neutral elevation only; the old green "glow" is retired app-wide.
