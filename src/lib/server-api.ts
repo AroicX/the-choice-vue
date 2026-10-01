@@ -45,7 +45,9 @@ export function excerpt(text: unknown, max = 160) {
 
 
 /** Title/description plus matching Open Graph and Twitter fields. */
-export function pageMetadata({ title, description, path }: { title: string; description: string; path: string }): Metadata {
+export function pageMetadata({ title: rawTitle, description, path }: { title: string; description: string; path: string }): Metadata {
+  // User-entered titles often carry stray spaces ("Lagos is smelling ").
+  const title = rawTitle.replace(/\s+/g, " ").trim();
   return {
     title: `${title} · ${SITE_NAME}`,
     description,

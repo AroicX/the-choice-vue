@@ -191,6 +191,13 @@ export type Issue = {
   politicianName?: string;
   politicianImage?: string;
   createdByName?: string;
+  createdById?: string;
+  createdByUsername?: string;
+  createdByAvatar?: string;
+  /** The viewer has upvoted this issue (one upvote per person). */
+  hasUpvoted?: boolean;
+  /** Raw ISSUE_TYPE: LOCAL / STATE / NATIONAL. */
+  scope?: string;
   createdAt?: string;
 };
 

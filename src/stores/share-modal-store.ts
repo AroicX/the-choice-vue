@@ -8,7 +8,7 @@ export type ShareQuotedPost = Pick<Post, "author" | "handle" | "topic" | "messag
 };
 
 export type SharePayload = {
-  type: "post" | "comment" | "election" | "poll";
+  type: "post" | "comment" | "election" | "poll" | "issue";
   url: string;
   author: string;
   handle?: string;

@@ -165,10 +165,12 @@ export function normalizeIssue(raw: ApiRecord): Issue {
 
   return {
     id: recordId(raw),
-    title: String(raw.title ?? "Untitled issue"),
-    description: String(raw.description ?? ""),
-    location: [raw.ward, raw.lga, raw.state].filter(Boolean).join(", ") || String(raw.location ?? "Nigeria"),
-    category: String(raw.category ?? raw.type ?? "Civic issue"),
+    title: String(raw.title ?? "Untitled issue").trim(),
+    description: String(raw.description ?? "").trim(),
+    location:
+      [raw.ward, raw.lga, raw.state].map((part) => String(part ?? "").trim()).filter(Boolean).join(", ") ||
+      String(raw.location ?? "Nigeria"),
+    category: String(raw.category ?? raw.type ?? "Civic issue").trim(),
     status: (String(raw.status ?? "OPEN") as Issue["status"]),
     upvotes: Number(raw.upvoteCount ?? raw.upvotes ?? raw.votes ?? 0),
     comments: Number(raw.commentCount ?? raw.comments ?? 0),
@@ -183,6 +185,11 @@ export function normalizeIssue(raw: ApiRecord): Issue {
     createdByName: createdBy
       ? [createdBy.firstName, createdBy.lastName].filter(Boolean).join(" ") || String(createdBy.username ?? "Citizen")
       : undefined,
+    createdById: String(createdBy?.id ?? raw.createdById ?? "") || undefined,
+    createdByUsername: createdBy?.username ? String(createdBy.username) : undefined,
+    createdByAvatar: createdBy?.profilePic ? String(createdBy.profilePic) : undefined,
+    hasUpvoted: Boolean(raw.hasUpvoted),
+    scope: raw.type ? String(raw.type) : undefined,
     createdAt: raw.createdAt ? String(raw.createdAt) : undefined
   };
 }

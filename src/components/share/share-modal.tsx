@@ -103,9 +103,9 @@ export function ShareModal() {
   if (!isOpen || !sharePayload) return null;
 
   const isComment = sharePayload.type === "comment";
-  const isElection = sharePayload.type === "election" || sharePayload.type === "poll";
+  const isElection = sharePayload.type === "election" || sharePayload.type === "poll" || sharePayload.type === "issue";
   const title =
-    sharePayload.type === "poll" ? "Share poll" : isComment ? "Share comment" : isElection ? "Share election" : "Share post";
+    sharePayload.type === "poll" ? "Share poll" : sharePayload.type === "issue" ? "Share issue" : isComment ? "Share comment" : isElection ? "Share election" : "Share post";
   const filename = `choice9ja-${sharePayload.type}-${Date.now()}.png`;
 
   async function waitForImages() {
