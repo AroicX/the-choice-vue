@@ -283,7 +283,9 @@ export function normalizeCommunity(raw: ApiRecord): Community {
     description: String(raw.description ?? ""),
     state: raw.state ? String(raw.state) : undefined,
     lga: raw.lga ? String(raw.lga) : undefined,
-    createdAt: raw.createdAt ? String(raw.createdAt) : undefined
+    createdAt: raw.createdAt ? String(raw.createdAt) : undefined,
+    memberCount: raw.memberCount !== undefined ? Number(raw.memberCount) : undefined,
+    isMember: Boolean(raw.isMember)
   };
 }
 

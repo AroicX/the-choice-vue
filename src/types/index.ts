@@ -171,6 +171,8 @@ export type Community = {
   state?: string;
   lga?: string;
   createdAt?: string;
+  memberCount?: number;
+  isMember?: boolean;
 };
 
 export type Issue = {

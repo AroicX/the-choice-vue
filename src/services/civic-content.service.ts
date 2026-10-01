@@ -28,6 +28,8 @@ export const newsService = {
 };
 
 export const communitiesService = {
+  /** Every community, fetched page by page (there are more than one page of states alone). */
+  listAll: <T = unknown>() => listAllPages<T>((params) => apiClient.get<T[]>(endpoints.communities.list, params)),
   list: <T = unknown>(params?: Record<string, string | number | boolean | undefined | null>) =>
     apiClient.get<T[]>(endpoints.communities.list, params),
   detail: <T = unknown>(id: string) => apiClient.get<T>(endpoints.communities.detail(id)),
