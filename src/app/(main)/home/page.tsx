@@ -46,7 +46,7 @@ const EMPTY_COPY: Record<FeedTab, { title: string; body: string; href: string; a
   local: {
     title: "No local posts yet",
     body: "Add your state and LGA to your profile to see what’s happening near you.",
-    href: "/settings",
+    href: "/settings#location",
     action: "Update your location"
   }
 };

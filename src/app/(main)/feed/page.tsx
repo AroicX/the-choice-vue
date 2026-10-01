@@ -35,7 +35,7 @@ const EMPTY: Record<FeedTabId, { title: string; body: string; href: string; acti
   trending: { title: "Nothing is trending", body: "Check back soon, or start a conversation.", href: "/discourse", action: "Browse discussions" },
   "fact-checks": { title: "No fact checks yet", body: "Verified claims about public figures will appear here.", href: "/fact-checks", action: "See all fact checks" },
   following: { title: "Your following feed is empty", body: "Follow leaders and citizens to see their activity here.", href: "/politicians", action: "Find leaders to follow" },
-  local: { title: "No local posts yet", body: "Add your state and LGA to see what’s happening near you.", href: "/settings", action: "Update your location" }
+  local: { title: "No local posts yet", body: "Add your state and LGA to see what’s happening near you.", href: "/settings#location", action: "Update your location" }
 };
 
 // Links shared before this redesign used display names (?tab=Fact Checks).

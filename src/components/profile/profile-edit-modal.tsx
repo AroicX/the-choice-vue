@@ -18,6 +18,8 @@ export type ProfileUpdatePayload = {
   username?: string;
   about?: string;
   profilePic?: string;
+  state?: string;
+  lga?: string;
 };
 
 function formValue(form: FormData, key: string) {
