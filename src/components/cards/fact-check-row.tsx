@@ -15,6 +15,10 @@ const VERDICT_STYLE: Record<string, { label: string; className: string }> = {
   FALSE: { label: "False", className: "bg-destructive/10 text-destructive" }
 };
 
+export function verdictLabel(verdict: string) {
+  return (VERDICT_STYLE[verdict.toUpperCase()] ?? VERDICT_STYLE.UNVERIFIED).label;
+}
+
 export function VerdictPill({ verdict }: { verdict: string }) {
   const style = VERDICT_STYLE[verdict.toUpperCase()] ?? VERDICT_STYLE.UNVERIFIED;
   return (

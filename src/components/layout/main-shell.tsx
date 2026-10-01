@@ -33,7 +33,7 @@ import type { ApiRecord, RoomRecord, User } from "@/types";
  * else (grids, dashboards, detail pages) gets the wider fluid column so its
  * multi-column layouts keep their room.
  */
-const TIMELINE_ROUTES = ["/home", "/feed", "/discourse", "/discussions", "/polls", "/issues", "/news", "/notifications", "/threads"];
+const TIMELINE_ROUTES = ["/home", "/feed", "/discourse", "/discussions", "/polls", "/issues", "/news", "/fact-checks", "/notifications", "/threads"];
 
 function isTimelineRoute(pathname: string) {
   return TIMELINE_ROUTES.some((route) => pathname === route || pathname.startsWith(`${route}/`));

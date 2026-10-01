@@ -1,50 +1,55 @@
 "use client";
 
-import Link from "next/link";
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { PageHeader } from "@/components/shared/page-header";
-import { QueryListState } from "@/components/shared/query-states";
-import { GenericCardSkeleton } from "@/components/skeletons/card-skeletons";
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent } from "@/components/ui/card";
-import { civicQueries } from "@/services/queries/civic.queries";
+import { FactCheckRow } from "@/components/cards/fact-check-row";
+import { PostRowSkeleton } from "@/components/skeletons/card-skeletons";
+import { TimelineEmpty, TimelineError, TimelineHeader, type TimelineTab } from "@/components/timeline/timeline";
 import { asArray, normalizeFactCheck } from "@/lib/content-utils";
+import { factChecksService } from "@/services/civic-content.service";
 import type { ApiRecord } from "@/types";
 
+type TabId = "all" | "true" | "false" | "misleading" | "unverified";
+
+const TABS: TimelineTab<TabId>[] = [
+  { id: "all", label: "All" },
+  { id: "true", label: "True" },
+  { id: "false", label: "False" },
+  { id: "misleading", label: "Misleading" },
+  { id: "unverified", label: "Unverified" }
+];
+
+// Each tab covers its "mostly" neighbour, and Mixed sits with Misleading.
+const MATCH: Record<Exclude<TabId, "all">, string[]> = {
+  true: ["TRUE", "MOSTLY_TRUE"],
+  false: ["FALSE", "MOSTLY_FALSE"],
+  misleading: ["MISLEADING", "MIXED"],
+  unverified: ["UNVERIFIED"]
+};
+
 export default function FactChecksPage() {
-  const query = useQuery({
-    queryKey: ["fact-checks"],
-    queryFn: civicQueries.factChecks
-  });
-  const factChecks = asArray<ApiRecord>(query.data).map(normalizeFactCheck);
+  const [tab, setTab] = useState<TabId>("all");
+  const query = useQuery({ queryKey: ["fact-checks", "all"], queryFn: () => factChecksService.listAll<ApiRecord>() });
+  const all = asArray<ApiRecord>(query.data).map(normalizeFactCheck);
+  const visible = tab === "all" ? all : all.filter((item) => MATCH[tab].includes(item.verdict.toUpperCase()));
 
   return (
-    <div>
-      <PageHeader title="Fact Checks" description="Claims, verdicts, sources, evidence, and civic context." />
-      <div className="grid gap-4 md:grid-cols-2">
-        <QueryListState
-          isLoading={query.isLoading}
-          isEmpty={factChecks.length === 0}
-          count={4}
-          skeleton={<GenericCardSkeleton />}
-          emptyMessage="No fact checks available yet."
-        >
-          {factChecks.map((factCheck) => (
-            <Link key={factCheck.id} href={`/fact-checks/${factCheck.id}`}>
-              <Card className="transition-colors hover:bg-accent">
-                <CardContent className="p-5">
-                  <Badge variant="info">{factCheck.verdict.replaceAll("_", " ")}</Badge>
-                  <h2 className="mt-4 font-semibold leading-6">{factCheck.claim}</h2>
-                  <p className="mt-2 line-clamp-2 text-sm text-muted-foreground">{factCheck.explanation}</p>
-                  <p className="mt-4 text-xs text-muted-foreground">
-                    {factCheck.sources.length} source{factCheck.sources.length === 1 ? "" : "s"}
-                  </p>
-                </CardContent>
-              </Card>
-            </Link>
-          ))}
-        </QueryListState>
+    <>
+      <TimelineHeader title="Fact checks" tabs={TABS} active={tab} onSelect={setTab} />
+      <div role="tabpanel" aria-busy={query.isLoading}>
+        {query.isLoading ? (
+          Array.from({ length: 4 }).map((_, index) => <PostRowSkeleton key={index} />)
+        ) : query.isError ? (
+          <TimelineError onRetry={() => query.refetch()} what="fact checks" />
+        ) : visible.length ? (
+          visible.map((factCheck) => <FactCheckRow key={factCheck.id} factCheck={factCheck} />)
+        ) : (
+          <TimelineEmpty
+            title={tab === "all" ? "No fact checks yet" : "Nothing with this verdict"}
+            body="Claims by and about public figures are checked and published here."
+          />
+        )}
       </div>
-    </div>
+    </>
   );
 }
