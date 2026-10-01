@@ -233,7 +233,7 @@ export function DiscourseRoomView({ discussionId }: { discussionId: string }) {
 
   return (
     <>
-      <div className="sticky top-[53px] z-30 flex h-[53px] items-center gap-6 bg-background/85 px-2 backdrop-blur-md lg:top-0">
+      <div className="sticky top-[var(--app-bar,53px)] z-30 flex h-[53px] items-center gap-6 bg-background/85 px-2 backdrop-blur-md lg:top-0">
         <Link
           href="/discourse"
           aria-label="Back to Discourse"
@@ -254,7 +254,7 @@ export function DiscourseRoomView({ discussionId }: { discussionId: string }) {
 
       <section className="px-4 pb-4 pt-3">
         <div className="flex items-start justify-between gap-4">
-          <h1 className="pt-1 text-xl font-bold leading-6 tracking-tight">{title}</h1>
+          <h1 className="pt-1 text-[19px] font-bold leading-6 tracking-tight sm:text-xl">{title}</h1>
           {isMember ? (
             <span className="inline-flex h-10 items-center rounded-full border px-5 text-sm font-medium">Joined</span>
           ) : (

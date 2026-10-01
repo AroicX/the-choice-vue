@@ -2,10 +2,11 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { FormEvent, useState } from "react";
+import { FormEvent, useCallback, useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import { mainNav, mobileNav } from "@/lib/constants";
+import { MobileDrawer } from "@/components/layout/mobile-drawer";
 import { ThemeToggle } from "@/components/layout/theme-toggle";
 import { AppIcon } from "@/components/ui/icon";
 import { Button } from "@/components/ui/button";
@@ -24,7 +25,7 @@ import {
 import { useRequireAuth } from "@/hooks/use-require-auth";
 import { useAuthStore } from "@/stores/auth-store";
 import { useLoginModalStore } from "@/stores/login-modal-store";
-import { Add01Icon, Logout01Icon, Search01Icon } from "@/lib/icons";
+import { Add01Icon, Logout01Icon, Menu01Icon, Search01Icon } from "@/lib/icons";
 import { cn } from "@/lib/utils";
 import type { ApiRecord, RoomRecord, User } from "@/types";
 
@@ -37,6 +38,14 @@ const TIMELINE_ROUTES = ["/home", "/feed", "/discourse", "/discussions", "/polls
 
 function isTimelineRoute(pathname: string) {
   return TIMELINE_ROUTES.some((route) => pathname === route || pathname.startsWith(`${route}/`));
+}
+
+/**
+ * Detail and form pages (/issues/123, /issues/create) bring their own sticky
+ * back bar, so on mobile the logo bar is dropped rather than stacked on top.
+ */
+function hasOwnMobileHeader(pathname: string) {
+  return pathname.split("/").filter(Boolean).length >= 2;
 }
 
 function isActive(pathname: string, href: string) {
@@ -158,6 +167,13 @@ export function MainShell({ children }: { children: React.ReactNode }) {
   const openLoginModal = useLoginModalStore((state) => state.open);
   const [search, setSearch] = useState("");
   const timeline = isTimelineRoute(pathname);
+  const showAppBar = !hasOwnMobileHeader(pathname);
+  const [drawerOpen, setDrawerOpen] = useState(false);
+  const closeDrawer = useCallback(() => setDrawerOpen(false), []);
+
+  useEffect(() => {
+    setDrawerOpen(false);
+  }, [pathname]);
 
   const roomsQuery = useQuery({
     queryKey: ["rooms", "me"],
@@ -198,7 +214,11 @@ export function MainShell({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div
+      className="min-h-screen bg-background"
+      // Sticky sub-headers sit below the mobile logo bar via this offset.
+      style={{ "--app-bar": showAppBar ? "53px" : "0px" } as React.CSSProperties}
+    >
       <div className="mx-auto flex max-w-[1440px] justify-center">
         {/* Left rail: icons only at lg, icons + labels from xl. */}
         <header className="sticky top-0 hidden h-screen w-[88px] shrink-0 flex-col items-end px-3 lg:flex xl:w-[275px] xl:items-stretch">
@@ -294,23 +314,37 @@ export function MainShell({ children }: { children: React.ReactNode }) {
             timeline ? "w-full max-w-[660px]" : "w-full max-w-[660px] flex-1 lg:max-w-[1080px]"
           )}
         >
-          {/* Mobile top bar. */}
-          <div className="sticky top-0 z-30 flex h-[53px] items-center justify-between border-b bg-background/85 px-4 backdrop-blur-md lg:hidden">
-            {isAuthenticated && user ? (
-              <Link href="/profile" aria-label="Your profile">
-                <Avatar user={user} size={32} />
+          {/* Mobile top bar: avatar/menu opens the drawer. */}
+          {showAppBar ? (
+            <div className="sticky top-0 z-30 grid h-[53px] grid-cols-[1fr_auto_1fr] items-center border-b bg-background/85 px-2 backdrop-blur-md lg:hidden">
+              <button
+                type="button"
+                onClick={() => setDrawerOpen(true)}
+                aria-label="Open menu"
+                aria-expanded={drawerOpen}
+                className="grid size-10 place-items-center justify-self-start rounded-full transition-colors hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              >
+                {isAuthenticated && user ? <Avatar user={user} size={32} /> : <AppIcon icon={Menu01Icon} size={22} />}
+              </button>
+              <Link href="/home" aria-label="Choice9ja home" className="grid size-10 place-items-center">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src="/icon-192x192.png" alt="" className="size-7 object-contain" />
               </Link>
-            ) : (
-              <Button size="sm" variant="outline" onClick={() => openLoginModal("Sign in to continue.")}>
-                Sign in
-              </Button>
-            )}
-            <Link href="/home" aria-label="Choice9ja home">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src="/icon-192x192.png" alt="" className="size-7 object-contain" />
-            </Link>
-            <ThemeToggle />
-          </div>
+              {isAuthenticated ? (
+                <Link
+                  href="/politicians"
+                  aria-label="Search leaders"
+                  className="grid size-10 place-items-center justify-self-end rounded-full transition-colors hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                >
+                  <AppIcon icon={Search01Icon} size={20} />
+                </Link>
+              ) : (
+                <Button size="sm" variant="outline" className="h-8 justify-self-end px-3.5" onClick={() => openLoginModal("Sign in to continue.")}>
+                  Sign in
+                </Button>
+              )}
+            </div>
+          ) : null}
 
           <main className={cn("min-w-0 pb-24 lg:pb-0", !timeline && "px-4 py-5 sm:px-6")}>{children}</main>
         </div>
@@ -453,12 +487,20 @@ export function MainShell({ children }: { children: React.ReactNode }) {
       {/* Mobile: report button + tab bar. */}
       <Button
         size="icon"
-        className="fixed bottom-20 right-4 z-40 size-14 shadow-panel lg:hidden"
+        className="fixed bottom-[calc(68px+env(safe-area-inset-bottom))] right-4 z-40 size-[52px] shadow-panel lg:hidden"
         onClick={reportIssue}
         aria-label="Report an issue"
       >
         <AppIcon icon={Add01Icon} size={24} strokeWidth={2.25} />
       </Button>
+      <MobileDrawer
+        open={drawerOpen}
+        onClose={closeDrawer}
+        pathname={pathname}
+        user={isAuthenticated ? user : null}
+        onSignIn={() => openLoginModal("Sign in to continue.")}
+        onLogout={handleLogout}
+      />
       <nav
         aria-label="Primary"
         className="fixed bottom-0 left-0 right-0 z-40 border-t bg-background/90 pb-[env(safe-area-inset-bottom)] backdrop-blur-md lg:hidden"
@@ -473,12 +515,12 @@ export function MainShell({ children }: { children: React.ReactNode }) {
                   href={item.href}
                   aria-label={item.label}
                   aria-current={active ? "page" : undefined}
-                  className="flex h-[53px] items-center justify-center"
+                  className="flex h-[52px] items-center justify-center transition-transform active:scale-90"
                 >
                   <span className="relative">
                     <AppIcon
                       icon={item.icon}
-                      size={26}
+                      size={24}
                       strokeWidth={active ? 2.25 : 1.75}
                       className={active ? "text-foreground" : "text-muted-foreground"}
                     />

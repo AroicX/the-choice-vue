@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
 import "@/app/globals.css";
 import "goey-toast/styles.css";
@@ -35,6 +35,18 @@ export const metadata: Metadata = {
     title: "Choice9ja",
     description: "Rate politicians, report local issues and join civic conversations in Nigeria."
   }
+};
+
+// viewport-fit=cover lets the tab bar and drawer pad for the iPhone home
+// indicator via env(safe-area-inset-*). Pinch zoom stays enabled.
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#ffffff" },
+    { media: "(prefers-color-scheme: dark)", color: "#000000" }
+  ]
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

@@ -120,7 +120,7 @@ export default function CreateIssuePage() {
 
   return (
     <>
-      <div className="sticky top-[53px] z-20 flex h-[53px] items-center gap-6 bg-background/85 px-2 backdrop-blur-md lg:top-0">
+      <div className="sticky top-[var(--app-bar,53px)] z-20 flex h-[53px] items-center gap-6 bg-background/85 px-2 backdrop-blur-md lg:top-0">
         <button
           type="button"
           onClick={() => (window.history.length > 1 ? router.back() : router.push("/issues"))}
@@ -129,7 +129,7 @@ export default function CreateIssuePage() {
         >
           <AppIcon icon={ArrowLeft01Icon} size={20} />
         </button>
-        <h1 className="text-xl font-bold tracking-tight">Report an issue</h1>
+        <h1 className="text-[17px] font-bold tracking-tight sm:text-xl">Report an issue</h1>
       </div>
 
       <form onSubmit={submit} className="space-y-6 px-4 pb-10 pt-3" noValidate>

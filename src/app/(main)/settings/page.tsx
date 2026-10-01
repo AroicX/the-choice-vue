@@ -63,7 +63,7 @@ function useProfileUpdate() {
 
 function PanelHeader({ title, onBack }: { title: string; onBack?: () => void }) {
   return (
-    <div className="sticky top-[53px] z-20 flex h-[53px] items-center gap-6 bg-background/85 px-2 backdrop-blur-md lg:top-0">
+    <div className="sticky top-[var(--app-bar,53px)] z-20 flex h-[53px] items-center gap-6 bg-background/85 px-2 backdrop-blur-md lg:top-0">
       {onBack ? (
         <button
           type="button"
@@ -74,7 +74,7 @@ function PanelHeader({ title, onBack }: { title: string; onBack?: () => void }) 
           <AppIcon icon={ArrowLeft01Icon} size={20} />
         </button>
       ) : null}
-      <h1 className={cn("text-xl font-bold tracking-tight", !onBack && "px-2")}>{title}</h1>
+      <h1 className={cn("text-[17px] font-bold tracking-tight sm:text-xl", !onBack && "px-2")}>{title}</h1>
     </div>
   );
 }

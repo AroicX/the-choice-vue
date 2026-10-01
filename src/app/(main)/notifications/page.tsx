@@ -103,7 +103,7 @@ export default function NotificationsPage() {
       <>
         <TimelineHeader title="Notifications" tabs={TABS.slice(0, 1)} active="all" onSelect={() => undefined} />
         <div className="mx-auto max-w-[400px] px-8 py-12">
-          <p className="text-[28px] font-bold leading-9 tracking-tight">Stay in the loop</p>
+          <p className="text-[22px] font-bold leading-7 sm:text-[28px] sm:leading-9 tracking-tight">Stay in the loop</p>
           <p className="mt-2 text-[15px] leading-5 text-muted-foreground">
             Sign in to see replies to your posts, updates on issues you follow and activity in your rooms.
           </p>

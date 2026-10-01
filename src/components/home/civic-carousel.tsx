@@ -179,7 +179,7 @@ export function CivicCarousel({ dateLabel }: { dateLabel: string }) {
                 <p className="text-[13px] font-medium" style={{ color: slide.accent }} suppressHydrationWarning>
                   {slide.eyebrow}
                 </p>
-                <h2 className="mt-2 max-w-[440px] text-[26px] font-bold leading-[1.15] tracking-[-0.02em] text-white sm:text-[30px]">
+                <h2 className="mt-2 max-w-[440px] text-[22px] font-bold leading-[1.15] tracking-[-0.02em] text-white sm:text-[30px]">
                   {slide.title}
                 </h2>
                 <p className="mt-2 max-w-[420px] text-[15px] leading-5 text-white/70">{slide.body}</p>

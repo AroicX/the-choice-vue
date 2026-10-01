@@ -25,8 +25,8 @@ export function TimelineHeader<T extends string>({
   onSelect: (id: T) => void;
 }) {
   return (
-    <div className={cn("sticky top-[53px] z-20 border-b bg-background/85 backdrop-blur-md lg:top-0", className)}>
-      {title ? <h1 className="px-4 pb-1 pt-3 text-xl font-bold tracking-tight">{title}</h1> : null}
+    <div className={cn("sticky top-[var(--app-bar,53px)] z-20 border-b bg-background/85 backdrop-blur-md lg:top-0", className)}>
+      {title ? <h1 className="px-4 pb-1 pt-3 text-[17px] font-bold tracking-tight sm:text-xl">{title}</h1> : null}
       <div role="tablist" aria-label={title ? `${title} tabs` : "Feeds"} className="flex overflow-x-auto [scrollbar-width:none]">
         {tabs.map((tab) => {
           const isActive = tab.id === active;
@@ -69,7 +69,7 @@ export function TimelineEmpty({
 }) {
   return (
     <div className="mx-auto max-w-[400px] px-8 py-12">
-      <p className="text-[28px] font-bold leading-9 tracking-tight">{title}</p>
+      <p className="text-[22px] font-bold leading-7 sm:text-[28px] sm:leading-9 tracking-tight">{title}</p>
       <p className="mt-2 text-[15px] leading-5 text-muted-foreground">{body}</p>
       {href && action ? (
         <Button asChild size="lg" className="mt-7">

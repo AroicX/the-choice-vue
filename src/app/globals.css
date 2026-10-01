@@ -69,6 +69,19 @@
 
   body {
     @apply bg-background text-foreground antialiased;
+    -webkit-tap-highlight-color: transparent;
+    -webkit-text-size-adjust: 100%;
+  }
+
+  /* iOS Safari zooms the page into any focused field under 16px. On touch
+     screens every field gets 16px, which stops the zoom without disabling
+     pinch-zoom for people who need it. */
+  @media (pointer: coarse) {
+    input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),
+    textarea,
+    select {
+      font-size: 16px !important;
+    }
   }
 }
 

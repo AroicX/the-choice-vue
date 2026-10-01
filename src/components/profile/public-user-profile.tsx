@@ -137,7 +137,7 @@ export function PublicUserProfile({ identifier }: { identifier: string }) {
   });
 
   const backBar = (
-    <div className="sticky top-[53px] z-20 flex h-[53px] items-center gap-6 bg-background/85 px-2 backdrop-blur-md lg:top-0">
+    <div className="sticky top-[var(--app-bar,53px)] z-20 flex h-[53px] items-center gap-6 bg-background/85 px-2 backdrop-blur-md lg:top-0">
       <button
         type="button"
         onClick={() => (window.history.length > 1 ? router.back() : router.push("/home"))}
@@ -221,7 +221,7 @@ export function PublicUserProfile({ identifier }: { identifier: string }) {
           </div>
         </div>
 
-        <h1 className="mt-3 flex items-center gap-1.5 text-xl font-bold leading-6 tracking-tight">
+        <h1 className="mt-3 flex items-center gap-1.5 text-[19px] font-bold leading-6 tracking-tight sm:text-xl">
           <span className="min-w-0 truncate">{userDisplayName(profile)}</span>
           {profile.verified || profile.verifiedPhone ? <AppIcon icon={CheckmarkBadge01Icon} size={20} className="shrink-0 text-primary" /> : null}
         </h1>

@@ -174,7 +174,7 @@ export default function RatingsPage() {
             {grouped.map((group) => (
               <section key={group.key} aria-labelledby={`office-${group.key}`}>
                 <div className="mb-3 flex items-baseline justify-between gap-3">
-                  <h2 id={`office-${group.key}`} className="text-xl font-bold tracking-tight">
+                  <h2 id={`office-${group.key}`} className="text-[17px] font-bold tracking-tight sm:text-xl">
                     {group.label}
                     <span className="ml-2 text-[15px] font-medium text-muted-foreground">{group.items.length}</span>
                   </h2>

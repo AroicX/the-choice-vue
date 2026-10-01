@@ -34,6 +34,7 @@ export {
   Location01Icon,
   Login01Icon,
   Logout01Icon,
+  Menu01Icon,
   Megaphone01Icon,
   Message01Icon,
   Moon02Icon,

@@ -239,7 +239,7 @@ export function PoliticianDetailView({ politicianId }: { politicianId: string })
 
             <div className="mt-4 flex items-start justify-between gap-4">
               <div className="min-w-0">
-                <h1 className="flex items-center gap-1.5 text-[26px] font-bold leading-8 tracking-[-0.02em]">
+                <h1 className="flex items-center gap-1.5 text-[22px] font-bold leading-7 sm:text-[26px] sm:leading-8 tracking-[-0.02em]">
                   <span className="min-w-0">{politician.name}</span>
                   {politician.verified ? (
                     <AppIcon icon={CheckmarkBadge01Icon} size={22} className="shrink-0 text-primary" />
@@ -300,7 +300,7 @@ export function PoliticianDetailView({ politicianId }: { politicianId: string })
               <div className="mb-5 flex items-baseline gap-3">
                 {scorecard.rated ? (
                   <>
-                    <span className="text-5xl font-bold tracking-tight tabular-nums">{Math.round(scorecard.approvalRating)}%</span>
+                    <span className="text-4xl font-bold tracking-tight tabular-nums sm:text-5xl">{Math.round(scorecard.approvalRating)}%</span>
                     <span className="text-[15px] text-muted-foreground">
                       approval from {scorecard.totalVotes.toLocaleString()} {scorecard.totalVotes === 1 ? "rating" : "ratings"}
                     </span>

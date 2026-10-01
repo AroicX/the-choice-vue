@@ -70,7 +70,7 @@ function BriefStat({
       {isLoading ? (
         <Skeleton className="h-7 w-10" />
       ) : (
-        <span className="text-2xl font-extrabold leading-7 tracking-tight tabular-nums">{value.toLocaleString()}</span>
+        <span className="text-xl font-extrabold leading-7 tracking-tight tabular-nums sm:text-2xl">{value.toLocaleString()}</span>
       )}
       <span className="flex items-center gap-1 text-[13px] text-muted-foreground transition-colors group-hover:text-foreground">
         {label}

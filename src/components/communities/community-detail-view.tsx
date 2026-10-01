@@ -69,7 +69,7 @@ export function CommunityDetailView({ communityId }: { communityId: string }) {
 
   return (
     <>
-      <div className="sticky top-[53px] z-20 flex h-[53px] items-center gap-6 bg-background/85 px-2 backdrop-blur-md lg:top-0">
+      <div className="sticky top-[var(--app-bar,53px)] z-20 flex h-[53px] items-center gap-6 bg-background/85 px-2 backdrop-blur-md lg:top-0">
         <button
           type="button"
           onClick={() => (window.history.length > 1 ? router.back() : router.push("/communities"))}
@@ -104,7 +104,7 @@ export function CommunityDetailView({ communityId }: { communityId: string }) {
           <section className="border-b px-4 pb-4 pt-3">
             <div className="flex items-start justify-between gap-4">
               <div className="min-w-0">
-                <h1 className="text-xl font-bold leading-6 tracking-tight">{community.name}</h1>
+                <h1 className="text-[19px] font-bold leading-6 tracking-tight sm:text-xl">{community.name}</h1>
                 <p className="mt-0.5 text-[14px] text-muted-foreground">
                   {[TYPE_LABEL[community.type] ?? community.type, place && place !== community.name ? place : null]
                     .filter(Boolean)

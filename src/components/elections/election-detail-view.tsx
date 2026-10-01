@@ -90,7 +90,7 @@ export function ElectionDetailView({ electionId }: { electionId: string }) {
           </div>
 
           <div className="mt-4 flex items-start justify-between gap-4">
-            <h1 className="text-[26px] font-bold leading-8 tracking-[-0.02em]">{election.title}</h1>
+            <h1 className="text-[22px] font-bold leading-7 sm:text-[26px] sm:leading-8 tracking-[-0.02em]">{election.title}</h1>
             <Button variant="outline" className="shrink-0" onClick={() => openShareModal(electionSharePayload(election))}>
               <AppIcon icon={Share08Icon} size={16} />
               Share

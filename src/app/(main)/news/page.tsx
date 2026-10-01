@@ -16,8 +16,8 @@ export default function NewsPage() {
 
   return (
     <>
-      <div className="sticky top-[53px] z-20 border-b bg-background/85 px-4 py-3 backdrop-blur-md lg:top-0">
-        <h1 className="text-xl font-bold tracking-tight">News</h1>
+      <div className="sticky top-[var(--app-bar,53px)] z-20 border-b bg-background/85 px-4 py-3 backdrop-blur-md lg:top-0">
+        <h1 className="text-[17px] font-bold tracking-tight sm:text-xl">News</h1>
         <p className="text-[13px] text-muted-foreground">Civic stories on politics, economy, security and governance</p>
       </div>
       {query.isLoading ? (

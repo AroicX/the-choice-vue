@@ -286,7 +286,7 @@ export function ShareModal() {
         role="dialog"
         aria-modal="true"
         aria-label={title}
-        className="relative z-10 max-h-[92vh] w-full max-w-[440px] overflow-y-auto rounded-t-[12px] border border-border bg-popover dark:border-white/10 sm:rounded-[12px]"
+        className="relative z-10 max-h-[92dvh] w-full max-w-[440px] overflow-y-auto rounded-t-[12px] border border-border bg-popover dark:border-white/10 sm:rounded-[12px]"
       >
         <div className="flex items-center justify-between px-5 pb-2 pt-4">
           <h2 className="text-[17px] font-semibold">{title}</h2>

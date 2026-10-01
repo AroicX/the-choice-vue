@@ -150,7 +150,7 @@ export function RateCandidateModal({
         role="dialog"
         aria-modal="true"
         aria-label={`Rate ${candidate.name}`}
-        className="relative z-10 flex max-h-[92vh] w-full max-w-[460px] flex-col overflow-hidden rounded-t-2xl border border-border bg-popover dark:border-white/10 sm:rounded-2xl"
+        className="relative z-10 flex max-h-[92dvh] w-full max-w-[460px] flex-col overflow-hidden rounded-t-2xl border border-border bg-popover dark:border-white/10 sm:rounded-2xl"
       >
         {/* Header: who you're rating, and progress. */}
         <div className="px-5 pb-3 pt-4">

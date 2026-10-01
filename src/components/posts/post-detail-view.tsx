@@ -37,7 +37,7 @@ function fullTimestamp(value?: string) {
 function BackBar() {
   const router = useRouter();
   return (
-    <div className="sticky top-[53px] z-20 flex h-[53px] items-center gap-6 bg-background/85 px-2 backdrop-blur-md lg:top-0">
+    <div className="sticky top-[var(--app-bar,53px)] z-20 flex h-[53px] items-center gap-6 bg-background/85 px-2 backdrop-blur-md lg:top-0">
       <button
         type="button"
         // History back when we came from inside the app; otherwise the feed.
@@ -47,7 +47,7 @@ function BackBar() {
       >
         <AppIcon icon={ArrowLeft01Icon} size={20} />
       </button>
-      <h1 className="text-xl font-bold tracking-tight">Post</h1>
+      <h1 className="text-[17px] font-bold tracking-tight sm:text-xl">Post</h1>
     </div>
   );
 }

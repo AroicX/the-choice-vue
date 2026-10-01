@@ -46,7 +46,7 @@ export function IssueDetailView({ issueId }: { issueId: string }) {
 
   return (
     <>
-      <div className="sticky top-[53px] z-20 flex h-[53px] items-center gap-6 bg-background/85 px-2 backdrop-blur-md lg:top-0">
+      <div className="sticky top-[var(--app-bar,53px)] z-20 flex h-[53px] items-center gap-6 bg-background/85 px-2 backdrop-blur-md lg:top-0">
         <button
           type="button"
           onClick={() => (window.history.length > 1 ? router.back() : router.push("/issues"))}
@@ -55,7 +55,7 @@ export function IssueDetailView({ issueId }: { issueId: string }) {
         >
           <AppIcon icon={ArrowLeft01Icon} size={20} />
         </button>
-        <h1 className="text-xl font-bold tracking-tight">Issue</h1>
+        <h1 className="text-[17px] font-bold tracking-tight sm:text-xl">Issue</h1>
       </div>
 
       {query.isLoading ? (
@@ -79,7 +79,7 @@ export function IssueDetailView({ issueId }: { issueId: string }) {
             </span>
           </div>
 
-          <h2 className="mt-3 text-[24px] font-bold leading-7 tracking-[-0.01em]">{issue.title}</h2>
+          <h2 className="mt-3 text-[20px] font-bold leading-6 sm:text-[24px] sm:leading-7 tracking-[-0.01em]">{issue.title}</h2>
 
           <div className="mt-3 flex items-center gap-2.5 text-[14px]">
             {issue.createdByAvatar ? (
