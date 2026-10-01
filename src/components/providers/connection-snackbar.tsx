@@ -6,8 +6,9 @@ import { api } from "@/services/client/api";
 import { useConnectionStore } from "@/stores/connection-store";
 import { cn } from "@/lib/utils";
 
-/** Seconds between automatic reconnect attempts; the last value repeats. */
-const BACKOFF = [3, 5, 10, 20, 30];
+/** Seconds before each automatic reconnect attempt. After these run out,
+ *  retrying is manual: endless countdowns read as nagging, not helping. */
+const BACKOFF = [3, 6];
 const PROBE_TIMEOUT_MS = 6_000;
 const RESTORED_VISIBLE_MS = 2_500;
 
@@ -71,10 +72,12 @@ export function ConnectionSnackbar() {
     }
   }, []);
 
-  // Countdown to the next automatic attempt while unreachable.
+  const autoRetrying = status === "unreachable" && attempt < BACKOFF.length;
+
+  // Countdown to the next automatic attempt, for the first BACKOFF.length tries.
   useEffect(() => {
-    if (status !== "unreachable") return;
-    const wait = BACKOFF[Math.min(attempt, BACKOFF.length - 1)];
+    if (!autoRetrying) return;
+    const wait = BACKOFF[attempt];
     setSecondsLeft(wait);
     const tick = window.setInterval(() => {
       setSecondsLeft((value) => {
@@ -87,7 +90,7 @@ export function ConnectionSnackbar() {
       });
     }, 1_000);
     return () => window.clearInterval(tick);
-  }, [attempt, retryNow, status]);
+  }, [attempt, autoRetrying, retryNow]);
 
   // On recovery: refetch what's on screen, show "Back online" briefly, reset.
   useEffect(() => {
@@ -139,7 +142,9 @@ export function ConnectionSnackbar() {
               ? "Back online"
               : checking
                 ? "Reconnecting…"
-                : `Can’t reach Choice9ja · Retrying in ${secondsLeft}s`}
+                : autoRetrying
+                  ? `Can’t reach Choice9ja · Retrying in ${secondsLeft}s`
+                  : "Can’t reach Choice9ja"}
         </span>
 
         {shown === "offline" || shown === "unreachable" ? (
@@ -150,7 +155,7 @@ export function ConnectionSnackbar() {
             disabled={checking}
             className="h-8 shrink-0 rounded-full px-3 font-semibold transition-colors hover:bg-background/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-background disabled:opacity-60"
           >
-            {shown === "offline" ? "Retry" : "Retry now"}
+            {shown === "offline" || !autoRetrying ? "Retry" : "Retry now"}
           </button>
         ) : (
           <span className="w-2.5" aria-hidden />
