@@ -170,7 +170,7 @@ export function MainShell({ children }: { children: React.ReactNode }) {
   const pollsQuery = useQuery({ queryKey: ["shell", "polls"], queryFn: civicQueries.polls });
   const notificationCountQuery = useQuery({
     queryKey: ["notifications", "count", user?.id],
-    queryFn: () => notificationsService.count(user!.id),
+    queryFn: () => notificationsService.mineCount(),
     enabled: Boolean(user?.id),
     refetchInterval: 60_000
   });

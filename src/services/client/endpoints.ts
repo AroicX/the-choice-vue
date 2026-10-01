@@ -183,6 +183,9 @@ export const endpoints = {
     unfollowTopic: (id: string) => `/follows/topics/${id}`
   },
   notifications: {
+    mine: "/notifications/me",
+    mineCount: "/notifications/me/count",
+    readAll: "/notifications/me/read-all",
     byUser: (id: string) => `/notifications/user/${id}`,
     count: (id: string) => `/notifications/user/count/${id}`,
     detail: (id: string) => `/notifications/${id}`,
