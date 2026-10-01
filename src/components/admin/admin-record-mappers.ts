@@ -673,6 +673,57 @@ export function promisePayload(payload: Record<string, string | boolean>, record
   };
 }
 
+const newsFields: AdminPageMeta["createFields"] = [
+  { name: "title", label: "Headline" },
+  { name: "source", label: "Source", placeholder: "e.g. Premium Times" },
+  { name: "sourceUrl", label: "Link to the original", placeholder: "https://…" },
+  { name: "imageUrl", label: "Image", type: "file" },
+  { name: "aiSummary", label: "In brief (short summary)", type: "textarea" },
+  { name: "content", label: "Article text", type: "textarea" }
+];
+
+export const newsMeta: AdminPageMeta = {
+  title: "News",
+  description: "Publish civic news. The headline, image and summary are what readers see first.",
+  primaryAction: "Publish article",
+  filters: ["Date range"],
+  columns: [
+    { key: "title", label: "Headline" },
+    { key: "source", label: "Source" },
+    { key: "hasImage", label: "Image" },
+    { key: "publishedAt", label: "Published" }
+  ],
+  rowActions: ["View", "Edit", "Delete"],
+  createFields: newsFields,
+  editFields: newsFields,
+  emptyTitle: "No articles yet",
+  emptyDescription: "Publish the first article to fill the News page."
+};
+
+export function mapNews(raw: Raw): AdminRecord {
+  const values = {
+    title: String(raw.title ?? "-"),
+    source: String(raw.source ?? "-"),
+    hasImage: raw.imageUrl ? "Yes" : "No",
+    publishedAt: dateOf({ createdAt: raw.publishedAt ?? raw.createdAt }),
+    // Pre-fill the edit form.
+    sourceUrl: String(raw.sourceUrl ?? ""),
+    imageUrl: String(raw.imageUrl ?? ""),
+    aiSummary: String(raw.aiSummary ?? ""),
+    content: String(raw.content ?? "")
+  };
+  return recordFrom(raw, String(values.title), values, "active", String(values.source));
+}
+
+/** Trims fields and drops empties so optional URLs aren't sent as "". */
+export function newsPayload(payload: Record<string, string | boolean>) {
+  return Object.fromEntries(
+    Object.entries(payload)
+      .map(([key, value]) => [key, typeof value === "string" ? value.trim() : value])
+      .filter(([, value]) => value !== "")
+  );
+}
+
 export const communitiesMeta: AdminPageMeta = {
   title: "Communities",
   description: "Manage civic communities by state, LGA, and topic.",

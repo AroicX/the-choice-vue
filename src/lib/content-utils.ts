@@ -614,3 +614,28 @@ export function profilePath(
   if (fallback) return `/u/${encodeURIComponent(fallback.replace(/^@+/, ""))}`;
   return "/profile";
 }
+
+export type NewsArticle = {
+  id: string;
+  title: string;
+  content: string;
+  summary?: string;
+  source?: string;
+  sourceUrl?: string;
+  imageUrl?: string;
+  publishedAt?: string;
+};
+
+export function normalizeNews(raw: ApiRecord): NewsArticle {
+  const text = (value: unknown) => (value ? String(value).trim() : undefined);
+  return {
+    id: recordId(raw),
+    title: String(raw.title ?? "Untitled").trim(),
+    content: String(raw.content ?? "").trim(),
+    summary: text(raw.aiSummary ?? raw.summary),
+    source: text(raw.source),
+    sourceUrl: text(raw.sourceUrl),
+    imageUrl: text(raw.imageUrl),
+    publishedAt: text(raw.publishedAt ?? raw.createdAt)
+  };
+}

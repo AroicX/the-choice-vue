@@ -1,46 +1,48 @@
 "use client";
 
-import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
-import { PageHeader } from "@/components/shared/page-header";
-import { QueryListState } from "@/components/shared/query-states";
-import { GenericCardSkeleton } from "@/components/skeletons/card-skeletons";
-import { Card, CardContent } from "@/components/ui/card";
-import { civicQueries } from "@/services/queries/civic.queries";
-import { asArray, displayName, recordId } from "@/lib/content-utils";
+import { NewsLead, NewsRow } from "@/components/news/news-row";
+import { PostRowSkeleton } from "@/components/skeletons/card-skeletons";
+import { TimelineEmpty, TimelineError } from "@/components/timeline/timeline";
+import { Skeleton } from "@/components/ui/skeleton";
+import { asArray, normalizeNews } from "@/lib/content-utils";
+import { newsService } from "@/services/civic-content.service";
 import type { ApiRecord } from "@/types";
 
 export default function NewsPage() {
-  const query = useQuery({
-    queryKey: ["news"],
-    queryFn: civicQueries.news
-  });
-  const articles = asArray<ApiRecord>(query.data);
+  const query = useQuery({ queryKey: ["news"], queryFn: () => newsService.list<ApiRecord>({ take: 50 }) });
+  const articles = asArray<ApiRecord>(query.data).map(normalizeNews);
+  const [lead, ...rest] = articles;
 
   return (
-    <div>
-      <PageHeader title="Civic News" description="Curated public-interest news across politics, economy, security, and governance." />
-      <div className="space-y-4">
-        <QueryListState
-          isLoading={query.isLoading}
-          isEmpty={articles.length === 0}
-          count={4}
-          skeleton={<GenericCardSkeleton />}
-          emptyMessage="No news articles available yet."
-        >
-          {articles.map((article) => (
-          <Link key={recordId(article)} href={`/news/${recordId(article)}`}>
-          <Card className="transition-colors hover:bg-accent">
-            <CardContent className="p-5">
-              <p className="text-sm font-medium text-primary">{String(article.source ?? "Civic news")}</p>
-              <h2 className="mt-2 text-xl font-semibold">{displayName(article)}</h2>
-              <p className="mt-2 line-clamp-2 text-muted-foreground">{String(article.summary ?? article.content ?? article.description ?? "")}</p>
-            </CardContent>
-          </Card>
-          </Link>
-        ))}
-        </QueryListState>
+    <>
+      <div className="sticky top-[53px] z-20 border-b bg-background/85 px-4 py-3 backdrop-blur-md lg:top-0">
+        <h1 className="text-xl font-bold tracking-tight">News</h1>
+        <p className="text-[13px] text-muted-foreground">Civic stories on politics, economy, security and governance</p>
       </div>
-    </div>
+      {query.isLoading ? (
+        <div aria-busy>
+          <div className="space-y-2 border-b px-4 py-4">
+            <Skeleton className="aspect-[16/9] w-full rounded-xl" />
+            <Skeleton className="h-3.5 w-1/3" />
+            <Skeleton className="h-6 w-4/5" />
+          </div>
+          {Array.from({ length: 3 }).map((_, index) => (
+            <PostRowSkeleton key={index} />
+          ))}
+        </div>
+      ) : query.isError ? (
+        <TimelineError onRetry={() => query.refetch()} what="news" />
+      ) : lead ? (
+        <>
+          <NewsLead article={lead} />
+          {rest.map((article) => (
+            <NewsRow key={article.id} article={article} />
+          ))}
+        </>
+      ) : (
+        <TimelineEmpty title="No news yet" body="Civic stories will appear here as they’re published." />
+      )}
+    </>
   );
 }

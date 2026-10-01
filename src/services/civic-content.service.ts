@@ -19,6 +19,14 @@ export const promisesService = {
   listAll: <T = unknown>() => listAllPages<T>((params) => promises.list(params))
 };
 
+const news = crudService("/news");
+
+export const newsService = {
+  ...news,
+  /** Every article, fetched page by page, for the admin screen. */
+  listAll: <T = unknown>() => listAllPages<T>((params) => news.list(params))
+};
+
 export const communitiesService = {
   list: <T = unknown>(params?: Record<string, string | number | boolean | undefined | null>) =>
     apiClient.get<T[]>(endpoints.communities.list, params),
