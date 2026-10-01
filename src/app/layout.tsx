@@ -4,6 +4,7 @@ import "@/app/globals.css";
 import "goey-toast/styles.css";
 import { ThemeProvider } from "@/components/providers/theme-provider";
 import { QueryProvider } from "@/components/providers/query-provider";
+import { MotionProvider } from "@/components/providers/motion-provider";
 import { ConnectionSnackbar } from "@/components/providers/connection-snackbar";
 import { ToastProvider } from "@/components/providers/toast-provider";
 import { LoginModal } from "@/components/auth/login-modal";
@@ -41,12 +42,14 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="en" suppressHydrationWarning>
       <body className={`${inter.variable} font-sans`}>
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
+          <MotionProvider>
           <QueryProvider>
             {children}
             <LoginModal />
             <ShareModal />
             <ConnectionSnackbar />
           </QueryProvider>
+          </MotionProvider>
           <ToastProvider />
         </ThemeProvider>
       </body>

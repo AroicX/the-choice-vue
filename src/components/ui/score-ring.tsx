@@ -1,3 +1,7 @@
+"use client";
+
+import { motion } from "motion/react";
+import { RESULT_SPRING } from "@/components/motion/result-bar";
 import { cn } from "@/lib/utils";
 
 /** Circular approval meter; a dashed empty ring when nobody has rated yet. */
@@ -25,7 +29,8 @@ export function ScoreRing({ score }: { score: number | null }) {
           strokeDasharray={score === null ? "3 4" : undefined}
         />
         {score !== null ? (
-          <circle
+          // Draws in from empty the first time it renders.
+          <motion.circle
             cx={size / 2}
             cy={size / 2}
             r={radius}
@@ -33,7 +38,10 @@ export function ScoreRing({ score }: { score: number | null }) {
             strokeWidth={stroke}
             strokeLinecap="round"
             className="stroke-primary"
-            strokeDasharray={`${(value / 100) * circumference} ${circumference}`}
+            strokeDasharray={circumference}
+            initial={{ strokeDashoffset: circumference }}
+            animate={{ strokeDashoffset: circumference * (1 - value / 100) }}
+            transition={RESULT_SPRING}
           />
         ) : null}
       </svg>

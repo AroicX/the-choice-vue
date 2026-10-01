@@ -2,6 +2,8 @@
 
 import Image from "next/image";
 import { useState } from "react";
+import { AnimatePresence, motion } from "motion/react";
+import { AnimatedNumber, ResultBar } from "@/components/motion/result-bar";
 import { Button } from "@/components/ui/button";
 import type { ElectionPhase } from "@/lib/content-utils";
 import { cn } from "@/lib/utils";
@@ -68,20 +70,13 @@ export function Ballot({ phase, options, totalVotes, hasVoted, votedKey, isSubmi
     return (
       <div>
         <ul className="space-y-2">
-          {ranked.map((option) => {
+          {ranked.map((option, index) => {
             const isLeader = option.key === leader;
             const isYours = option.key === yourVote;
             return (
               <li key={option.key} className="relative overflow-hidden rounded-xl border px-4 py-3">
                 {/* The bar is the row background, so the result reads at a glance. */}
-                <span
-                  aria-hidden
-                  className={cn(
-                    "absolute inset-y-0 left-0 transition-[width] duration-500 motion-reduce:transition-none",
-                    isLeader ? "bg-primary/15" : "bg-foreground/[0.05]"
-                  )}
-                  style={{ width: `${Math.max(0, Math.min(100, option.value))}%` }}
-                />
+                <ResultBar percent={option.value} index={index} className={isLeader ? "bg-primary/15" : "bg-foreground/[0.05]"} />
                 <span className="relative flex items-center gap-3">
                   <Portrait option={option} />
                   <span className="min-w-0 flex-1">
@@ -92,7 +87,9 @@ export function Ballot({ phase, options, totalVotes, hasVoted, votedKey, isSubmi
                     </span>
                   </span>
                   <span className="shrink-0 text-right">
-                    <span className="block text-[17px] font-bold tabular-nums">{option.value}%</span>
+                    <span className="block text-[17px] font-bold tabular-nums">
+                      <AnimatedNumber value={option.value} suffix="%" delay={index * 0.06} />
+                    </span>
                     <span className="block text-[12px] text-muted-foreground tabular-nums">
                       {(option.rawValue ?? 0).toLocaleString()} votes
                     </span>
@@ -148,8 +145,18 @@ export function Ballot({ phase, options, totalVotes, hasVoted, votedKey, isSubmi
         })}
       </div>
 
-      {/* Sticky confirm bar: names the choice so nobody votes by accident. */}
-      <div className="sticky bottom-[60px] mt-4 flex items-center justify-between gap-3 rounded-xl border bg-background/95 px-4 py-3 backdrop-blur-md lg:bottom-4">
+      {/* Sticky confirm bar: names the choice so nobody votes by accident.
+          Slides up once a candidate is picked. */}
+      <AnimatePresence>
+        {choice ? (
+      <motion.div
+        key="confirm"
+        initial={{ opacity: 0, y: 16 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, y: 16 }}
+        transition={{ type: "spring", stiffness: 380, damping: 30 }}
+        className="sticky bottom-[60px] mt-4 flex items-center justify-between gap-3 rounded-xl border bg-background/95 px-4 py-3 backdrop-blur-md lg:bottom-4"
+      >
         <p className="min-w-0 truncate text-[14px] text-muted-foreground">
           {choice ? "One vote per person. It can’t be changed." : "Pick a candidate to vote."}
         </p>
@@ -164,7 +171,9 @@ export function Ballot({ phase, options, totalVotes, hasVoted, votedKey, isSubmi
         >
           {isSubmitting ? "Voting…" : choice ? `Vote for ${choice.label}` : "Vote"}
         </Button>
-      </div>
+      </motion.div>
+        ) : null}
+      </AnimatePresence>
     </div>
   );
 }
