@@ -1,6 +1,6 @@
 import { OG_CONTENT_TYPE, OG_SIZE, renderOgImage } from "@/lib/og";
 
-export const runtime = "edge";
+export const runtime = "nodejs";
 export const alt = "Choice9ja: know your leaders, hold them to account";
 export const size = OG_SIZE;
 export const contentType = OG_CONTENT_TYPE;

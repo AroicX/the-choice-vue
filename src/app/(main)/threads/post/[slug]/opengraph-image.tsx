@@ -2,7 +2,7 @@ import { normalizePost } from "@/lib/content-utils";
 import { OG_CONTENT_TYPE, OG_SIZE, renderOgImage } from "@/lib/og";
 import { excerpt, fetchApiRecord } from "@/lib/server-api";
 
-export const runtime = "edge";
+export const runtime = "nodejs";
 export const alt = "A post on Choice9ja";
 export const size = OG_SIZE;
 export const contentType = OG_CONTENT_TYPE;

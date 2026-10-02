@@ -1,3 +1,5 @@
+import { readFile } from "node:fs/promises";
+import { join } from "node:path";
 import { ImageResponse } from "next/og";
 
 /**
@@ -23,19 +25,22 @@ const ACCENT: Record<OgBackground, string> = {
   clay: "#F0A585"
 };
 
-// Each asset URL must be a literal so the bundler includes the file; a
-// template string (`./og-assets/${name}`) silently bundles nothing.
-const ASSET_URLS = {
-  forest: new URL("./og-assets/forest.png", import.meta.url),
-  ink: new URL("./og-assets/ink.png", import.meta.url),
-  clay: new URL("./og-assets/clay.png", import.meta.url),
-  icon: new URL("./og-assets/icon.png", import.meta.url),
-  inter400: new URL("./og-assets/inter-400.ttf", import.meta.url),
-  inter700: new URL("./og-assets/inter-700.ttf", import.meta.url)
+// OG routes run on Node, not the edge: with fonts and halftone art the edge
+// bundle is ~1.5MB gzipped, over Vercel's 1MB edge limit, and every deploy
+// failed. next.config traces this folder into each serverless function.
+const ASSET_DIR = join(process.cwd(), "src/lib/og-assets");
+const ASSET_FILES = {
+  forest: "forest.png",
+  ink: "ink.png",
+  clay: "clay.png",
+  icon: "icon.png",
+  inter400: "inter-400.ttf",
+  inter700: "inter-700.ttf"
 };
 
-async function asset(name: keyof typeof ASSET_URLS) {
-  return fetch(ASSET_URLS[name]).then((response) => response.arrayBuffer());
+async function asset(name: keyof typeof ASSET_FILES): Promise<ArrayBuffer> {
+  const file = await readFile(join(ASSET_DIR, ASSET_FILES[name]));
+  return file.buffer.slice(file.byteOffset, file.byteOffset + file.byteLength) as ArrayBuffer;
 }
 
 /**

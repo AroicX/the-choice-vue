@@ -2,7 +2,7 @@ import { electionPhase, normalizeElection } from "@/lib/content-utils";
 import { OG_CONTENT_TYPE, OG_SIZE, renderOgImage } from "@/lib/og";
 import { fetchApiRecord } from "@/lib/server-api";
 
-export const runtime = "edge";
+export const runtime = "nodejs";
 export const alt = "A mock election on Choice9ja";
 export const size = OG_SIZE;
 export const contentType = OG_CONTENT_TYPE;
