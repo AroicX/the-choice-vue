@@ -38,10 +38,12 @@ export const metadata: Metadata = {
 };
 
 // viewport-fit=cover lets the tab bar and drawer pad for the iPhone home
-// indicator via env(safe-area-inset-*). Pinch zoom stays enabled.
+// indicator via env(safe-area-inset-*). maximumScale stops iOS auto-zooming
+// into focused fields; iOS still allows pinch-zoom regardless.
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
+  maximumScale: 1,
   viewportFit: "cover",
   themeColor: [
     { media: "(prefers-color-scheme: light)", color: "#ffffff" },

@@ -73,10 +73,18 @@
     -webkit-text-size-adjust: 100%;
   }
 
-  /* iOS Safari zooms the page into any focused field under 16px. On touch
-     screens every field gets 16px, which stops the zoom without disabling
-     pinch-zoom for people who need it. */
-  @media (pointer: coarse) {
+  /* iOS Safari zooms the page into any focused field under 16px. Fields get
+     16px on phone/tablet widths and on any touch screen. */
+  @media (max-width: 1023px), (pointer: coarse), (hover: none) {
+    input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),
+    textarea,
+    select {
+      font-size: 16px !important;
+    }
+  }
+
+  /* Every iOS browser is WebKit; catch iPads reporting a fine pointer too. */
+  @supports (-webkit-touch-callout: none) {
     input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),
     textarea,
     select {
